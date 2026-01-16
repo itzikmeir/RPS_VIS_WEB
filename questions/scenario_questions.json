@@ -1,0 +1,122 @@
+{
+  "scenario_questions": [
+    {
+      "question_id": "sa_1",
+      "scenario_id": "SCN_001_OPT",
+      "question_text": "שאלה ייעודית 1 לתרחיש (placeholder לסיטואציית מודעות מצב).",
+      "options": [
+        "אופציה א",
+        "אופציה ב",
+        "אופציה ג",
+        "אופציה ד",
+        "אופציה ה"
+      ],
+      "correct_answer_index": 1
+    },
+    {
+      "question_id": "sa_2",
+      "scenario_id": "SCN_001_OPT",
+      "question_text": "שאלה ייעודית 2 לתרחיש (placeholder לסיטואציית מודעות מצב).",
+      "options": [
+        "אופציה א",
+        "אופציה ב",
+        "אופציה ג",
+        "אופציה ד",
+        "אופציה ה"
+      ],
+      "correct_answer_index": 2
+    },
+    {
+      "question_id": "sa_3",
+      "scenario_id": "SCN_001_OPT",
+      "question_text": "שאלה ייעודית 3 לתרחיש (placeholder לסיטואציית מודעות מצב).",
+      "options": [
+        "אופציה א",
+        "אופציה ב",
+        "אופציה ג",
+        "אופציה ד",
+        "אופציה ה"
+      ],
+      "correct_answer_index": 0
+    },
+    {
+      "question_id": "sa_1",
+      "scenario_id": "SCN_002_OPT",
+      "question_text": "שאלה ייעודית 1 לתרחיש (placeholder לסיטואציית מודעות מצב).",
+      "options": [
+        "אופציה א",
+        "אופציה ב",
+        "אופציה ג",
+        "אופציה ד",
+        "אופציה ה"
+      ],
+      "correct_answer_index": 0
+    },
+    {
+      "question_id": "sa_2",
+      "scenario_id": "SCN_002_OPT",
+      "question_text": "שאלה ייעודית 2 לתרחיש (placeholder לסיטואציית מודעות מצב).",
+      "options": [
+        "אופציה א",
+        "אופציה ב",
+        "אופציה ג",
+        "אופציה ד",
+        "אופציה ה"
+      ],
+      "correct_answer_index": 1
+    },
+    {
+      "question_id": "sa_3",
+      "scenario_id": "SCN_002_OPT",
+      "question_text": "שאלה ייעודית 3 לתרחיש (placeholder לסיטואציית מודעות מצב).",
+      "options": [
+        "אופציה א",
+        "אופציה ב",
+        "אופציה ג",
+        "אופציה ד",
+        "אופציה ה"
+      ],
+      "correct_answer_index": 2
+    },
+    {
+      "question_id": "sa_1",
+      "scenario_id": "SCN_003_OPT",
+      "question_text": "שאלה ייעודית 1 לתרחיש (placeholder לסיטואציית מודעות מצב).",
+      "options": [
+        "אופציה א",
+        "אופציה ב",
+        "אופציה ג",
+        "אופציה ד",
+        "אופציה ה"
+      ],
+      "correct_answer_index": 2
+    },
+    {
+      "question_id": "sa_2",
+      "scenario_id": "SCN_003_OPT",
+      "question_text": "שאלה ייעודית 2 לתרחיש (placeholder לסיטואציית מודעות מצב).",
+      "options": [
+        "אופציה א",
+        "אופציה ב",
+        "אופציה ג",
+        "אופציה ד",
+        "אופציה ה"
+      ],
+      "correct_answer_index": 2
+    },
+    {
+      "question_id": "sa_3",
+      "scenario_id": "SCN_003_OPT",
+      "question_text": "שאלה ייעודית 3 לתרחיש (placeholder לסיטואציית מודעות מצב).",
+      "options": [
+        "אופציה א",
+        "אופציה ב",
+        "אופציה ג",
+        "אופציה ד",
+        "אופציה ה"
+      ],
+      "correct_answer_index": 2
+    }
+  ]
+}
+

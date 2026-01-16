@@ -1,0 +1,2678 @@
+{
+  "pages": [
+    {
+      "page_name": "LoginPage",
+      "stage": "login",
+      "page_type": null,
+      "metadata": {},
+      "enter_ts": 1768558443430,
+      "exit_ts": 1768558449790
+    },
+    {
+      "page_name": "IntroPage_ishihara_test",
+      "stage": "pre",
+      "page_type": "info",
+      "metadata": {
+        "page_id": "ishihara_test"
+      },
+      "enter_ts": 1768558449790,
+      "exit_ts": 1768558457296
+    },
+    {
+      "page_name": "IntroPage_invitation_letter",
+      "stage": "pre",
+      "page_type": "info",
+      "metadata": {
+        "page_id": "invitation_letter"
+      },
+      "enter_ts": 1768558457296,
+      "exit_ts": 1768558459185
+    },
+    {
+      "page_name": "IntroPage_consent_form",
+      "stage": "pre",
+      "page_type": "info",
+      "metadata": {
+        "page_id": "consent_form"
+      },
+      "enter_ts": 1768558459185,
+      "exit_ts": 1768558465266
+    },
+    {
+      "page_name": "IntroPage_experiment_explanation_1",
+      "stage": "pre",
+      "page_type": "info",
+      "metadata": {
+        "page_id": "experiment_explanation_1"
+      },
+      "enter_ts": 1768558465266,
+      "exit_ts": 1768558466387
+    },
+    {
+      "page_name": "IntroPage_experiment_video",
+      "stage": "pre",
+      "page_type": "info",
+      "metadata": {
+        "page_id": "experiment_video"
+      },
+      "enter_ts": 1768558466387,
+      "exit_ts": 1768558468774
+    },
+    {
+      "page_name": "IntroPage_system_layout",
+      "stage": "pre",
+      "page_type": "info",
+      "metadata": {
+        "page_id": "system_layout"
+      },
+      "enter_ts": 1768558468774,
+      "exit_ts": 1768558485522
+    },
+    {
+      "page_name": "IntroPage_system_criteria",
+      "stage": "pre",
+      "page_type": "info",
+      "metadata": {
+        "page_id": "system_criteria"
+      },
+      "enter_ts": 1768558485522,
+      "exit_ts": 1768558490904
+    },
+    {
+      "page_name": "IntroPage_helper_explanation",
+      "stage": "pre",
+      "page_type": "info",
+      "metadata": {
+        "page_id": "helper_explanation"
+      },
+      "enter_ts": 1768558490904,
+      "exit_ts": 1768558492740
+    },
+    {
+      "page_name": "IntroPage_experiment_flow",
+      "stage": "pre",
+      "page_type": "info",
+      "metadata": {
+        "page_id": "experiment_flow"
+      },
+      "enter_ts": 1768558492740,
+      "exit_ts": 1768558495488
+    },
+    {
+      "page_name": "PracticeIntroPage",
+      "stage": "practice",
+      "page_type": "info",
+      "metadata": {},
+      "enter_ts": 1768558495488,
+      "exit_ts": 1768558496336
+    },
+    {
+      "page_name": "ScenarioIntroPage",
+      "stage": "practice",
+      "page_type": "scenario_intro",
+      "metadata": {},
+      "enter_ts": 1768558496336,
+      "exit_ts": 1768558496853
+    },
+    {
+      "page_name": "TrialPage",
+      "stage": "practice",
+      "page_type": "trial",
+      "metadata": {
+        "scenario_id": "SCN_001_OPT",
+        "stage": "practice"
+      },
+      "enter_ts": 1768558496853,
+      "exit_ts": 1768558571148
+    },
+    {
+      "page_name": "TrialQuestionsPage",
+      "stage": "practice",
+      "page_type": "trial_questions",
+      "metadata": {
+        "scenario_id": "SCN_001_OPT",
+        "stage": "practice"
+      },
+      "enter_ts": 1768558571148,
+      "exit_ts": 1768558589593
+    },
+    {
+      "page_name": "ScenarioIntroPage",
+      "stage": "practice",
+      "page_type": "scenario_intro",
+      "metadata": {},
+      "enter_ts": 1768558589593,
+      "exit_ts": 1768558591438
+    },
+    {
+      "page_name": "TrialPage",
+      "stage": "practice",
+      "page_type": "trial",
+      "metadata": {
+        "scenario_id": "SCN_002_OPT",
+        "stage": "practice"
+      },
+      "enter_ts": 1768558591438,
+      "exit_ts": 1768558629500
+    },
+    {
+      "page_name": "TrialQuestionsPage",
+      "stage": "practice",
+      "page_type": "trial_questions",
+      "metadata": {
+        "scenario_id": "SCN_002_OPT",
+        "stage": "practice"
+      },
+      "enter_ts": 1768558629500,
+      "exit_ts": 1768558692596
+    },
+    {
+      "page_name": "ScenarioIntroPage",
+      "stage": "practice",
+      "page_type": "scenario_intro",
+      "metadata": {},
+      "enter_ts": 1768558692596,
+      "exit_ts": 1768558694074
+    },
+    {
+      "page_name": "TrialPage",
+      "stage": "practice",
+      "page_type": "trial",
+      "metadata": {
+        "scenario_id": "SCN_003_OPT",
+        "stage": "practice"
+      },
+      "enter_ts": 1768558694074,
+      "exit_ts": 1768558703305
+    },
+    {
+      "page_name": "TrialQuestionsPage",
+      "stage": "practice",
+      "page_type": "trial_questions",
+      "metadata": {
+        "scenario_id": "SCN_003_OPT",
+        "stage": "practice"
+      },
+      "enter_ts": 1768558703305,
+      "exit_ts": 1768558803273
+    },
+    {
+      "page_name": "ConditionIntroPage_C0",
+      "stage": "experiment",
+      "page_type": "info",
+      "metadata": {
+        "condition_index": 0,
+        "visualization": "רדאר"
+      },
+      "enter_ts": 1768558803274,
+      "exit_ts": 1768558804279
+    },
+    {
+      "page_name": "ModelIntroPage_C0_M0",
+      "stage": "experiment",
+      "page_type": "model_intro",
+      "metadata": {
+        "condition_index": 0,
+        "model_tag": "M1",
+        "model_type": "SUB"
+      },
+      "enter_ts": 1768558804279,
+      "exit_ts": 1768558805145
+    },
+    {
+      "page_name": "ScenarioIntroPage",
+      "stage": "experiment",
+      "page_type": "scenario_intro",
+      "metadata": {},
+      "enter_ts": 1768558805145,
+      "exit_ts": 1768558805723
+    },
+    {
+      "page_name": "TrialPage",
+      "stage": "experiment",
+      "page_type": "trial",
+      "metadata": {
+        "scenario_id": "SCN_018_SUB",
+        "stage": "experiment"
+      },
+      "enter_ts": 1768558805723,
+      "exit_ts": 1768558806843
+    },
+    {
+      "page_name": "TrialQuestionsPage",
+      "stage": "experiment",
+      "page_type": "trial_questions",
+      "metadata": {
+        "scenario_id": "SCN_018_SUB",
+        "stage": "experiment"
+      },
+      "enter_ts": 1768558806843,
+      "exit_ts": 1768558807718
+    },
+    {
+      "page_name": "ScenarioIntroPage",
+      "stage": "experiment",
+      "page_type": "scenario_intro",
+      "metadata": {},
+      "enter_ts": 1768558807718,
+      "exit_ts": 1768558809233
+    },
+    {
+      "page_name": "TrialPage",
+      "stage": "experiment",
+      "page_type": "trial",
+      "metadata": {
+        "scenario_id": "SCN_029_SUB",
+        "stage": "experiment"
+      },
+      "enter_ts": 1768558809233,
+      "exit_ts": 1768558812330
+    },
+    {
+      "page_name": "TrialQuestionsPage",
+      "stage": "experiment",
+      "page_type": "trial_questions",
+      "metadata": {
+        "scenario_id": "SCN_029_SUB",
+        "stage": "experiment"
+      },
+      "enter_ts": 1768558812330,
+      "exit_ts": 1768558813187
+    },
+    {
+      "page_name": "ScenarioIntroPage",
+      "stage": "experiment",
+      "page_type": "scenario_intro",
+      "metadata": {},
+      "enter_ts": 1768558813187,
+      "exit_ts": 1768558814797
+    },
+    {
+      "page_name": "TrialPage",
+      "stage": "experiment",
+      "page_type": "trial",
+      "metadata": {
+        "scenario_id": "SCN_020_SUB",
+        "stage": "experiment"
+      },
+      "enter_ts": 1768558814797,
+      "exit_ts": 1768558817929
+    },
+    {
+      "page_name": "TrialQuestionsPage",
+      "stage": "experiment",
+      "page_type": "trial_questions",
+      "metadata": {
+        "scenario_id": "SCN_020_SUB",
+        "stage": "experiment"
+      },
+      "enter_ts": 1768558817929,
+      "exit_ts": 1768558837100
+    },
+    {
+      "page_name": "ScenarioIntroPage",
+      "stage": "experiment",
+      "page_type": "scenario_intro",
+      "metadata": {},
+      "enter_ts": 1768558837100,
+      "exit_ts": 1768558838999
+    },
+    {
+      "page_name": "TrialPage",
+      "stage": "experiment",
+      "page_type": "trial",
+      "metadata": {
+        "scenario_id": "SCN_023_SUB",
+        "stage": "experiment"
+      },
+      "enter_ts": 1768558838999,
+      "exit_ts": 1768558915568
+    },
+    {
+      "page_name": "TrialQuestionsPage",
+      "stage": "experiment",
+      "page_type": "trial_questions",
+      "metadata": {
+        "scenario_id": "SCN_023_SUB",
+        "stage": "experiment"
+      },
+      "enter_ts": 1768558915568,
+      "exit_ts": 1768558916758
+    },
+    {
+      "page_name": "ModelSummaryPage_C0_M0",
+      "stage": "experiment",
+      "page_type": "model_summary",
+      "metadata": {
+        "condition_index": 0,
+        "model_tag": "M1"
+      },
+      "enter_ts": 1768558916758,
+      "exit_ts": 1768558918062
+    },
+    {
+      "page_name": "ModelIntroPage_C0_M1",
+      "stage": "experiment",
+      "page_type": "model_intro",
+      "metadata": {
+        "condition_index": 0,
+        "model_tag": "M2",
+        "model_type": "OPT"
+      },
+      "enter_ts": 1768558918062,
+      "exit_ts": 1768558919234
+    },
+    {
+      "page_name": "ScenarioIntroPage",
+      "stage": "experiment",
+      "page_type": "scenario_intro",
+      "metadata": {},
+      "enter_ts": 1768558919234,
+      "exit_ts": 1768558919960
+    },
+    {
+      "page_name": "TrialPage",
+      "stage": "experiment",
+      "page_type": "trial",
+      "metadata": {
+        "scenario_id": "SCN_006_OPT",
+        "stage": "experiment"
+      },
+      "enter_ts": 1768558919960,
+      "exit_ts": 1768558920774
+    },
+    {
+      "page_name": "TrialQuestionsPage",
+      "stage": "experiment",
+      "page_type": "trial_questions",
+      "metadata": {
+        "scenario_id": "SCN_006_OPT",
+        "stage": "experiment"
+      },
+      "enter_ts": 1768558920774,
+      "exit_ts": 1768558921527
+    },
+    {
+      "page_name": "ScenarioIntroPage",
+      "stage": "experiment",
+      "page_type": "scenario_intro",
+      "metadata": {},
+      "enter_ts": 1768558921527,
+      "exit_ts": 1768558922290
+    },
+    {
+      "page_name": "TrialPage",
+      "stage": "experiment",
+      "page_type": "trial",
+      "metadata": {
+        "scenario_id": "SCN_030_OPT",
+        "stage": "experiment"
+      },
+      "enter_ts": 1768558922290,
+      "exit_ts": 1768558923399
+    },
+    {
+      "page_name": "TrialQuestionsPage",
+      "stage": "experiment",
+      "page_type": "trial_questions",
+      "metadata": {
+        "scenario_id": "SCN_030_OPT",
+        "stage": "experiment"
+      },
+      "enter_ts": 1768558923399,
+      "exit_ts": 1768558924152
+    },
+    {
+      "page_name": "ScenarioIntroPage",
+      "stage": "experiment",
+      "page_type": "scenario_intro",
+      "metadata": {},
+      "enter_ts": 1768558924152,
+      "exit_ts": 1768558925307
+    },
+    {
+      "page_name": "TrialPage",
+      "stage": "experiment",
+      "page_type": "trial",
+      "metadata": {
+        "scenario_id": "SCN_016_OPT",
+        "stage": "experiment"
+      },
+      "enter_ts": 1768558925307,
+      "exit_ts": 1768558927722
+    },
+    {
+      "page_name": "TrialQuestionsPage",
+      "stage": "experiment",
+      "page_type": "trial_questions",
+      "metadata": {
+        "scenario_id": "SCN_016_OPT",
+        "stage": "experiment"
+      },
+      "enter_ts": 1768558927722,
+      "exit_ts": 1768558928730
+    },
+    {
+      "page_name": "ScenarioIntroPage",
+      "stage": "experiment",
+      "page_type": "scenario_intro",
+      "metadata": {},
+      "enter_ts": 1768558928730,
+      "exit_ts": 1768558929893
+    },
+    {
+      "page_name": "TrialPage",
+      "stage": "experiment",
+      "page_type": "trial",
+      "metadata": {
+        "scenario_id": "SCN_007_OPT",
+        "stage": "experiment"
+      },
+      "enter_ts": 1768558929893,
+      "exit_ts": 1768558931371
+    },
+    {
+      "page_name": "TrialQuestionsPage",
+      "stage": "experiment",
+      "page_type": "trial_questions",
+      "metadata": {
+        "scenario_id": "SCN_007_OPT",
+        "stage": "experiment"
+      },
+      "enter_ts": 1768558931371,
+      "exit_ts": 1768558932096
+    },
+    {
+      "page_name": "ScenarioIntroPage",
+      "stage": "experiment",
+      "page_type": "scenario_intro",
+      "metadata": {},
+      "enter_ts": 1768558932096,
+      "exit_ts": 1768558933015
+    },
+    {
+      "page_name": "TrialPage",
+      "stage": "experiment",
+      "page_type": "trial",
+      "metadata": {
+        "scenario_id": "SCN_027_OPT",
+        "stage": "experiment"
+      },
+      "enter_ts": 1768558933015,
+      "exit_ts": 1768558934337
+    },
+    {
+      "page_name": "TrialQuestionsPage",
+      "stage": "experiment",
+      "page_type": "trial_questions",
+      "metadata": {
+        "scenario_id": "SCN_027_OPT",
+        "stage": "experiment"
+      },
+      "enter_ts": 1768558934337,
+      "exit_ts": 1768558935386
+    },
+    {
+      "page_name": "ModelSummaryPage_C0_M1",
+      "stage": "experiment",
+      "page_type": "model_summary",
+      "metadata": {
+        "condition_index": 0,
+        "model_tag": "M2"
+      },
+      "enter_ts": 1768558935386,
+      "exit_ts": 1768558949754
+    },
+    {
+      "page_name": "VisualizationConditionPage_C0",
+      "stage": "experiment",
+      "page_type": "visualization_condition",
+      "metadata": {
+        "condition_index": 0,
+        "visualization": "רדאר"
+      },
+      "enter_ts": 1768558949754,
+      "exit_ts": 1768558964761
+    },
+    {
+      "page_name": "ConditionIntroPage_C1",
+      "stage": "experiment",
+      "page_type": "info",
+      "metadata": {
+        "condition_index": 1,
+        "visualization": "מפת חום"
+      },
+      "enter_ts": 1768558964761,
+      "exit_ts": 1768558966484
+    },
+    {
+      "page_name": "ModelIntroPage_C1_M0",
+      "stage": "experiment",
+      "page_type": "model_intro",
+      "metadata": {
+        "condition_index": 1,
+        "model_tag": "M1",
+        "model_type": "OPT"
+      },
+      "enter_ts": 1768558966484,
+      "exit_ts": 1768558967437
+    },
+    {
+      "page_name": "ScenarioIntroPage",
+      "stage": "experiment",
+      "page_type": "scenario_intro",
+      "metadata": {},
+      "enter_ts": 1768558967437,
+      "exit_ts": 1768558968093
+    },
+    {
+      "page_name": "TrialPage",
+      "stage": "experiment",
+      "page_type": "trial",
+      "metadata": {
+        "scenario_id": "SCN_004_OPT",
+        "stage": "experiment"
+      },
+      "enter_ts": 1768558968093,
+      "exit_ts": 1768558970307
+    },
+    {
+      "page_name": "TrialQuestionsPage",
+      "stage": "experiment",
+      "page_type": "trial_questions",
+      "metadata": {
+        "scenario_id": "SCN_004_OPT",
+        "stage": "experiment"
+      },
+      "enter_ts": 1768558970307,
+      "exit_ts": 1768558970972
+    },
+    {
+      "page_name": "ScenarioIntroPage",
+      "stage": "experiment",
+      "page_type": "scenario_intro",
+      "metadata": {},
+      "enter_ts": 1768558970972,
+      "exit_ts": 1768558971724
+    },
+    {
+      "page_name": "TrialPage",
+      "stage": "experiment",
+      "page_type": "trial",
+      "metadata": {
+        "scenario_id": "SCN_017_OPT",
+        "stage": "experiment"
+      },
+      "enter_ts": 1768558971724,
+      "exit_ts": 1768558972634
+    },
+    {
+      "page_name": "TrialQuestionsPage",
+      "stage": "experiment",
+      "page_type": "trial_questions",
+      "metadata": {
+        "scenario_id": "SCN_017_OPT",
+        "stage": "experiment"
+      },
+      "enter_ts": 1768558972634,
+      "exit_ts": 1768558973413
+    },
+    {
+      "page_name": "ScenarioIntroPage",
+      "stage": "experiment",
+      "page_type": "scenario_intro",
+      "metadata": {},
+      "enter_ts": 1768558973413,
+      "exit_ts": 1768558974235
+    },
+    {
+      "page_name": "TrialPage",
+      "stage": "experiment",
+      "page_type": "trial",
+      "metadata": {
+        "scenario_id": "SCN_008_OPT",
+        "stage": "experiment"
+      },
+      "enter_ts": 1768558974235,
+      "exit_ts": 1768558975128
+    },
+    {
+      "page_name": "TrialQuestionsPage",
+      "stage": "experiment",
+      "page_type": "trial_questions",
+      "metadata": {
+        "scenario_id": "SCN_008_OPT",
+        "stage": "experiment"
+      },
+      "enter_ts": 1768558975128,
+      "exit_ts": 1768558975784
+    },
+    {
+      "page_name": "ScenarioIntroPage",
+      "stage": "experiment",
+      "page_type": "scenario_intro",
+      "metadata": {},
+      "enter_ts": 1768558975784,
+      "exit_ts": 1768558976642
+    },
+    {
+      "page_name": "TrialPage",
+      "stage": "experiment",
+      "page_type": "trial",
+      "metadata": {
+        "scenario_id": "SCN_014_OPT",
+        "stage": "experiment"
+      },
+      "enter_ts": 1768558976642,
+      "exit_ts": 1768558977545
+    },
+    {
+      "page_name": "TrialQuestionsPage",
+      "stage": "experiment",
+      "page_type": "trial_questions",
+      "metadata": {
+        "scenario_id": "SCN_014_OPT",
+        "stage": "experiment"
+      },
+      "enter_ts": 1768558977545,
+      "exit_ts": 1768558978173
+    },
+    {
+      "page_name": "ScenarioIntroPage",
+      "stage": "experiment",
+      "page_type": "scenario_intro",
+      "metadata": {},
+      "enter_ts": 1768558978173,
+      "exit_ts": 1768558978909
+    },
+    {
+      "page_name": "TrialPage",
+      "stage": "experiment",
+      "page_type": "trial",
+      "metadata": {
+        "scenario_id": "SCN_012_OPT",
+        "stage": "experiment"
+      },
+      "enter_ts": 1768558978909,
+      "exit_ts": 1768558979774
+    },
+    {
+      "page_name": "TrialQuestionsPage",
+      "stage": "experiment",
+      "page_type": "trial_questions",
+      "metadata": {
+        "scenario_id": "SCN_012_OPT",
+        "stage": "experiment"
+      },
+      "enter_ts": 1768558979774,
+      "exit_ts": 1768558980492
+    },
+    {
+      "page_name": "ModelSummaryPage_C1_M0",
+      "stage": "experiment",
+      "page_type": "model_summary",
+      "metadata": {
+        "condition_index": 1,
+        "model_tag": "M1"
+      },
+      "enter_ts": 1768558980492,
+      "exit_ts": 1768558982373
+    },
+    {
+      "page_name": "ModelIntroPage_C1_M1",
+      "stage": "experiment",
+      "page_type": "model_intro",
+      "metadata": {
+        "condition_index": 1,
+        "model_tag": "M2",
+        "model_type": "SUB"
+      },
+      "enter_ts": 1768558982373,
+      "exit_ts": 1768558983239
+    },
+    {
+      "page_name": "ScenarioIntroPage",
+      "stage": "experiment",
+      "page_type": "scenario_intro",
+      "metadata": {},
+      "enter_ts": 1768558983239,
+      "exit_ts": 1768558984123
+    },
+    {
+      "page_name": "TrialPage",
+      "stage": "experiment",
+      "page_type": "trial",
+      "metadata": {
+        "scenario_id": "SCN_022_SUB",
+        "stage": "experiment"
+      },
+      "enter_ts": 1768558984123,
+      "exit_ts": 1768558985173
+    },
+    {
+      "page_name": "TrialQuestionsPage",
+      "stage": "experiment",
+      "page_type": "trial_questions",
+      "metadata": {
+        "scenario_id": "SCN_022_SUB",
+        "stage": "experiment"
+      },
+      "enter_ts": 1768558985173,
+      "exit_ts": 1768558985759
+    },
+    {
+      "page_name": "ScenarioIntroPage",
+      "stage": "experiment",
+      "page_type": "scenario_intro",
+      "metadata": {},
+      "enter_ts": 1768558985759,
+      "exit_ts": 1768558986521
+    },
+    {
+      "page_name": "TrialPage",
+      "stage": "experiment",
+      "page_type": "trial",
+      "metadata": {
+        "scenario_id": "SCN_021_SUB",
+        "stage": "experiment"
+      },
+      "enter_ts": 1768558986521,
+      "exit_ts": 1768558987334
+    },
+    {
+      "page_name": "TrialQuestionsPage",
+      "stage": "experiment",
+      "page_type": "trial_questions",
+      "metadata": {
+        "scenario_id": "SCN_021_SUB",
+        "stage": "experiment"
+      },
+      "enter_ts": 1768558987334,
+      "exit_ts": 1768558987912
+    },
+    {
+      "page_name": "ScenarioIntroPage",
+      "stage": "experiment",
+      "page_type": "scenario_intro",
+      "metadata": {},
+      "enter_ts": 1768558987912,
+      "exit_ts": 1768558988770
+    },
+    {
+      "page_name": "TrialPage",
+      "stage": "experiment",
+      "page_type": "trial",
+      "metadata": {
+        "scenario_id": "SCN_011_SUB",
+        "stage": "experiment"
+      },
+      "enter_ts": 1768558988770,
+      "exit_ts": 1768558989635
+    },
+    {
+      "page_name": "TrialQuestionsPage",
+      "stage": "experiment",
+      "page_type": "trial_questions",
+      "metadata": {
+        "scenario_id": "SCN_011_SUB",
+        "stage": "experiment"
+      },
+      "enter_ts": 1768558989635,
+      "exit_ts": 1768558990379
+    },
+    {
+      "page_name": "ScenarioIntroPage",
+      "stage": "experiment",
+      "page_type": "scenario_intro",
+      "metadata": {},
+      "enter_ts": 1768558990379,
+      "exit_ts": 1768558991237
+    },
+    {
+      "page_name": "TrialPage",
+      "stage": "experiment",
+      "page_type": "trial",
+      "metadata": {
+        "scenario_id": "SCN_019_SUB",
+        "stage": "experiment"
+      },
+      "enter_ts": 1768558991237,
+      "exit_ts": 1768558992198
+    },
+    {
+      "page_name": "TrialQuestionsPage",
+      "stage": "experiment",
+      "page_type": "trial_questions",
+      "metadata": {
+        "scenario_id": "SCN_019_SUB",
+        "stage": "experiment"
+      },
+      "enter_ts": 1768558992198,
+      "exit_ts": 1768558993607
+    },
+    {
+      "page_name": "ModelSummaryPage_C1_M1",
+      "stage": "experiment",
+      "page_type": "model_summary",
+      "metadata": {
+        "condition_index": 1,
+        "model_tag": "M2"
+      },
+      "enter_ts": 1768558993607,
+      "exit_ts": 1768558996425
+    },
+    {
+      "page_name": "VisualizationConditionPage_C1",
+      "stage": "experiment",
+      "page_type": "visualization_condition",
+      "metadata": {
+        "condition_index": 1,
+        "visualization": "מפת חום"
+      },
+      "enter_ts": 1768558996425,
+      "exit_ts": 1768558998166
+    },
+    {
+      "page_name": "ConditionIntroPage_C2",
+      "stage": "experiment",
+      "page_type": "info",
+      "metadata": {
+        "condition_index": 2,
+        "visualization": "עמודות מוערמות"
+      },
+      "enter_ts": 1768558998166,
+      "exit_ts": 1768558998963
+    },
+    {
+      "page_name": "ModelIntroPage_C2_M0",
+      "stage": "experiment",
+      "page_type": "model_intro",
+      "metadata": {
+        "condition_index": 2,
+        "model_tag": "M1",
+        "model_type": "OPT"
+      },
+      "enter_ts": 1768558998963,
+      "exit_ts": 1768559003573
+    },
+    {
+      "page_name": "ScenarioIntroPage",
+      "stage": "experiment",
+      "page_type": "scenario_intro",
+      "metadata": {},
+      "enter_ts": 1768559003573,
+      "exit_ts": 1768559005997
+    },
+    {
+      "page_name": "TrialPage",
+      "stage": "experiment",
+      "page_type": "trial",
+      "metadata": {
+        "scenario_id": "SCN_026_OPT",
+        "stage": "experiment"
+      },
+      "enter_ts": 1768559005997,
+      "exit_ts": 1768559007607
+    },
+    {
+      "page_name": "TrialQuestionsPage",
+      "stage": "experiment",
+      "page_type": "trial_questions",
+      "metadata": {
+        "scenario_id": "SCN_026_OPT",
+        "stage": "experiment"
+      },
+      "enter_ts": 1768559007607,
+      "exit_ts": 1768559008806
+    },
+    {
+      "page_name": "ScenarioIntroPage",
+      "stage": "experiment",
+      "page_type": "scenario_intro",
+      "metadata": {},
+      "enter_ts": 1768559008806,
+      "exit_ts": 1768559009935
+    },
+    {
+      "page_name": "TrialPage",
+      "stage": "experiment",
+      "page_type": "trial",
+      "metadata": {
+        "scenario_id": "SCN_028_OPT",
+        "stage": "experiment"
+      },
+      "enter_ts": 1768559009935,
+      "exit_ts": 1768559012017
+    },
+    {
+      "page_name": "TrialQuestionsPage",
+      "stage": "experiment",
+      "page_type": "trial_questions",
+      "metadata": {
+        "scenario_id": "SCN_028_OPT",
+        "stage": "experiment"
+      },
+      "enter_ts": 1768559012017,
+      "exit_ts": 1768559012866
+    },
+    {
+      "page_name": "ScenarioIntroPage",
+      "stage": "experiment",
+      "page_type": "scenario_intro",
+      "metadata": {},
+      "enter_ts": 1768559012866,
+      "exit_ts": 1768559014292
+    },
+    {
+      "page_name": "TrialPage",
+      "stage": "experiment",
+      "page_type": "trial",
+      "metadata": {
+        "scenario_id": "SCN_009_OPT",
+        "stage": "experiment"
+      },
+      "enter_ts": 1768559014292,
+      "exit_ts": 1768559015851
+    },
+    {
+      "page_name": "TrialQuestionsPage",
+      "stage": "experiment",
+      "page_type": "trial_questions",
+      "metadata": {
+        "scenario_id": "SCN_009_OPT",
+        "stage": "experiment"
+      },
+      "enter_ts": 1768559015851,
+      "exit_ts": 1768559018370
+    },
+    {
+      "page_name": "ScenarioIntroPage",
+      "stage": "experiment",
+      "page_type": "scenario_intro",
+      "metadata": {},
+      "enter_ts": 1768559018370,
+      "exit_ts": 1768559019385
+    },
+    {
+      "page_name": "TrialPage",
+      "stage": "experiment",
+      "page_type": "trial",
+      "metadata": {
+        "scenario_id": "SCN_024_OPT",
+        "stage": "experiment"
+      },
+      "enter_ts": 1768559019385,
+      "exit_ts": 1768559020916
+    },
+    {
+      "page_name": "TrialQuestionsPage",
+      "stage": "experiment",
+      "page_type": "trial_questions",
+      "metadata": {
+        "scenario_id": "SCN_024_OPT",
+        "stage": "experiment"
+      },
+      "enter_ts": 1768559020916,
+      "exit_ts": 1768559021773
+    },
+    {
+      "page_name": "ScenarioIntroPage",
+      "stage": "experiment",
+      "page_type": "scenario_intro",
+      "metadata": {},
+      "enter_ts": 1768559021773,
+      "exit_ts": 1768559023462
+    },
+    {
+      "page_name": "TrialPage",
+      "stage": "experiment",
+      "page_type": "trial",
+      "metadata": {
+        "scenario_id": "SCN_025_OPT",
+        "stage": "experiment"
+      },
+      "enter_ts": 1768559023462,
+      "exit_ts": 1768559024818
+    },
+    {
+      "page_name": "TrialQuestionsPage",
+      "stage": "experiment",
+      "page_type": "trial_questions",
+      "metadata": {
+        "scenario_id": "SCN_025_OPT",
+        "stage": "experiment"
+      },
+      "enter_ts": 1768559024818,
+      "exit_ts": 1768559025588
+    },
+    {
+      "page_name": "ModelSummaryPage_C2_M0",
+      "stage": "experiment",
+      "page_type": "model_summary",
+      "metadata": {
+        "condition_index": 2,
+        "model_tag": "M1"
+      },
+      "enter_ts": 1768559025588,
+      "exit_ts": 1768559031127
+    },
+    {
+      "page_name": "ModelIntroPage_C2_M1",
+      "stage": "experiment",
+      "page_type": "model_intro",
+      "metadata": {
+        "condition_index": 2,
+        "model_tag": "M2",
+        "model_type": "SUB"
+      },
+      "enter_ts": 1768559031127,
+      "exit_ts": 1768559037112
+    },
+    {
+      "page_name": "ScenarioIntroPage",
+      "stage": "experiment",
+      "page_type": "scenario_intro",
+      "metadata": {},
+      "enter_ts": 1768559037112,
+      "exit_ts": 1768559037943
+    },
+    {
+      "page_name": "TrialPage",
+      "stage": "experiment",
+      "page_type": "trial",
+      "metadata": {
+        "scenario_id": "SCN_010_SUB",
+        "stage": "experiment"
+      },
+      "enter_ts": 1768559037943,
+      "exit_ts": 1768559039185
+    },
+    {
+      "page_name": "TrialQuestionsPage",
+      "stage": "experiment",
+      "page_type": "trial_questions",
+      "metadata": {
+        "scenario_id": "SCN_010_SUB",
+        "stage": "experiment"
+      },
+      "enter_ts": 1768559039185,
+      "exit_ts": 1768559039911
+    },
+    {
+      "page_name": "ScenarioIntroPage",
+      "stage": "experiment",
+      "page_type": "scenario_intro",
+      "metadata": {},
+      "enter_ts": 1768559039911,
+      "exit_ts": 1768559040734
+    },
+    {
+      "page_name": "TrialPage",
+      "stage": "experiment",
+      "page_type": "trial",
+      "metadata": {
+        "scenario_id": "SCN_015_SUB",
+        "stage": "experiment"
+      },
+      "enter_ts": 1768559040734,
+      "exit_ts": 1768559041758
+    },
+    {
+      "page_name": "TrialQuestionsPage",
+      "stage": "experiment",
+      "page_type": "trial_questions",
+      "metadata": {
+        "scenario_id": "SCN_015_SUB",
+        "stage": "experiment"
+      },
+      "enter_ts": 1768559041758,
+      "exit_ts": 1768559042397
+    },
+    {
+      "page_name": "ScenarioIntroPage",
+      "stage": "experiment",
+      "page_type": "scenario_intro",
+      "metadata": {},
+      "enter_ts": 1768559042397,
+      "exit_ts": 1768559043106
+    },
+    {
+      "page_name": "TrialPage",
+      "stage": "experiment",
+      "page_type": "trial",
+      "metadata": {
+        "scenario_id": "SCN_005_SUB",
+        "stage": "experiment"
+      },
+      "enter_ts": 1768559043106,
+      "exit_ts": 1768559044164
+    },
+    {
+      "page_name": "TrialQuestionsPage",
+      "stage": "experiment",
+      "page_type": "trial_questions",
+      "metadata": {
+        "scenario_id": "SCN_005_SUB",
+        "stage": "experiment"
+      },
+      "enter_ts": 1768559044164,
+      "exit_ts": 1768559044952
+    },
+    {
+      "page_name": "ScenarioIntroPage",
+      "stage": "experiment",
+      "page_type": "scenario_intro",
+      "metadata": {},
+      "enter_ts": 1768559044952,
+      "exit_ts": 1768559045687
+    },
+    {
+      "page_name": "TrialPage",
+      "stage": "experiment",
+      "page_type": "trial",
+      "metadata": {
+        "scenario_id": "SCN_013_SUB",
+        "stage": "experiment"
+      },
+      "enter_ts": 1768559045687,
+      "exit_ts": 1768559046606
+    },
+    {
+      "page_name": "TrialQuestionsPage",
+      "stage": "experiment",
+      "page_type": "trial_questions",
+      "metadata": {
+        "scenario_id": "SCN_013_SUB",
+        "stage": "experiment"
+      },
+      "enter_ts": 1768559046606,
+      "exit_ts": 1768559047428
+    },
+    {
+      "page_name": "ModelSummaryPage_C2_M1",
+      "stage": "experiment",
+      "page_type": "model_summary",
+      "metadata": {
+        "condition_index": 2,
+        "model_tag": "M2"
+      },
+      "enter_ts": 1768559047428,
+      "exit_ts": 1768559048801
+    },
+    {
+      "page_name": "VisualizationConditionPage_C2",
+      "stage": "experiment",
+      "page_type": "visualization_condition",
+      "metadata": {
+        "condition_index": 2,
+        "visualization": "עמודות מוערמות"
+      },
+      "enter_ts": 1768559048801,
+      "exit_ts": 1768559049659
+    },
+    {
+      "page_name": "VisualizationGlobalPage",
+      "stage": "post",
+      "page_type": "visualization_global",
+      "metadata": {},
+      "enter_ts": 1768559049659,
+      "exit_ts": 1768559141970
+    },
+    {
+      "page_name": "DemographicsPage",
+      "stage": "post",
+      "page_type": "demographics",
+      "metadata": {},
+      "enter_ts": 1768559141970,
+      "exit_ts": 1768559616600
+    },
+    {
+      "page_name": "EndPage",
+      "stage": "end",
+      "page_type": "end",
+      "metadata": {},
+      "enter_ts": 1768559616600,
+      "exit_ts": 1768559618752
+    }
+  ],
+  "trials": [
+    {
+      "trial_id": "P002_practice_T0",
+      "participant_id": "P002",
+      "stage": "practice",
+      "condition_index": null,
+      "model_index": null,
+      "trial_index": 0,
+      "scenario_id": "SCN_001_OPT",
+      "difficulty": "E",
+      "true_route": "א׳",
+      "ai_route": "א׳",
+      "model_type": null,
+      "user_route": "C",
+      "followed_ai": false,
+      "chose_true_optimal": false,
+      "start_ts": 1768558496853,
+      "end_ts": 1768558571148
+    },
+    {
+      "trial_id": "P002_practice_T1",
+      "participant_id": "P002",
+      "stage": "practice",
+      "condition_index": null,
+      "model_index": null,
+      "trial_index": 1,
+      "scenario_id": "SCN_002_OPT",
+      "difficulty": "E",
+      "true_route": "ג׳",
+      "ai_route": "ג׳",
+      "model_type": null,
+      "user_route": "A",
+      "followed_ai": false,
+      "chose_true_optimal": false,
+      "start_ts": 1768558591438,
+      "end_ts": 1768558629500
+    },
+    {
+      "trial_id": "P002_practice_T2",
+      "participant_id": "P002",
+      "stage": "practice",
+      "condition_index": null,
+      "model_index": null,
+      "trial_index": 2,
+      "scenario_id": "SCN_003_OPT",
+      "difficulty": "E",
+      "true_route": "ב׳",
+      "ai_route": "ב׳",
+      "model_type": null,
+      "user_route": "A",
+      "followed_ai": false,
+      "chose_true_optimal": false,
+      "start_ts": 1768558694074,
+      "end_ts": 1768558703305
+    },
+    {
+      "trial_id": "P002_experiment_C0_M0_T0",
+      "participant_id": "P002",
+      "stage": "experiment",
+      "condition_index": 0,
+      "model_index": 0,
+      "trial_index": 0,
+      "scenario_id": "SCN_018_SUB",
+      "difficulty": "H",
+      "true_route": "ב׳",
+      "ai_route": "ג׳",
+      "model_type": "SUB",
+      "user_route": "ג׳",
+      "followed_ai": true,
+      "chose_true_optimal": false,
+      "start_ts": 1768558805723,
+      "end_ts": 1768558806843
+    },
+    {
+      "trial_id": "P002_experiment_C0_M0_T1",
+      "participant_id": "P002",
+      "stage": "experiment",
+      "condition_index": 0,
+      "model_index": 0,
+      "trial_index": 1,
+      "scenario_id": "SCN_029_SUB",
+      "difficulty": "H",
+      "true_route": "א׳",
+      "ai_route": "א׳",
+      "model_type": "SUB",
+      "user_route": "א׳",
+      "followed_ai": true,
+      "chose_true_optimal": true,
+      "start_ts": 1768558809233,
+      "end_ts": 1768558812330
+    },
+    {
+      "trial_id": "P002_experiment_C0_M0_T2",
+      "participant_id": "P002",
+      "stage": "experiment",
+      "condition_index": 0,
+      "model_index": 0,
+      "trial_index": 2,
+      "scenario_id": "SCN_020_SUB",
+      "difficulty": "H",
+      "true_route": "א׳",
+      "ai_route": "ב׳",
+      "model_type": "SUB",
+      "user_route": "ב׳",
+      "followed_ai": true,
+      "chose_true_optimal": false,
+      "start_ts": 1768558814797,
+      "end_ts": 1768558817929
+    },
+    {
+      "trial_id": "P002_experiment_C0_M0_T3",
+      "participant_id": "P002",
+      "stage": "experiment",
+      "condition_index": 0,
+      "model_index": 0,
+      "trial_index": 3,
+      "scenario_id": "SCN_023_SUB",
+      "difficulty": "E",
+      "true_route": "ב׳",
+      "ai_route": "ב׳",
+      "model_type": "SUB",
+      "user_route": "ב׳",
+      "followed_ai": true,
+      "chose_true_optimal": true,
+      "start_ts": 1768558838999,
+      "end_ts": 1768558915568
+    },
+    {
+      "trial_id": "P002_experiment_C0_M1_T0",
+      "participant_id": "P002",
+      "stage": "experiment",
+      "condition_index": 0,
+      "model_index": 1,
+      "trial_index": 0,
+      "scenario_id": "SCN_006_OPT",
+      "difficulty": "H",
+      "true_route": "א׳",
+      "ai_route": "א׳",
+      "model_type": "OPT",
+      "user_route": "א׳",
+      "followed_ai": true,
+      "chose_true_optimal": true,
+      "start_ts": 1768558919960,
+      "end_ts": 1768558920774
+    },
+    {
+      "trial_id": "P002_experiment_C0_M1_T1",
+      "participant_id": "P002",
+      "stage": "experiment",
+      "condition_index": 0,
+      "model_index": 1,
+      "trial_index": 1,
+      "scenario_id": "SCN_030_OPT",
+      "difficulty": "E",
+      "true_route": "ג׳",
+      "ai_route": "ג׳",
+      "model_type": "OPT",
+      "user_route": "ג׳",
+      "followed_ai": true,
+      "chose_true_optimal": true,
+      "start_ts": 1768558922290,
+      "end_ts": 1768558923399
+    },
+    {
+      "trial_id": "P002_experiment_C0_M1_T2",
+      "participant_id": "P002",
+      "stage": "experiment",
+      "condition_index": 0,
+      "model_index": 1,
+      "trial_index": 2,
+      "scenario_id": "SCN_016_OPT",
+      "difficulty": "H",
+      "true_route": "ג׳",
+      "ai_route": "ג׳",
+      "model_type": "OPT",
+      "user_route": "ג׳",
+      "followed_ai": true,
+      "chose_true_optimal": true,
+      "start_ts": 1768558925307,
+      "end_ts": 1768558927722
+    },
+    {
+      "trial_id": "P002_experiment_C0_M1_T3",
+      "participant_id": "P002",
+      "stage": "experiment",
+      "condition_index": 0,
+      "model_index": 1,
+      "trial_index": 3,
+      "scenario_id": "SCN_007_OPT",
+      "difficulty": "E",
+      "true_route": "ב׳",
+      "ai_route": "ג׳",
+      "model_type": "OPT",
+      "user_route": "ג׳",
+      "followed_ai": true,
+      "chose_true_optimal": false,
+      "start_ts": 1768558929893,
+      "end_ts": 1768558931371
+    },
+    {
+      "trial_id": "P002_experiment_C0_M1_T4",
+      "participant_id": "P002",
+      "stage": "experiment",
+      "condition_index": 0,
+      "model_index": 1,
+      "trial_index": 4,
+      "scenario_id": "SCN_027_OPT",
+      "difficulty": "E",
+      "true_route": "א׳",
+      "ai_route": "א׳",
+      "model_type": "OPT",
+      "user_route": "א׳",
+      "followed_ai": true,
+      "chose_true_optimal": true,
+      "start_ts": 1768558933015,
+      "end_ts": 1768558934337
+    },
+    {
+      "trial_id": "P002_experiment_C1_M0_T0",
+      "participant_id": "P002",
+      "stage": "experiment",
+      "condition_index": 1,
+      "model_index": 0,
+      "trial_index": 0,
+      "scenario_id": "SCN_004_OPT",
+      "difficulty": "E",
+      "true_route": "ב׳",
+      "ai_route": "ב׳",
+      "model_type": "OPT",
+      "user_route": "ב׳",
+      "followed_ai": true,
+      "chose_true_optimal": true,
+      "start_ts": 1768558968093,
+      "end_ts": 1768558970307
+    },
+    {
+      "trial_id": "P002_experiment_C1_M0_T1",
+      "participant_id": "P002",
+      "stage": "experiment",
+      "condition_index": 1,
+      "model_index": 0,
+      "trial_index": 1,
+      "scenario_id": "SCN_017_OPT",
+      "difficulty": "E",
+      "true_route": "ב׳",
+      "ai_route": "ג׳",
+      "model_type": "OPT",
+      "user_route": "ג׳",
+      "followed_ai": true,
+      "chose_true_optimal": false,
+      "start_ts": 1768558971724,
+      "end_ts": 1768558972634
+    },
+    {
+      "trial_id": "P002_experiment_C1_M0_T2",
+      "participant_id": "P002",
+      "stage": "experiment",
+      "condition_index": 1,
+      "model_index": 0,
+      "trial_index": 2,
+      "scenario_id": "SCN_008_OPT",
+      "difficulty": "H",
+      "true_route": "ב׳",
+      "ai_route": "ב׳",
+      "model_type": "OPT",
+      "user_route": "ב׳",
+      "followed_ai": true,
+      "chose_true_optimal": true,
+      "start_ts": 1768558974235,
+      "end_ts": 1768558975128
+    },
+    {
+      "trial_id": "P002_experiment_C1_M0_T3",
+      "participant_id": "P002",
+      "stage": "experiment",
+      "condition_index": 1,
+      "model_index": 0,
+      "trial_index": 3,
+      "scenario_id": "SCN_014_OPT",
+      "difficulty": "E",
+      "true_route": "ג׳",
+      "ai_route": "ג׳",
+      "model_type": "OPT",
+      "user_route": "ג׳",
+      "followed_ai": true,
+      "chose_true_optimal": true,
+      "start_ts": 1768558976642,
+      "end_ts": 1768558977545
+    },
+    {
+      "trial_id": "P002_experiment_C1_M0_T4",
+      "participant_id": "P002",
+      "stage": "experiment",
+      "condition_index": 1,
+      "model_index": 0,
+      "trial_index": 4,
+      "scenario_id": "SCN_012_OPT",
+      "difficulty": "H",
+      "true_route": "ג׳",
+      "ai_route": "ג׳",
+      "model_type": "OPT",
+      "user_route": "ג׳",
+      "followed_ai": true,
+      "chose_true_optimal": true,
+      "start_ts": 1768558978909,
+      "end_ts": 1768558979774
+    },
+    {
+      "trial_id": "P002_experiment_C1_M1_T0",
+      "participant_id": "P002",
+      "stage": "experiment",
+      "condition_index": 1,
+      "model_index": 1,
+      "trial_index": 0,
+      "scenario_id": "SCN_022_SUB",
+      "difficulty": "H",
+      "true_route": "א׳",
+      "ai_route": "א׳",
+      "model_type": "SUB",
+      "user_route": "א׳",
+      "followed_ai": true,
+      "chose_true_optimal": true,
+      "start_ts": 1768558984123,
+      "end_ts": 1768558985173
+    },
+    {
+      "trial_id": "P002_experiment_C1_M1_T1",
+      "participant_id": "P002",
+      "stage": "experiment",
+      "condition_index": 1,
+      "model_index": 1,
+      "trial_index": 1,
+      "scenario_id": "SCN_021_SUB",
+      "difficulty": "E",
+      "true_route": "ב׳",
+      "ai_route": "ג׳",
+      "model_type": "SUB",
+      "user_route": "ג׳",
+      "followed_ai": true,
+      "chose_true_optimal": false,
+      "start_ts": 1768558986521,
+      "end_ts": 1768558987334
+    },
+    {
+      "trial_id": "P002_experiment_C1_M1_T2",
+      "participant_id": "P002",
+      "stage": "experiment",
+      "condition_index": 1,
+      "model_index": 1,
+      "trial_index": 2,
+      "scenario_id": "SCN_011_SUB",
+      "difficulty": "E",
+      "true_route": "א׳",
+      "ai_route": "א׳",
+      "model_type": "SUB",
+      "user_route": "א׳",
+      "followed_ai": true,
+      "chose_true_optimal": true,
+      "start_ts": 1768558988770,
+      "end_ts": 1768558989635
+    },
+    {
+      "trial_id": "P002_experiment_C1_M1_T3",
+      "participant_id": "P002",
+      "stage": "experiment",
+      "condition_index": 1,
+      "model_index": 1,
+      "trial_index": 3,
+      "scenario_id": "SCN_019_SUB",
+      "difficulty": "E",
+      "true_route": "ב׳",
+      "ai_route": "ג׳",
+      "model_type": "SUB",
+      "user_route": "ג׳",
+      "followed_ai": true,
+      "chose_true_optimal": false,
+      "start_ts": 1768558991237,
+      "end_ts": 1768558992198
+    },
+    {
+      "trial_id": "P002_experiment_C2_M0_T0",
+      "participant_id": "P002",
+      "stage": "experiment",
+      "condition_index": 2,
+      "model_index": 0,
+      "trial_index": 0,
+      "scenario_id": "SCN_026_OPT",
+      "difficulty": "H",
+      "true_route": "ב׳",
+      "ai_route": "ב׳",
+      "model_type": "OPT",
+      "user_route": "ב׳",
+      "followed_ai": true,
+      "chose_true_optimal": true,
+      "start_ts": 1768559005997,
+      "end_ts": 1768559007607
+    },
+    {
+      "trial_id": "P002_experiment_C2_M0_T1",
+      "participant_id": "P002",
+      "stage": "experiment",
+      "condition_index": 2,
+      "model_index": 0,
+      "trial_index": 1,
+      "scenario_id": "SCN_028_OPT",
+      "difficulty": "H",
+      "true_route": "ב׳",
+      "ai_route": "ב׳",
+      "model_type": "OPT",
+      "user_route": "ב׳",
+      "followed_ai": true,
+      "chose_true_optimal": true,
+      "start_ts": 1768559009935,
+      "end_ts": 1768559012017
+    },
+    {
+      "trial_id": "P002_experiment_C2_M0_T2",
+      "participant_id": "P002",
+      "stage": "experiment",
+      "condition_index": 2,
+      "model_index": 0,
+      "trial_index": 2,
+      "scenario_id": "SCN_009_OPT",
+      "difficulty": "E",
+      "true_route": "ב׳",
+      "ai_route": "ג׳",
+      "model_type": "OPT",
+      "user_route": "ג׳",
+      "followed_ai": true,
+      "chose_true_optimal": false,
+      "start_ts": 1768559014292,
+      "end_ts": 1768559015851
+    },
+    {
+      "trial_id": "P002_experiment_C2_M0_T3",
+      "participant_id": "P002",
+      "stage": "experiment",
+      "condition_index": 2,
+      "model_index": 0,
+      "trial_index": 3,
+      "scenario_id": "SCN_024_OPT",
+      "difficulty": "H",
+      "true_route": "ג׳",
+      "ai_route": "ג׳",
+      "model_type": "OPT",
+      "user_route": "ג׳",
+      "followed_ai": true,
+      "chose_true_optimal": true,
+      "start_ts": 1768559019385,
+      "end_ts": 1768559020916
+    },
+    {
+      "trial_id": "P002_experiment_C2_M0_T4",
+      "participant_id": "P002",
+      "stage": "experiment",
+      "condition_index": 2,
+      "model_index": 0,
+      "trial_index": 4,
+      "scenario_id": "SCN_025_OPT",
+      "difficulty": "E",
+      "true_route": "ג׳",
+      "ai_route": "ג׳",
+      "model_type": "OPT",
+      "user_route": "ג׳",
+      "followed_ai": true,
+      "chose_true_optimal": true,
+      "start_ts": 1768559023462,
+      "end_ts": 1768559024818
+    },
+    {
+      "trial_id": "P002_experiment_C2_M1_T0",
+      "participant_id": "P002",
+      "stage": "experiment",
+      "condition_index": 2,
+      "model_index": 1,
+      "trial_index": 0,
+      "scenario_id": "SCN_010_SUB",
+      "difficulty": "H",
+      "true_route": "א׳",
+      "ai_route": "ב׳",
+      "model_type": "SUB",
+      "user_route": "ב׳",
+      "followed_ai": true,
+      "chose_true_optimal": false,
+      "start_ts": 1768559037943,
+      "end_ts": 1768559039185
+    },
+    {
+      "trial_id": "P002_experiment_C2_M1_T1",
+      "participant_id": "P002",
+      "stage": "experiment",
+      "condition_index": 2,
+      "model_index": 1,
+      "trial_index": 1,
+      "scenario_id": "SCN_015_SUB",
+      "difficulty": "E",
+      "true_route": "ב׳",
+      "ai_route": "ב׳",
+      "model_type": "SUB",
+      "user_route": "ב׳",
+      "followed_ai": true,
+      "chose_true_optimal": true,
+      "start_ts": 1768559040734,
+      "end_ts": 1768559041758
+    },
+    {
+      "trial_id": "P002_experiment_C2_M1_T2",
+      "participant_id": "P002",
+      "stage": "experiment",
+      "condition_index": 2,
+      "model_index": 1,
+      "trial_index": 2,
+      "scenario_id": "SCN_005_SUB",
+      "difficulty": "E",
+      "true_route": "א׳",
+      "ai_route": "ב׳",
+      "model_type": "SUB",
+      "user_route": "ב׳",
+      "followed_ai": true,
+      "chose_true_optimal": false,
+      "start_ts": 1768559043106,
+      "end_ts": 1768559044164
+    },
+    {
+      "trial_id": "P002_experiment_C2_M1_T3",
+      "participant_id": "P002",
+      "stage": "experiment",
+      "condition_index": 2,
+      "model_index": 1,
+      "trial_index": 3,
+      "scenario_id": "SCN_013_SUB",
+      "difficulty": "H",
+      "true_route": "ג׳",
+      "ai_route": "ג׳",
+      "model_type": "SUB",
+      "user_route": "ג׳",
+      "followed_ai": true,
+      "chose_true_optimal": true,
+      "start_ts": 1768559045687,
+      "end_ts": 1768559046606
+    }
+  ],
+  "questionnaires": [
+    {
+      "trial_id": "P002_practice_T0",
+      "participant_id": "P002",
+      "stage": "practice",
+      "condition_index": null,
+      "model_index": null,
+      "trial_index": 0,
+      "questionnaire_type": "post_scenario",
+      "answers": {
+        "confidence": 7,
+        "mental_workload": 7,
+        "scenario_questions": {
+          "sa_1": {
+            "answer_index": 0,
+            "answer_text": "אופציה א",
+            "correct_answer_index": 1,
+            "is_correct": false
+          },
+          "sa_2": "DBG",
+          "sa_3": "DBG"
+        }
+      },
+      "correct": {
+        "Q1": "ב",
+        "Q2": "ג",
+        "Q3": "ד"
+      },
+      "enter_ts": 1768558571148,
+      "exit_ts": 1768558589593
+    },
+    {
+      "trial_id": "P002_practice_T1",
+      "participant_id": "P002",
+      "stage": "practice",
+      "condition_index": null,
+      "model_index": null,
+      "trial_index": 1,
+      "questionnaire_type": "post_scenario",
+      "answers": {
+        "confidence": "DBG",
+        "mental_workload": "DBG",
+        "scenario_questions": {
+          "sa_1": "DBG",
+          "sa_2": "DBG",
+          "sa_3": "DBG"
+        }
+      },
+      "correct": {
+        "Q1": "ג",
+        "Q2": "ב",
+        "Q3": "ג"
+      },
+      "enter_ts": 1768558629500,
+      "exit_ts": 1768558692596
+    },
+    {
+      "trial_id": "P002_practice_T2",
+      "participant_id": "P002",
+      "stage": "practice",
+      "condition_index": null,
+      "model_index": null,
+      "trial_index": 2,
+      "questionnaire_type": "post_scenario",
+      "answers": {
+        "confidence": "DBG",
+        "mental_workload": "DBG",
+        "scenario_questions": {
+          "sa_1": {
+            "answer_index": 4,
+            "answer_text": "אופציה ה",
+            "correct_answer_index": 2,
+            "is_correct": false
+          },
+          "sa_2": "DBG",
+          "sa_3": "DBG"
+        }
+      },
+      "correct": {
+        "Q1": "ג",
+        "Q2": "ג",
+        "Q3": "ג"
+      },
+      "enter_ts": 1768558703305,
+      "exit_ts": 1768558803273
+    },
+    {
+      "trial_id": "P002_experiment_C0_M0_T0",
+      "participant_id": "P002",
+      "stage": "experiment",
+      "condition_index": 0,
+      "model_index": 0,
+      "trial_index": 0,
+      "questionnaire_type": "post_scenario",
+      "answers": {
+        "confidence": "DBG",
+        "mental_workload": "DBG"
+      },
+      "correct": {
+        "Q1": "ב",
+        "Q2": "ב",
+        "Q3": "ג"
+      },
+      "enter_ts": 1768558806843,
+      "exit_ts": 1768558807718
+    },
+    {
+      "trial_id": "P002_experiment_C0_M0_T1",
+      "participant_id": "P002",
+      "stage": "experiment",
+      "condition_index": 0,
+      "model_index": 0,
+      "trial_index": 1,
+      "questionnaire_type": "post_scenario",
+      "answers": {
+        "confidence": "DBG",
+        "mental_workload": "DBG"
+      },
+      "correct": {
+        "Q1": "ד",
+        "Q2": "ב",
+        "Q3": "א"
+      },
+      "enter_ts": 1768558812330,
+      "exit_ts": 1768558813187
+    },
+    {
+      "trial_id": "P002_experiment_C0_M0_T2",
+      "participant_id": "P002",
+      "stage": "experiment",
+      "condition_index": 0,
+      "model_index": 0,
+      "trial_index": 2,
+      "questionnaire_type": "post_scenario",
+      "answers": {
+        "confidence": "DBG",
+        "mental_workload": "DBG"
+      },
+      "correct": {
+        "Q1": "א",
+        "Q2": "א",
+        "Q3": "א"
+      },
+      "enter_ts": 1768558817929,
+      "exit_ts": 1768558837100
+    },
+    {
+      "trial_id": "P002_experiment_C0_M0_T3",
+      "participant_id": "P002",
+      "stage": "experiment",
+      "condition_index": 0,
+      "model_index": 0,
+      "trial_index": 3,
+      "questionnaire_type": "post_scenario",
+      "answers": {
+        "confidence": "DBG",
+        "mental_workload": "DBG"
+      },
+      "correct": {
+        "Q1": "א",
+        "Q2": "א",
+        "Q3": "א"
+      },
+      "enter_ts": 1768558915568,
+      "exit_ts": 1768558916758
+    },
+    {
+      "trial_id": null,
+      "participant_id": "P002",
+      "stage": "experiment",
+      "condition_index": 0,
+      "model_index": 0,
+      "trial_index": null,
+      "questionnaire_type": "model_summary",
+      "answers": {
+        "wl1": "DBG",
+        "wl2": "DBG",
+        "wl3": "DBG",
+        "wl4": "DBG",
+        "wl5": "DBG",
+        "trust1": "DBG",
+        "trust2": "DBG",
+        "trust3": "DBG",
+        "trust4": "DBG",
+        "trust5": "DBG",
+        "trust6": "DBG",
+        "trust7": "DBG",
+        "trust8": "DBG",
+        "trust9": "DBG",
+        "trust10": "DBG",
+        "trust11": "DBG",
+        "trust12": "DBG"
+      },
+      "correct": null,
+      "enter_ts": 1768558916758,
+      "exit_ts": 1768558918062
+    },
+    {
+      "trial_id": "P002_experiment_C0_M1_T0",
+      "participant_id": "P002",
+      "stage": "experiment",
+      "condition_index": 0,
+      "model_index": 1,
+      "trial_index": 0,
+      "questionnaire_type": "post_scenario",
+      "answers": {
+        "confidence": "DBG",
+        "mental_workload": "DBG"
+      },
+      "correct": {
+        "Q1": "א",
+        "Q2": "ג",
+        "Q3": "ב"
+      },
+      "enter_ts": 1768558920774,
+      "exit_ts": 1768558921527
+    },
+    {
+      "trial_id": "P002_experiment_C0_M1_T1",
+      "participant_id": "P002",
+      "stage": "experiment",
+      "condition_index": 0,
+      "model_index": 1,
+      "trial_index": 1,
+      "questionnaire_type": "post_scenario",
+      "answers": {
+        "confidence": "DBG",
+        "mental_workload": "DBG"
+      },
+      "correct": {
+        "Q1": "א",
+        "Q2": "ב",
+        "Q3": "א"
+      },
+      "enter_ts": 1768558923399,
+      "exit_ts": 1768558924152
+    },
+    {
+      "trial_id": "P002_experiment_C0_M1_T2",
+      "participant_id": "P002",
+      "stage": "experiment",
+      "condition_index": 0,
+      "model_index": 1,
+      "trial_index": 2,
+      "questionnaire_type": "post_scenario",
+      "answers": {
+        "confidence": "DBG",
+        "mental_workload": "DBG"
+      },
+      "correct": {
+        "Q1": "ג",
+        "Q2": "ב",
+        "Q3": "ד"
+      },
+      "enter_ts": 1768558927722,
+      "exit_ts": 1768558928730
+    },
+    {
+      "trial_id": "P002_experiment_C0_M1_T3",
+      "participant_id": "P002",
+      "stage": "experiment",
+      "condition_index": 0,
+      "model_index": 1,
+      "trial_index": 3,
+      "questionnaire_type": "post_scenario",
+      "answers": {
+        "confidence": "DBG",
+        "mental_workload": "DBG"
+      },
+      "correct": {
+        "Q1": "ג",
+        "Q2": "ג",
+        "Q3": "ד"
+      },
+      "enter_ts": 1768558931371,
+      "exit_ts": 1768558932096
+    },
+    {
+      "trial_id": "P002_experiment_C0_M1_T4",
+      "participant_id": "P002",
+      "stage": "experiment",
+      "condition_index": 0,
+      "model_index": 1,
+      "trial_index": 4,
+      "questionnaire_type": "post_scenario",
+      "answers": {
+        "confidence": "DBG",
+        "mental_workload": "DBG"
+      },
+      "correct": {
+        "Q1": "א",
+        "Q2": "ב",
+        "Q3": "ב"
+      },
+      "enter_ts": 1768558934337,
+      "exit_ts": 1768558935386
+    },
+    {
+      "trial_id": null,
+      "participant_id": "P002",
+      "stage": "experiment",
+      "condition_index": 0,
+      "model_index": 1,
+      "trial_index": null,
+      "questionnaire_type": "model_summary",
+      "answers": {
+        "wl1": "DBG",
+        "wl2": "DBG",
+        "wl3": "DBG",
+        "wl4": "DBG",
+        "wl5": "DBG",
+        "trust1": "DBG",
+        "trust2": "DBG",
+        "trust3": "DBG",
+        "trust4": "DBG",
+        "trust5": "DBG",
+        "trust6": "DBG",
+        "trust7": "DBG",
+        "trust8": "DBG",
+        "trust9": "DBG",
+        "trust10": "DBG",
+        "trust11": "DBG",
+        "trust12": "DBG"
+      },
+      "correct": null,
+      "enter_ts": 1768558935386,
+      "exit_ts": 1768558949754
+    },
+    {
+      "trial_id": null,
+      "participant_id": "P002",
+      "stage": "experiment",
+      "condition_index": 0,
+      "model_index": null,
+      "trial_index": null,
+      "questionnaire_type": "visualization_condition",
+      "answers": {
+        "model_preference": "מודל A"
+      },
+      "correct": null,
+      "enter_ts": 1768558949754,
+      "exit_ts": 1768558964761
+    },
+    {
+      "trial_id": "P002_experiment_C1_M0_T0",
+      "participant_id": "P002",
+      "stage": "experiment",
+      "condition_index": 1,
+      "model_index": 0,
+      "trial_index": 0,
+      "questionnaire_type": "post_scenario",
+      "answers": {
+        "confidence": "DBG",
+        "mental_workload": "DBG"
+      },
+      "correct": {
+        "Q1": "ד",
+        "Q2": "ד",
+        "Q3": "ג"
+      },
+      "enter_ts": 1768558970307,
+      "exit_ts": 1768558970972
+    },
+    {
+      "trial_id": "P002_experiment_C1_M0_T1",
+      "participant_id": "P002",
+      "stage": "experiment",
+      "condition_index": 1,
+      "model_index": 0,
+      "trial_index": 1,
+      "questionnaire_type": "post_scenario",
+      "answers": {
+        "confidence": "DBG",
+        "mental_workload": "DBG"
+      },
+      "correct": {
+        "Q1": "ד",
+        "Q2": "א",
+        "Q3": "א"
+      },
+      "enter_ts": 1768558972634,
+      "exit_ts": 1768558973413
+    },
+    {
+      "trial_id": "P002_experiment_C1_M0_T2",
+      "participant_id": "P002",
+      "stage": "experiment",
+      "condition_index": 1,
+      "model_index": 0,
+      "trial_index": 2,
+      "questionnaire_type": "post_scenario",
+      "answers": {
+        "confidence": "DBG",
+        "mental_workload": "DBG"
+      },
+      "correct": {
+        "Q1": "ד",
+        "Q2": "א",
+        "Q3": "ב"
+      },
+      "enter_ts": 1768558975128,
+      "exit_ts": 1768558975784
+    },
+    {
+      "trial_id": "P002_experiment_C1_M0_T3",
+      "participant_id": "P002",
+      "stage": "experiment",
+      "condition_index": 1,
+      "model_index": 0,
+      "trial_index": 3,
+      "questionnaire_type": "post_scenario",
+      "answers": {
+        "confidence": "DBG",
+        "mental_workload": "DBG"
+      },
+      "correct": {
+        "Q1": "ג",
+        "Q2": "ד",
+        "Q3": "ג"
+      },
+      "enter_ts": 1768558977545,
+      "exit_ts": 1768558978173
+    },
+    {
+      "trial_id": "P002_experiment_C1_M0_T4",
+      "participant_id": "P002",
+      "stage": "experiment",
+      "condition_index": 1,
+      "model_index": 0,
+      "trial_index": 4,
+      "questionnaire_type": "post_scenario",
+      "answers": {
+        "confidence": "DBG",
+        "mental_workload": "DBG"
+      },
+      "correct": {
+        "Q1": "ג",
+        "Q2": "ג",
+        "Q3": "ב"
+      },
+      "enter_ts": 1768558979774,
+      "exit_ts": 1768558980492
+    },
+    {
+      "trial_id": null,
+      "participant_id": "P002",
+      "stage": "experiment",
+      "condition_index": 1,
+      "model_index": 0,
+      "trial_index": null,
+      "questionnaire_type": "model_summary",
+      "answers": {
+        "wl1": "DBG",
+        "wl2": "DBG",
+        "wl3": "DBG",
+        "wl4": "DBG",
+        "wl5": "DBG",
+        "trust1": "DBG",
+        "trust2": "DBG",
+        "trust3": "DBG",
+        "trust4": "DBG",
+        "trust5": "DBG",
+        "trust6": "DBG",
+        "trust7": "DBG",
+        "trust8": "DBG",
+        "trust9": "DBG",
+        "trust10": "DBG",
+        "trust11": "DBG",
+        "trust12": "DBG"
+      },
+      "correct": null,
+      "enter_ts": 1768558980492,
+      "exit_ts": 1768558982373
+    },
+    {
+      "trial_id": "P002_experiment_C1_M1_T0",
+      "participant_id": "P002",
+      "stage": "experiment",
+      "condition_index": 1,
+      "model_index": 1,
+      "trial_index": 0,
+      "questionnaire_type": "post_scenario",
+      "answers": {
+        "confidence": "DBG",
+        "mental_workload": "DBG"
+      },
+      "correct": {
+        "Q1": "ב",
+        "Q2": "ג",
+        "Q3": "א"
+      },
+      "enter_ts": 1768558985173,
+      "exit_ts": 1768558985759
+    },
+    {
+      "trial_id": "P002_experiment_C1_M1_T1",
+      "participant_id": "P002",
+      "stage": "experiment",
+      "condition_index": 1,
+      "model_index": 1,
+      "trial_index": 1,
+      "questionnaire_type": "post_scenario",
+      "answers": {
+        "confidence": "DBG",
+        "mental_workload": "DBG"
+      },
+      "correct": {
+        "Q1": "ג",
+        "Q2": "ב",
+        "Q3": "ד"
+      },
+      "enter_ts": 1768558987334,
+      "exit_ts": 1768558987912
+    },
+    {
+      "trial_id": "P002_experiment_C1_M1_T2",
+      "participant_id": "P002",
+      "stage": "experiment",
+      "condition_index": 1,
+      "model_index": 1,
+      "trial_index": 2,
+      "questionnaire_type": "post_scenario",
+      "answers": {
+        "confidence": "DBG",
+        "mental_workload": "DBG"
+      },
+      "correct": {
+        "Q1": "ג",
+        "Q2": "ג",
+        "Q3": "א"
+      },
+      "enter_ts": 1768558989635,
+      "exit_ts": 1768558990379
+    },
+    {
+      "trial_id": "P002_experiment_C1_M1_T3",
+      "participant_id": "P002",
+      "stage": "experiment",
+      "condition_index": 1,
+      "model_index": 1,
+      "trial_index": 3,
+      "questionnaire_type": "post_scenario",
+      "answers": {
+        "confidence": "DBG",
+        "mental_workload": "DBG"
+      },
+      "correct": {
+        "Q1": "ד",
+        "Q2": "ב",
+        "Q3": "ב"
+      },
+      "enter_ts": 1768558992198,
+      "exit_ts": 1768558993607
+    },
+    {
+      "trial_id": null,
+      "participant_id": "P002",
+      "stage": "experiment",
+      "condition_index": 1,
+      "model_index": 1,
+      "trial_index": null,
+      "questionnaire_type": "model_summary",
+      "answers": {
+        "wl1": "DBG",
+        "wl2": "DBG",
+        "wl3": "DBG",
+        "wl4": "DBG",
+        "wl5": "DBG",
+        "trust1": "DBG",
+        "trust2": "DBG",
+        "trust3": "DBG",
+        "trust4": "DBG",
+        "trust5": "DBG",
+        "trust6": "DBG",
+        "trust7": "DBG",
+        "trust8": "DBG",
+        "trust9": "DBG",
+        "trust10": "DBG",
+        "trust11": "DBG",
+        "trust12": "DBG"
+      },
+      "correct": null,
+      "enter_ts": 1768558993607,
+      "exit_ts": 1768558996425
+    },
+    {
+      "trial_id": null,
+      "participant_id": "P002",
+      "stage": "experiment",
+      "condition_index": 1,
+      "model_index": null,
+      "trial_index": null,
+      "questionnaire_type": "visualization_condition",
+      "answers": {
+        "model_preference": "DBG"
+      },
+      "correct": null,
+      "enter_ts": 1768558996425,
+      "exit_ts": 1768558998166
+    },
+    {
+      "trial_id": "P002_experiment_C2_M0_T0",
+      "participant_id": "P002",
+      "stage": "experiment",
+      "condition_index": 2,
+      "model_index": 0,
+      "trial_index": 0,
+      "questionnaire_type": "post_scenario",
+      "answers": {
+        "confidence": "DBG",
+        "mental_workload": "DBG"
+      },
+      "correct": {
+        "Q1": "א",
+        "Q2": "ד",
+        "Q3": "ג"
+      },
+      "enter_ts": 1768559007607,
+      "exit_ts": 1768559008806
+    },
+    {
+      "trial_id": "P002_experiment_C2_M0_T1",
+      "participant_id": "P002",
+      "stage": "experiment",
+      "condition_index": 2,
+      "model_index": 0,
+      "trial_index": 1,
+      "questionnaire_type": "post_scenario",
+      "answers": {
+        "confidence": "DBG",
+        "mental_workload": "DBG"
+      },
+      "correct": {
+        "Q1": "ד",
+        "Q2": "ג",
+        "Q3": "ד"
+      },
+      "enter_ts": 1768559012017,
+      "exit_ts": 1768559012866
+    },
+    {
+      "trial_id": "P002_experiment_C2_M0_T2",
+      "participant_id": "P002",
+      "stage": "experiment",
+      "condition_index": 2,
+      "model_index": 0,
+      "trial_index": 2,
+      "questionnaire_type": "post_scenario",
+      "answers": {
+        "confidence": "DBG",
+        "mental_workload": "DBG"
+      },
+      "correct": {
+        "Q1": "א",
+        "Q2": "ב",
+        "Q3": "ד"
+      },
+      "enter_ts": 1768559015851,
+      "exit_ts": 1768559018370
+    },
+    {
+      "trial_id": "P002_experiment_C2_M0_T3",
+      "participant_id": "P002",
+      "stage": "experiment",
+      "condition_index": 2,
+      "model_index": 0,
+      "trial_index": 3,
+      "questionnaire_type": "post_scenario",
+      "answers": {
+        "confidence": "DBG",
+        "mental_workload": "DBG"
+      },
+      "correct": {
+        "Q1": "ג",
+        "Q2": "ג",
+        "Q3": "ד"
+      },
+      "enter_ts": 1768559020916,
+      "exit_ts": 1768559021773
+    },
+    {
+      "trial_id": "P002_experiment_C2_M0_T4",
+      "participant_id": "P002",
+      "stage": "experiment",
+      "condition_index": 2,
+      "model_index": 0,
+      "trial_index": 4,
+      "questionnaire_type": "post_scenario",
+      "answers": {
+        "confidence": "DBG",
+        "mental_workload": "DBG"
+      },
+      "correct": {
+        "Q1": "ב",
+        "Q2": "א",
+        "Q3": "ד"
+      },
+      "enter_ts": 1768559024818,
+      "exit_ts": 1768559025588
+    },
+    {
+      "trial_id": null,
+      "participant_id": "P002",
+      "stage": "experiment",
+      "condition_index": 2,
+      "model_index": 0,
+      "trial_index": null,
+      "questionnaire_type": "model_summary",
+      "answers": {
+        "wl1": "DBG",
+        "wl2": "DBG",
+        "wl3": "DBG",
+        "wl4": "DBG",
+        "wl5": "DBG",
+        "trust1": "DBG",
+        "trust2": "DBG",
+        "trust3": "DBG",
+        "trust4": "DBG",
+        "trust5": "DBG",
+        "trust6": "DBG",
+        "trust7": "DBG",
+        "trust8": "DBG",
+        "trust9": "DBG",
+        "trust10": "DBG",
+        "trust11": "DBG",
+        "trust12": "DBG"
+      },
+      "correct": null,
+      "enter_ts": 1768559025588,
+      "exit_ts": 1768559031127
+    },
+    {
+      "trial_id": "P002_experiment_C2_M1_T0",
+      "participant_id": "P002",
+      "stage": "experiment",
+      "condition_index": 2,
+      "model_index": 1,
+      "trial_index": 0,
+      "questionnaire_type": "post_scenario",
+      "answers": {
+        "confidence": "DBG",
+        "mental_workload": "DBG"
+      },
+      "correct": {
+        "Q1": "ב",
+        "Q2": "ג",
+        "Q3": "ג"
+      },
+      "enter_ts": 1768559039185,
+      "exit_ts": 1768559039911
+    },
+    {
+      "trial_id": "P002_experiment_C2_M1_T1",
+      "participant_id": "P002",
+      "stage": "experiment",
+      "condition_index": 2,
+      "model_index": 1,
+      "trial_index": 1,
+      "questionnaire_type": "post_scenario",
+      "answers": {
+        "confidence": "DBG",
+        "mental_workload": "DBG"
+      },
+      "correct": {
+        "Q1": "ב",
+        "Q2": "א",
+        "Q3": "ד"
+      },
+      "enter_ts": 1768559041758,
+      "exit_ts": 1768559042397
+    },
+    {
+      "trial_id": "P002_experiment_C2_M1_T2",
+      "participant_id": "P002",
+      "stage": "experiment",
+      "condition_index": 2,
+      "model_index": 1,
+      "trial_index": 2,
+      "questionnaire_type": "post_scenario",
+      "answers": {
+        "confidence": "DBG",
+        "mental_workload": "DBG"
+      },
+      "correct": {
+        "Q1": "א",
+        "Q2": "ב",
+        "Q3": "ג"
+      },
+      "enter_ts": 1768559044164,
+      "exit_ts": 1768559044952
+    },
+    {
+      "trial_id": "P002_experiment_C2_M1_T3",
+      "participant_id": "P002",
+      "stage": "experiment",
+      "condition_index": 2,
+      "model_index": 1,
+      "trial_index": 3,
+      "questionnaire_type": "post_scenario",
+      "answers": {
+        "confidence": "DBG",
+        "mental_workload": "DBG"
+      },
+      "correct": {
+        "Q1": "א",
+        "Q2": "ד",
+        "Q3": "א"
+      },
+      "enter_ts": 1768559046606,
+      "exit_ts": 1768559047428
+    },
+    {
+      "trial_id": null,
+      "participant_id": "P002",
+      "stage": "experiment",
+      "condition_index": 2,
+      "model_index": 1,
+      "trial_index": null,
+      "questionnaire_type": "model_summary",
+      "answers": {
+        "wl1": "DBG",
+        "wl2": "DBG",
+        "wl3": "DBG",
+        "wl4": "DBG",
+        "wl5": "DBG",
+        "trust1": "DBG",
+        "trust2": "DBG",
+        "trust3": "DBG",
+        "trust4": "DBG",
+        "trust5": "DBG",
+        "trust6": "DBG",
+        "trust7": "DBG",
+        "trust8": "DBG",
+        "trust9": "DBG",
+        "trust10": "DBG",
+        "trust11": "DBG",
+        "trust12": "DBG"
+      },
+      "correct": null,
+      "enter_ts": 1768559047428,
+      "exit_ts": 1768559048801
+    },
+    {
+      "trial_id": null,
+      "participant_id": "P002",
+      "stage": "experiment",
+      "condition_index": 2,
+      "model_index": null,
+      "trial_index": null,
+      "questionnaire_type": "visualization_condition",
+      "answers": {
+        "model_preference": "DBG"
+      },
+      "correct": null,
+      "enter_ts": 1768559048801,
+      "exit_ts": 1768559049659
+    },
+    {
+      "trial_id": null,
+      "participant_id": "P002",
+      "stage": "post",
+      "condition_index": null,
+      "model_index": null,
+      "trial_index": null,
+      "questionnaire_type": "visualization_global",
+      "answers": {
+        "עמודות מוערמות": 3,
+        "רדאר": 3,
+        "מפת חום": 3
+      },
+      "correct": null,
+      "enter_ts": 1768559049659,
+      "exit_ts": 1768559141970
+    },
+    {
+      "trial_id": null,
+      "participant_id": "P002",
+      "stage": "post",
+      "condition_index": null,
+      "model_index": null,
+      "trial_index": null,
+      "questionnaire_type": "demographics",
+      "answers": {
+        "age": "DBG",
+        "gender": "DBG",
+        "native_language": "DBG",
+        "education": "דוקטורט / מקצועי",
+        "field": "DBG",
+        "navigation_use": 1,
+        "tech_skill": "DBG",
+        "viz_literacy": "DBG"
+      },
+      "correct": null,
+      "enter_ts": 1768559141970,
+      "exit_ts": 1768559616600
+    }
+  ],
+  "interactions": []
+}
