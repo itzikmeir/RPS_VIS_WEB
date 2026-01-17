@@ -24,6 +24,8 @@ const state = {
   
   // Current trial route selection (from iframe)
   currentTrialSelectedRoute: null,
+  // Reference to current trial iframe container for cleanup
+  currentTrialIframeContainer: null,
 
   // log buffers
   logs: {
@@ -435,6 +437,12 @@ function renderInfoPage(root, pageId) {
     input.dir = "rtl";
     inputContainer.appendChild(input);
   } else if (pageData.input_type === "checkbox") {
+    inputContainer.style.display = "flex";
+    inputContainer.style.flexDirection = "row";
+    inputContainer.style.alignItems = "center";
+    inputContainer.style.gap = "8px";
+    inputContainer.dir = "rtl";
+    
     const checkbox = document.createElement("input");
     checkbox.type = "checkbox";
     checkbox.id = `input_${pageId}`;
@@ -442,7 +450,8 @@ function renderInfoPage(root, pageId) {
     label.setAttribute("for", `input_${pageId}`);
     label.textContent = "אני מאשר/ת";
     label.dir = "rtl";
-    label.style.marginRight = "8px";
+    label.style.marginRight = "0";
+    label.style.cursor = "pointer";
     inputContainer.appendChild(checkbox);
     inputContainer.appendChild(label);
   } else if (pageData.input_type === "checkbox_list") {
@@ -450,16 +459,23 @@ function renderInfoPage(root, pageId) {
     for (let i = 1; i <= 5; i++) {
       const checkboxWrapper = document.createElement("div");
       checkboxWrapper.style.marginBottom = "10px";
+      checkboxWrapper.style.display = "flex";
+      checkboxWrapper.style.flexDirection = "row";
+      checkboxWrapper.style.alignItems = "center";
+      checkboxWrapper.style.gap = "8px";
+      checkboxWrapper.dir = "rtl";
       
       const checkbox = document.createElement("input");
       checkbox.type = "checkbox";
       checkbox.id = `input_${pageId}_item${i}`;
+      checkbox.name = `checkbox_list_${pageId}`;
       
       const label = document.createElement("label");
       label.setAttribute("for", `input_${pageId}_item${i}`);
       label.textContent = `פריט ${i}`;
       label.dir = "rtl";
-      label.style.marginRight = "8px";
+      label.style.marginRight = "0";
+      label.style.cursor = "pointer";
       
       checkboxWrapper.appendChild(checkbox);
       checkboxWrapper.appendChild(label);
@@ -663,58 +679,71 @@ function renderTrialPage(root) {
   
   root.innerHTML = "";
   
-  let titleText;
-  if (state.stage === "practice") {
-    titleText = `Trial – Practice #${state.practiceIndex + 1}`;
-  } else {
-    const cond = state.schedule.conditions[state.conditionIndex];
-    const model = cond.models[state.modelIndex];
-    titleText = `Trial – Condition ${state.conditionIndex + 1} (${cond.visualization}) Model ${model.tag} Trial ${state.trialIndex + 1}`;
-  }
-  
-  const title = document.createElement("h1");
-  title.className = "page-title";
-  title.textContent = titleText;
-  root.appendChild(title);
-  
-  const infoBox = document.createElement("div");
-  infoBox.className = "info-box";
-  
-  const infoTitle = document.createElement("h3");
-  infoTitle.textContent = "Trial Information";
-  infoBox.appendChild(infoTitle);
-  
-  const infoItems = [
-    ["Participant ID", state.participantId],
-    ["Stage", state.stage],
-    ["Scenario ID", t.scenario_id],
-    ["Difficulty", t.difficulty],
-    ["Correct Route", t.correct_route],
-    ["AI Recommended Route", t.ai_recommended_route]
-  ];
-  
-  if (state.stage === "experiment") {
-    const cond = state.schedule.conditions[state.conditionIndex];
-    const model = cond.models[state.modelIndex];
-    infoItems.splice(2, 0, ["Condition", `${state.conditionIndex + 1}: ${cond.visualization}`]);
-    infoItems.splice(3, 0, ["Model", `${model.tag} (${model.model_type})`]);
-  }
-  
-  infoItems.forEach(([label, value]) => {
-    const item = document.createElement("div");
-    item.className = "info-item";
-    const labelSpan = document.createElement("span");
-    labelSpan.className = "info-label";
-    labelSpan.textContent = `${label}: `;
-    item.appendChild(labelSpan);
-    item.appendChild(document.createTextNode(String(value)));
-    infoBox.appendChild(item);
+  // Clean up any existing fullscreen iframe containers
+  const existingContainers = document.querySelectorAll('[id^="scenario-iframe-container"]');
+  existingContainers.forEach(container => {
+    if (container.parentNode) {
+      container.parentNode.removeChild(container);
+    }
   });
   
-  root.appendChild(infoBox);
+  // Reset selected route and iframe container reference for this trial
+  state.currentTrialSelectedRoute = null;
+  state.currentTrialIframeContainer = null;
   
-  // Show debug info only in debug mode
+  // Show title and info boxes only in debug mode
   if (state.debugMode) {
+    let titleText;
+    if (state.stage === "practice") {
+      titleText = `Trial – Practice #${state.practiceIndex + 1}`;
+    } else {
+      const cond = state.schedule.conditions[state.conditionIndex];
+      const model = cond.models[state.modelIndex];
+      titleText = `Trial – Condition ${state.conditionIndex + 1} (${cond.visualization}) Model ${model.tag} Trial ${state.trialIndex + 1}`;
+    }
+    
+    const title = document.createElement("h1");
+    title.className = "page-title";
+    title.textContent = titleText;
+    root.appendChild(title);
+    
+    const infoBox = document.createElement("div");
+    infoBox.className = "info-box";
+    
+    const infoTitle = document.createElement("h3");
+    infoTitle.textContent = "Trial Information";
+    infoBox.appendChild(infoTitle);
+    
+    const infoItems = [
+      ["Participant ID", state.participantId],
+      ["Stage", state.stage],
+      ["Scenario ID", t.scenario_id],
+      ["Difficulty", t.difficulty],
+      ["Correct Route", t.correct_route],
+      ["AI Recommended Route", t.ai_recommended_route]
+    ];
+    
+    if (state.stage === "experiment") {
+      const cond = state.schedule.conditions[state.conditionIndex];
+      const model = cond.models[state.modelIndex];
+      infoItems.splice(2, 0, ["Condition", `${state.conditionIndex + 1}: ${cond.visualization}`]);
+      infoItems.splice(3, 0, ["Model", `${model.tag} (${model.model_type})`]);
+    }
+    
+    infoItems.forEach(([label, value]) => {
+      const item = document.createElement("div");
+      item.className = "info-item";
+      const labelSpan = document.createElement("span");
+      labelSpan.className = "info-label";
+      labelSpan.textContent = `${label}: `;
+      item.appendChild(labelSpan);
+      item.appendChild(document.createTextNode(String(value)));
+      infoBox.appendChild(item);
+    });
+    
+    root.appendChild(infoBox);
+    
+    // Show debug info only in debug mode
     const debugBox = document.createElement("div");
     debugBox.className = "debug-info";
     
@@ -748,21 +777,23 @@ function renderTrialPage(root) {
     root.appendChild(debugBox);
   }
   
-  // Reset selected route for this trial
-  state.currentTrialSelectedRoute = null;
-  
   // Check if we have a scenario HTML file for this scenario
   const scenarioFilePath = getScenarioFilePath(t.scenario_id);
   
   if (scenarioFilePath) {
-    // Load actual scenario HTML in iframe
+    // Load actual scenario HTML in fullscreen iframe
     const iframeContainer = document.createElement("div");
-    iframeContainer.style.width = "100%";
-    iframeContainer.style.height = "800px";
-    iframeContainer.style.border = "2px solid rgba(0,0,0,0.1)";
-    iframeContainer.style.borderRadius = "8px";
-    iframeContainer.style.overflow = "hidden";
-    iframeContainer.style.margin = "20px 0";
+    iframeContainer.id = `scenario-iframe-container-${t.scenario_id}`;
+    iframeContainer.style.position = "fixed";
+    iframeContainer.style.top = "0";
+    iframeContainer.style.left = "0";
+    iframeContainer.style.width = "100vw";
+    iframeContainer.style.height = "100vh";
+    iframeContainer.style.border = "none";
+    iframeContainer.style.margin = "0";
+    iframeContainer.style.padding = "0";
+    iframeContainer.style.zIndex = "1000";
+    iframeContainer.style.backgroundColor = "#0b0f17";
     
     const iframe = document.createElement("iframe");
     iframe.src = scenarioFilePath;
@@ -771,62 +802,67 @@ function renderTrialPage(root) {
     iframe.style.border = "none";
     iframe.id = `scenario-iframe-${t.scenario_id}`;
     iframeContainer.appendChild(iframe);
-    root.appendChild(iframeContainer);
+    
+    // Store reference to iframeContainer for cleanup when navigating
+    state.currentTrialIframeContainer = iframeContainer;
+    
+    // Append to body instead of root for fullscreen effect
+    document.body.appendChild(iframeContainer);
   } else {
     // Fallback to placeholder if no scenario file found
     const iframePlaceholder = document.createElement("div");
     iframePlaceholder.className = "iframe-placeholder";
     iframePlaceholder.textContent = `MAP IFRAME PLACEHOLDER (${t.scenario_id})`;
     root.appendChild(iframePlaceholder);
-  }
-  
-  // No route selector - route selection will be in scenario iframe
-  // In debug mode, use AI recommended route as default
-  const buttonGroup = document.createElement("div");
-  buttonGroup.className = "button-group";
-  
-  const confirmBtn = document.createElement("button");
-  confirmBtn.textContent = "המשך";
-  confirmBtn.onclick = () => {
-    // Use selected route from iframe, or fallback to AI recommended route
-    const userRoute = state.currentTrialSelectedRoute || t.ai_recommended_route;
-    const followedAi = userRoute === t.ai_recommended_route;
-    const choseOptimal = userRoute === t.correct_route;
     
-    const trialKey = getCurrentTrialKey();
-    const trialLog = {
-      trial_id: trialKey,
-      participant_id: state.participantId,
-      stage: state.stage,
-      condition_index: (state.stage === "experiment" ? state.conditionIndex : null),
-      model_index: (state.stage === "experiment" ? state.modelIndex : null),
-      trial_index: (state.stage === "practice" ? state.practiceIndex : state.trialIndex),
-      scenario_id: t.scenario_id,
-      difficulty: t.difficulty,
-      true_route: t.correct_route,
-      ai_route: t.ai_recommended_route,
-      model_type: (state.stage === "experiment"
-                   ? state.schedule.conditions[state.conditionIndex].models[state.modelIndex].model_type
-                   : null),
-      user_route: userRoute,
-      followed_ai: followedAi,
-      chose_true_optimal: choseOptimal,
-      start_ts: state.currentPageEnterTs,
-      end_ts: Date.now()
+    // No route selector - route selection will be in scenario iframe
+    // In debug mode, use AI recommended route as default
+    const buttonGroup = document.createElement("div");
+    buttonGroup.className = "button-group";
+    
+    const confirmBtn = document.createElement("button");
+    confirmBtn.textContent = "המשך";
+    confirmBtn.onclick = () => {
+      // Use selected route from iframe, or fallback to AI recommended route
+      const userRoute = state.currentTrialSelectedRoute || t.ai_recommended_route;
+      const followedAi = userRoute === t.ai_recommended_route;
+      const choseOptimal = userRoute === t.correct_route;
+      
+      const trialKey = getCurrentTrialKey();
+      const trialLog = {
+        trial_id: trialKey,
+        participant_id: state.participantId,
+        stage: state.stage,
+        condition_index: (state.stage === "experiment" ? state.conditionIndex : null),
+        model_index: (state.stage === "experiment" ? state.modelIndex : null),
+        trial_index: (state.stage === "practice" ? state.practiceIndex : state.trialIndex),
+        scenario_id: t.scenario_id,
+        difficulty: t.difficulty,
+        true_route: t.correct_route,
+        ai_route: t.ai_recommended_route,
+        model_type: (state.stage === "experiment"
+                     ? state.schedule.conditions[state.conditionIndex].models[state.modelIndex].model_type
+                     : null),
+        user_route: userRoute,
+        followed_ai: followedAi,
+        chose_true_optimal: choseOptimal,
+        start_ts: state.currentPageEnterTs,
+        end_ts: Date.now()
+      };
+      
+      state.logs.trials.push(trialLog);
+      logPageExit("TrialPage");
+      
+      // Reset selected route for next trial
+      state.currentTrialSelectedRoute = null;
+      
+      state.pageType = "trial_questions";
+      render();
     };
+    buttonGroup.appendChild(confirmBtn);
     
-    state.logs.trials.push(trialLog);
-    logPageExit("TrialPage");
-    
-    // Reset selected route for next trial
-    state.currentTrialSelectedRoute = null;
-    
-    state.pageType = "trial_questions";
-    render();
-  };
-  buttonGroup.appendChild(confirmBtn);
-  
-  root.appendChild(buttonGroup);
+    root.appendChild(buttonGroup);
+  }
 }
 
 function renderTrialQuestionsPage(root) {
@@ -926,8 +962,9 @@ function renderTrialQuestionsPage(root) {
       for (let i = 1; i <= 7; i++) {
         const radioWrapper = document.createElement("div");
         radioWrapper.style.display = "flex";
-        radioWrapper.style.flexDirection = "column";
+        radioWrapper.style.flexDirection = "row";
         radioWrapper.style.alignItems = "center";
+        radioWrapper.style.gap = "6px";
         
         const radio = document.createElement("input");
         radio.type = "radio";
@@ -939,7 +976,10 @@ function renderTrialQuestionsPage(root) {
         radioLabel.setAttribute("for", `trial_fixed_${question.id}_${i}`);
         radioLabel.textContent = i;
         radioLabel.style.fontSize = "14px";
-        radioLabel.style.marginTop = "4px";
+        radioLabel.style.marginTop = "0";
+        radioLabel.style.marginRight = "0";
+        radioLabel.style.marginLeft = "0";
+        radioLabel.style.cursor = "pointer";
         
         radioWrapper.appendChild(radio);
         radioWrapper.appendChild(radioLabel);
@@ -992,6 +1032,11 @@ function renderTrialQuestionsPage(root) {
         questionData.options.forEach((option, optIdx) => {
           const optionWrapper = document.createElement("div");
           optionWrapper.style.marginBottom = "8px";
+          optionWrapper.style.display = "flex";
+          optionWrapper.style.flexDirection = "row";
+          optionWrapper.style.alignItems = "center";
+          optionWrapper.style.gap = "8px";
+          optionWrapper.dir = "rtl";
           
           const radio = document.createElement("input");
           radio.type = "radio";
@@ -1004,7 +1049,7 @@ function renderTrialQuestionsPage(root) {
           radioLabel.setAttribute("for", `scenario_${questionData.question_id}_${idx}_opt_${optIdx}`);
           radioLabel.textContent = option;
           radioLabel.dir = "rtl";
-          radioLabel.style.marginRight = "8px";
+          radioLabel.style.marginRight = "0";
           radioLabel.style.cursor = "pointer";
           radioLabel.style.fontSize = "14px";
           
@@ -1439,8 +1484,9 @@ function createLikertQuestion(question, namePrefix) {
   for (let i = 1; i <= 7; i++) {
     const radioWrapper = document.createElement("div");
     radioWrapper.style.display = "flex";
-    radioWrapper.style.flexDirection = "column";
+    radioWrapper.style.flexDirection = "row";
     radioWrapper.style.alignItems = "center";
+    radioWrapper.style.gap = "6px";
     
     const radio = document.createElement("input");
     radio.type = "radio";
@@ -1453,7 +1499,10 @@ function createLikertQuestion(question, namePrefix) {
     radioLabel.setAttribute("for", `${namePrefix}_${i}`);
     radioLabel.textContent = i;
     radioLabel.style.fontSize = "14px";
-    radioLabel.style.marginTop = "4px";
+    radioLabel.style.marginTop = "0";
+    radioLabel.style.marginRight = "0";
+    radioLabel.style.marginLeft = "0";
+    radioLabel.style.cursor = "pointer";
     
     radioWrapper.appendChild(radio);
     radioWrapper.appendChild(radioLabel);
@@ -1505,6 +1554,11 @@ function renderVisualizationConditionPage(root) {
       questionData.options.forEach((option, idx) => {
         const optionWrapper = document.createElement("div");
         optionWrapper.style.marginBottom = "10px";
+        optionWrapper.style.display = "flex";
+        optionWrapper.style.flexDirection = "row";
+        optionWrapper.style.alignItems = "center";
+        optionWrapper.style.gap = "8px";
+        optionWrapper.dir = "rtl";
         
         const radio = document.createElement("input");
         radio.type = "radio";
@@ -1517,7 +1571,7 @@ function renderVisualizationConditionPage(root) {
         radioLabel.setAttribute("for", `viz_cond_opt_${idx}`);
         radioLabel.textContent = option;
         radioLabel.dir = "rtl";
-        radioLabel.style.marginRight = "8px";
+        radioLabel.style.marginRight = "0";
         radioLabel.style.cursor = "pointer";
         
         optionWrapper.appendChild(radio);
@@ -1754,6 +1808,11 @@ function renderDemographicsPage(root) {
         question.options.forEach((option, optIdx) => {
           const optionWrapper = document.createElement("div");
           optionWrapper.style.marginBottom = "8px";
+          optionWrapper.style.display = "flex";
+          optionWrapper.style.flexDirection = "row";
+          optionWrapper.style.alignItems = "center";
+          optionWrapper.style.gap = "8px";
+          optionWrapper.dir = "rtl";
           
           const radio = document.createElement("input");
           radio.type = "radio";
@@ -1765,7 +1824,7 @@ function renderDemographicsPage(root) {
           radioLabel.setAttribute("for", `demo_${question.id}_${optIdx}`);
           radioLabel.textContent = option;
           radioLabel.dir = "rtl";
-          radioLabel.style.marginRight = "8px";
+          radioLabel.style.marginRight = "0";
           radioLabel.style.cursor = "pointer";
           
           optionWrapper.appendChild(radio);
@@ -1782,8 +1841,9 @@ function renderDemographicsPage(root) {
       for (let i = 1; i <= 7; i++) {
         const radioWrapper = document.createElement("div");
         radioWrapper.style.display = "flex";
-        radioWrapper.style.flexDirection = "column";
+        radioWrapper.style.flexDirection = "row";
         radioWrapper.style.alignItems = "center";
+        radioWrapper.style.gap = "6px";
         
         const radio = document.createElement("input");
         radio.type = "radio";
@@ -1795,7 +1855,10 @@ function renderDemographicsPage(root) {
         radioLabel.setAttribute("for", `demo_${question.id}_${i}`);
         radioLabel.textContent = i;
         radioLabel.style.fontSize = "14px";
-        radioLabel.style.marginTop = "4px";
+        radioLabel.style.marginTop = "0";
+        radioLabel.style.marginRight = "0";
+        radioLabel.style.marginLeft = "0";
+        radioLabel.style.cursor = "pointer";
         
         radioWrapper.appendChild(radio);
         radioWrapper.appendChild(radioLabel);
@@ -1952,6 +2015,53 @@ window.addEventListener("message", (event) => {
   if (event.data && event.data.type === "scenario_route_selected") {
     state.currentTrialSelectedRoute = event.data.route;
     console.log("Route selected from scenario:", event.data.route, "for scenario:", event.data.scenarioName);
+    
+    // Automatically navigate to next page after confirmation
+    const t = getCurrentTrial();
+    if (t && state.pageType === "trial") {
+      // Use selected route from iframe
+      const userRoute = event.data.route || t.ai_recommended_route;
+      const followedAi = userRoute === t.ai_recommended_route;
+      const choseOptimal = userRoute === t.correct_route;
+      
+      const trialKey = getCurrentTrialKey();
+      const trialLog = {
+        trial_id: trialKey,
+        participant_id: state.participantId,
+        stage: state.stage,
+        condition_index: (state.stage === "experiment" ? state.conditionIndex : null),
+        model_index: (state.stage === "experiment" ? state.modelIndex : null),
+        trial_index: (state.stage === "practice" ? state.practiceIndex : state.trialIndex),
+        scenario_id: t.scenario_id,
+        difficulty: t.difficulty,
+        true_route: t.correct_route,
+        ai_route: t.ai_recommended_route,
+        model_type: (state.stage === "experiment"
+                     ? state.schedule.conditions[state.conditionIndex].models[state.modelIndex].model_type
+                     : null),
+        user_route: userRoute,
+        followed_ai: followedAi,
+        chose_true_optimal: choseOptimal,
+        start_ts: state.currentPageEnterTs,
+        end_ts: Date.now()
+      };
+      
+      state.logs.trials.push(trialLog);
+      logPageExit("TrialPage");
+      
+      // Remove fullscreen container
+      if (state.currentTrialIframeContainer && state.currentTrialIframeContainer.parentNode) {
+        state.currentTrialIframeContainer.parentNode.removeChild(state.currentTrialIframeContainer);
+      }
+      state.currentTrialIframeContainer = null;
+      
+      // Reset selected route for next trial
+      state.currentTrialSelectedRoute = null;
+      
+      // Navigate to questions page
+      state.pageType = "trial_questions";
+      render();
+    }
   }
 });
 
