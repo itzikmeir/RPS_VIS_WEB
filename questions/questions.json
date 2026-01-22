@@ -106,14 +106,14 @@
     "trial_fixed_questions": [
       {
         "id": "confidence",
-        "type": "scale_1_7",
+        "type": "scale_minus10_10",
         "text": "עד כמה אתה בטוח שהמסלול שבחרת הוא המסלול האופטימלי?",
         "min_label": "בכלל לא בטוח",
         "max_label": "בטוח מאוד"
       },
       {
         "id": "mental_workload",
-        "type": "scale_1_7",
+        "type": "scale_minus10_10",
         "text": "עד כמה המשימה הייתה תובענית מבחינה מנטלית (חשיבה, קבלת החלטות, חיפוש, חישוב, השוואה)?",
         "min_label": "בכלל לא תובענית",
         "max_label": "תובענית מאוד"

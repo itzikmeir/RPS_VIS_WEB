@@ -26,6 +26,8 @@ const state = {
   currentTrialSelectedRoute: null,
   // Reference to current trial iframe container for cleanup
   currentTrialIframeContainer: null,
+  // Temporary storage for workload answers before trust page
+  tempWorkloadAnswers: null,
 
   // log buffers
   logs: {
@@ -73,6 +75,26 @@ function normalizeId(input) {
     id = "P" + id;
   }
   return id;
+}
+
+// Convert English route letter to Hebrew route letter
+function convertRouteToHebrew(route) {
+  if (!route) return route;
+  
+  const routeStr = String(route).trim().toUpperCase();
+  const routeMap = {
+    "A": "א׳",
+    "B": "ב׳",
+    "C": "ג׳"
+  };
+  
+  // If it's already in Hebrew, return as is
+  if (routeStr === "א׳" || routeStr === "ב׳" || routeStr === "ג׳") {
+    return routeStr;
+  }
+  
+  // Convert English to Hebrew
+  return routeMap[routeStr] || route;
 }
 
 function escapeHtml(str) {
@@ -458,7 +480,7 @@ function renderInfoPage(root, pageId) {
       const formFields = [
         { id: "consent_name", label: "שם:", type: "text", required: true, validation: (val) => val.trim().length > 0, errorMsg: "אנא הזן שם" },
         { id: "consent_id", label: "ת\"ז:", type: "text", required: true, validation: (val) => /^\d{9}$/.test(val.trim()), errorMsg: "אנא הזן ת\"ז תקין (9 ספרות)" },
-        { id: "consent_email", label: "כתובת:", type: "text", required: true, validation: (val) => val.includes("@"), errorMsg: "אנא הזן כתובת תקינה (חייבת להכיל @)" }
+        { id: "consent_email", label: "כתובת / דואר אלקטרוני:", type: "text", required: true, validation: (val) => val.includes("@"), errorMsg: "אנא הזן כתובת תקינה (חייבת להכיל @)" }
       ];
       
       formFields.forEach(field => {
@@ -866,8 +888,8 @@ function renderTrialPage(root) {
   state.currentTrialSelectedRoute = null;
   state.currentTrialIframeContainer = null;
   
-  // Show title and info boxes only in debug mode
-  if (state.debugMode) {
+  // Show title and info boxes only in debug mode AND practice stage (hide in real experiment)
+  if (state.debugMode && state.stage === "practice") {
     let titleText;
     if (state.stage === "practice") {
       titleText = `Trial – Practice #${state.practiceIndex + 1}`;
@@ -999,7 +1021,8 @@ function renderTrialPage(root) {
     confirmBtn.textContent = "המשך";
     confirmBtn.onclick = () => {
       // Use selected route from iframe, or fallback to AI recommended route
-      const userRoute = state.currentTrialSelectedRoute || t.ai_recommended_route;
+      // Convert to Hebrew if needed
+      const userRoute = convertRouteToHebrew(state.currentTrialSelectedRoute) || t.ai_recommended_route;
       const followedAi = userRoute === t.ai_recommended_route;
       const choseOptimal = userRoute === t.correct_route;
       
@@ -1095,70 +1118,77 @@ function renderTrialQuestionsPage(root) {
     fixedQuestionsSection.style.marginTop = "30px";
     
     state.questionsConfig.trial_fixed_questions.forEach((question, idx) => {
-      const questionDiv = document.createElement("div");
-      questionDiv.className = "form-group";
-      questionDiv.style.marginBottom = "25px";
-      
-      const label = document.createElement("label");
-      label.textContent = question.text;
-      label.dir = "rtl";
-      label.style.display = "block";
-      label.style.marginBottom = "10px";
-      label.style.fontWeight = "600";
-      questionDiv.appendChild(label);
-      
-      // Scale labels
-      const scaleLabels = document.createElement("div");
-      scaleLabels.style.display = "flex";
-      scaleLabels.style.justifyContent = "space-between";
-      scaleLabels.style.marginBottom = "8px";
-      scaleLabels.dir = "rtl";
-      
-      const minLabel = document.createElement("span");
-      minLabel.textContent = question.min_label;
-      minLabel.style.fontSize = "12px";
-      minLabel.style.color = "#666";
-      
-      const maxLabel = document.createElement("span");
-      maxLabel.textContent = question.max_label;
-      maxLabel.style.fontSize = "12px";
-      maxLabel.style.color = "#666";
-      
-      scaleLabels.appendChild(maxLabel);
-      scaleLabels.appendChild(minLabel);
-      questionDiv.appendChild(scaleLabels);
-      
-      // Radio buttons 1-7 (numbers below buttons)
-      const radioGroup = document.createElement("div");
-      radioGroup.style.display = "flex";
-      radioGroup.style.gap = "10px";
-      radioGroup.style.justifyContent = "center";
-      
-      for (let i = 1; i <= 7; i++) {
-        const radioWrapper = document.createElement("div");
-        radioWrapper.style.display = "flex";
-        radioWrapper.style.flexDirection = "column";
-        radioWrapper.style.alignItems = "center";
+      let questionDiv;
+      if (question.type === "scale_minus10_10") {
+        questionDiv = createMinus10To10Question(question, `trial_fixed_${question.id}`);
+      } else {
+        // Fallback to old 1-7 scale if type is not specified
+        questionDiv = document.createElement("div");
+        questionDiv.className = "form-group";
+        questionDiv.style.marginBottom = "25px";
         
-        const radio = document.createElement("input");
-        radio.type = "radio";
-        radio.name = `trial_fixed_${question.id}`;
-        radio.value = i;
-        radio.id = `trial_fixed_${question.id}_${i}`;
+        const label = document.createElement("label");
+        label.textContent = question.text;
+        label.dir = "rtl";
+        label.style.display = "block";
+        label.style.marginBottom = "10px";
+        label.style.fontWeight = "600";
+        questionDiv.appendChild(label);
         
-        const radioLabel = document.createElement("label");
-        radioLabel.setAttribute("for", `trial_fixed_${question.id}_${i}`);
-        radioLabel.textContent = i;
-        radioLabel.style.fontSize = "14px";
-        radioLabel.style.marginTop = "4px";
-        radioLabel.style.cursor = "pointer";
+        // Scale labels
+        const scaleLabels = document.createElement("div");
+        scaleLabels.style.display = "flex";
+        scaleLabels.style.justifyContent = "space-between";
+        scaleLabels.style.marginBottom = "8px";
+        scaleLabels.dir = "rtl";
         
-        radioWrapper.appendChild(radio);
-        radioWrapper.appendChild(radioLabel);
-        radioGroup.appendChild(radioWrapper);
+        const minLabel = document.createElement("span");
+        minLabel.textContent = question.min_label;
+        minLabel.style.fontSize = "12px";
+        minLabel.style.color = "#666";
+        
+        const maxLabel = document.createElement("span");
+        maxLabel.textContent = question.max_label;
+        maxLabel.style.fontSize = "12px";
+        maxLabel.style.color = "#666";
+        
+        scaleLabels.appendChild(maxLabel);
+        scaleLabels.appendChild(minLabel);
+        questionDiv.appendChild(scaleLabels);
+        
+        // Radio buttons 1-7 (numbers below buttons)
+        const radioGroup = document.createElement("div");
+        radioGroup.style.display = "flex";
+        radioGroup.style.gap = "10px";
+        radioGroup.style.justifyContent = "center";
+        
+        for (let i = 1; i <= 7; i++) {
+          const radioWrapper = document.createElement("div");
+          radioWrapper.style.display = "flex";
+          radioWrapper.style.flexDirection = "column";
+          radioWrapper.style.alignItems = "center";
+          
+          const radio = document.createElement("input");
+          radio.type = "radio";
+          radio.name = `trial_fixed_${question.id}`;
+          radio.value = i;
+          radio.id = `trial_fixed_${question.id}_${i}`;
+          
+          const radioLabel = document.createElement("label");
+          radioLabel.setAttribute("for", `trial_fixed_${question.id}_${i}`);
+          radioLabel.textContent = i;
+          radioLabel.style.fontSize = "14px";
+          radioLabel.style.marginTop = "4px";
+          radioLabel.style.cursor = "pointer";
+          
+          radioWrapper.appendChild(radio);
+          radioWrapper.appendChild(radioLabel);
+          radioGroup.appendChild(radioWrapper);
+        }
+        
+        questionDiv.appendChild(radioGroup);
       }
       
-      questionDiv.appendChild(radioGroup);
       fixedQuestionsSection.appendChild(questionDiv);
     });
     
@@ -1231,8 +1261,8 @@ function renderTrialQuestionsPage(root) {
         });
       }
       
-      // Show correct answer from schedule (Q1, Q2, Q3) - only in debug mode
-      if (state.debugMode) {
+      // Show correct answer from schedule (Q1, Q2, Q3) - only in debug mode AND practice stage
+      if (state.debugMode && state.stage === "practice") {
         const answerKey = questionKeys[idx];
         if (t.correct_answers && t.correct_answers[answerKey]) {
           const answerLabel = document.createElement("div");
@@ -1287,10 +1317,26 @@ function renderTrialQuestionsPage(root) {
     // Validate fixed questions are answered (skip in debug mode)
     if (!state.debugMode && state.questionsConfig && state.questionsConfig.trial_fixed_questions) {
       for (const question of state.questionsConfig.trial_fixed_questions) {
-        const selected = document.querySelector(`input[name="trial_fixed_${question.id}"]:checked`);
-        if (!selected) {
-          alert(`אנא ענה על השאלה: ${question.text}`);
-          return;
+        if (question.type === "scale_minus10_10") {
+          // For slider-based questions, check hidden input
+          const hiddenInput = document.getElementById(`trial_fixed_${question.id}_value`);
+          // Check if input exists and has a valid numeric value (including "0" which is valid)
+          if (!hiddenInput) {
+            alert(`אנא ענה על השאלה: ${question.text}`);
+            return;
+          }
+          const value = parseInt(hiddenInput.value);
+          if (isNaN(value) || value < -10 || value > 10) {
+            alert(`אנא ענה על השאלה: ${question.text}`);
+            return;
+          }
+        } else {
+          // For radio button questions (1-7 scale)
+          const selected = document.querySelector(`input[name="trial_fixed_${question.id}"]:checked`);
+          if (!selected) {
+            alert(`אנא ענה על השאלה: ${question.text}`);
+            return;
+          }
         }
       }
     }
@@ -1312,11 +1358,23 @@ function renderTrialQuestionsPage(root) {
     const answers = {};
     if (state.questionsConfig && state.questionsConfig.trial_fixed_questions) {
       state.questionsConfig.trial_fixed_questions.forEach(question => {
-        const selected = document.querySelector(`input[name="trial_fixed_${question.id}"]:checked`);
-        if (selected) {
-          answers[question.id] = parseInt(selected.value);
+        if (question.type === "scale_minus10_10") {
+          // For slider-based questions, get value from hidden input
+          const hiddenInput = document.getElementById(`trial_fixed_${question.id}_value`);
+          if (hiddenInput && hiddenInput.value !== "") {
+            answers[question.id] = parseInt(hiddenInput.value);
+          } else {
+            answers[question.id] = state.debugMode ? "DBG" : null;
+          }
         } else {
-          answers[question.id] = state.debugMode ? "DBG" : null;
+          // For radio button questions (1-7 scale)
+          const selected = document.querySelector(`input[name="trial_fixed_${question.id}"]:checked`);
+          if (selected) {
+            const value = parseInt(selected.value);
+            answers[question.id] = value;
+          } else {
+            answers[question.id] = state.debugMode ? "DBG" : null;
+          }
         }
       });
     }
@@ -1387,11 +1445,51 @@ function renderTrialQuestionsPage(root) {
         state.pageType = "scenario_intro";
         render();
       } else {
-        // Finished all trials in this model, go to model summary
-        state.pageType = "model_summary";
+        // Finished all trials in this model, go to model summary workload page
+        state.pageType = "model_summary_workload";
         render();
       }
     }
+  };
+  buttonGroup.appendChild(continueBtn);
+  
+  root.appendChild(buttonGroup);
+}
+
+function renderExperimentTransitionPage(root) {
+  const pageName = "ExperimentTransitionPage";
+  logPageEntry(pageName);
+  
+  root.innerHTML = "";
+  
+  const title = document.createElement("h1");
+  title.className = "page-title";
+  title.textContent = "מעבר לניסוי האמיתי";
+  title.dir = "rtl";
+  root.appendChild(title);
+  
+  const content = document.createElement("div");
+  content.className = "page-content";
+  content.style.marginTop = "30px";
+  content.style.padding = "20px";
+  content.style.background = "#f9f9f9";
+  content.style.borderRadius = "8px";
+  content.style.fontSize = "16px";
+  content.style.lineHeight = "1.8";
+  content.textContent = "סיימת את שלב התרגול. כעת נתחיל בניסוי האמיתי. הניסוי יכלול מספר תנאי ויזואליזציה, ובכל תנאי מספר מודלי בינה מלאכותית. בכל מודל תוצג לך סדרה של תרחישים.";
+  content.dir = "rtl";
+  root.appendChild(content);
+  
+  const buttonGroup = document.createElement("div");
+  buttonGroup.className = "button-group";
+  buttonGroup.style.marginTop = "30px";
+  
+  const continueBtn = document.createElement("button");
+  continueBtn.textContent = "המשך לניסוי";
+  continueBtn.onclick = () => {
+    logPageExit(pageName);
+    state.pageType = "info";
+    render();
   };
   buttonGroup.appendChild(continueBtn);
   
@@ -1519,10 +1617,10 @@ function renderModelIntroPage(root) {
   root.appendChild(buttonGroup);
 }
 
-function renderModelSummaryPage(root) {
+function renderModelSummaryWorkloadPage(root) {
   const cond = state.schedule.conditions[state.conditionIndex];
   const model = cond.models[state.modelIndex];
-  const pageName = `ModelSummaryPage_C${state.conditionIndex}_M${state.modelIndex}`;
+  const pageName = `ModelSummaryWorkloadPage_C${state.conditionIndex}_M${state.modelIndex}`;
   logPageEntry(pageName, {
     condition_index: state.conditionIndex,
     model_tag: model.tag
@@ -1532,7 +1630,7 @@ function renderModelSummaryPage(root) {
   
   const title = document.createElement("h1");
   title.className = "page-title";
-  title.textContent = `שאלון מסכם מודל – תנאי ${state.conditionIndex + 1} מודל ${model.tag}`;
+  title.textContent = `שאלון מסכם מודל – שאלות עומס – תנאי ${state.conditionIndex + 1} מודל ${model.tag}`;
   title.dir = "rtl";
   root.appendChild(title);
   
@@ -1540,12 +1638,6 @@ function renderModelSummaryPage(root) {
   if (state.questionsConfig && state.questionsConfig.model_summary_questions) {
     const workloadSection = document.createElement("div");
     workloadSection.style.marginTop = "20px";
-    
-    const workloadTitle = document.createElement("h3");
-    workloadTitle.textContent = "שאלות עומס";
-    workloadTitle.dir = "rtl";
-    workloadTitle.style.marginBottom = "20px";
-    workloadSection.appendChild(workloadTitle);
     
     if (state.questionsConfig.model_summary_questions.workload) {
       state.questionsConfig.model_summary_questions.workload.forEach((question, idx) => {
@@ -1561,25 +1653,6 @@ function renderModelSummaryPage(root) {
     }
     
     root.appendChild(workloadSection);
-    
-    // Render trust questions
-    const trustSection = document.createElement("div");
-    trustSection.style.marginTop = "40px";
-    
-    const trustTitle = document.createElement("h3");
-    trustTitle.textContent = "שאלות אמון";
-    trustTitle.dir = "rtl";
-    trustTitle.style.marginBottom = "20px";
-    trustSection.appendChild(trustTitle);
-    
-    if (state.questionsConfig.model_summary_questions.trust) {
-      state.questionsConfig.model_summary_questions.trust.forEach((question, idx) => {
-        const questionDiv = createLikertQuestion(question, `model_trust_${question.id}`);
-        trustSection.appendChild(questionDiv);
-      });
-    }
-    
-    root.appendChild(trustSection);
   }
   
   const buttonGroup = document.createElement("div");
@@ -1593,14 +1666,219 @@ function renderModelSummaryPage(root) {
       // Validate workload questions
       if (state.questionsConfig.model_summary_questions.workload) {
         for (const question of state.questionsConfig.model_summary_questions.workload) {
-          const selected = document.querySelector(`input[name="model_workload_${question.id}"]:checked`);
-          if (!selected) {
+          // For slider-based questions, check hidden input
+          const hiddenInput = document.getElementById(`model_workload_${question.id}_value`);
+          // Check if input exists and has a valid numeric value (including "0" which is valid)
+          if (!hiddenInput) {
+            alert(`אנא ענה על השאלה: ${question.text}`);
+            return;
+          }
+          const value = parseInt(hiddenInput.value);
+          if (isNaN(value) || value < -10 || value > 10) {
             alert(`אנא ענה על השאלה: ${question.text}`);
             return;
           }
         }
       }
+    }
+    
+    // Collect workload answers and store temporarily
+    const workloadAnswers = {};
+    if (state.questionsConfig && state.questionsConfig.model_summary_questions) {
+      if (state.questionsConfig.model_summary_questions.workload) {
+        state.questionsConfig.model_summary_questions.workload.forEach(question => {
+          // For slider-based questions, get value from hidden input
+          const hiddenInput = document.getElementById(`model_workload_${question.id}_value`);
+          if (hiddenInput && hiddenInput.value !== "") {
+            workloadAnswers[question.id] = parseInt(hiddenInput.value);
+          } else {
+            // Fallback: try radio button (for backward compatibility)
+            const selected = document.querySelector(`input[name="model_workload_${question.id}"]:checked`);
+            workloadAnswers[question.id] = selected ? parseInt(selected.value) : (state.debugMode ? "DBG" : null);
+          }
+        });
+      }
+    }
+    
+    // Store workload answers temporarily
+    state.tempWorkloadAnswers = workloadAnswers;
+    
+    logPageExit(pageName);
+    
+    // Navigate to trust questions page
+    state.pageType = "model_summary_trust";
+    render();
+  };
+  buttonGroup.appendChild(continueBtn);
+  
+  root.appendChild(buttonGroup);
+}
+
+function renderModelSummaryTrustPage(root) {
+  const cond = state.schedule.conditions[state.conditionIndex];
+  const model = cond.models[state.modelIndex];
+  const pageName = `ModelSummaryTrustPage_C${state.conditionIndex}_M${state.modelIndex}`;
+  logPageEntry(pageName, {
+    condition_index: state.conditionIndex,
+    model_tag: model.tag
+  });
+  
+  root.innerHTML = "";
+  
+  const title = document.createElement("h1");
+  title.className = "page-title";
+  title.textContent = `שאלון מסכם מודל – שאלות אמון – תנאי ${state.conditionIndex + 1} מודל ${model.tag}`;
+  title.dir = "rtl";
+  root.appendChild(title);
+  
+  // Render trust questions in table format
+  if (state.questionsConfig && state.questionsConfig.model_summary_questions && state.questionsConfig.model_summary_questions.trust) {
+    const trustSection = document.createElement("div");
+    trustSection.style.marginTop = "30px";
+    trustSection.dir = "rtl";
+    
+    // Create table
+    const table = document.createElement("table");
+    table.style.width = "100%";
+    table.style.borderCollapse = "collapse";
+    table.style.marginTop = "20px";
+    table.style.fontSize = "14px";
+    
+    // Scale labels row above header (aligned with specific columns)
+    const labelsRow = document.createElement("tr");
+    labelsRow.style.borderBottom = "none";
+    
+    // Empty cell for question column
+    const emptyQuestionCell = document.createElement("td");
+    emptyQuestionCell.style.padding = "8px 12px";
+    emptyQuestionCell.style.width = "40%";
+    emptyQuestionCell.style.borderRight = "1px solid transparent";
+    labelsRow.appendChild(emptyQuestionCell);
+    
+    // Create cells for each scale column (1-7)
+    for (let i = 1; i <= 7; i++) {
+      const labelCell = document.createElement("td");
+      labelCell.style.padding = "8px 8px";
+      labelCell.style.textAlign = "center";
+      labelCell.style.width = `${60 / 7}%`;
+      labelCell.style.borderRight = i < 7 ? "1px solid transparent" : "none";
+      labelCell.style.fontSize = "13px";
+      labelCell.style.fontWeight = "500";
+      labelCell.style.color = "#666";
       
+      // Add labels to specific columns
+      if (i === 1) {
+        labelCell.textContent = "מתנגד מאוד";
+      } else if (i === 4) {
+        labelCell.textContent = "ניטרלי/ת";
+      } else if (i === 7) {
+        labelCell.textContent = "מסכים/ה מאוד";
+      }
+      // Empty cells for columns 2, 3, 5, 6
+      
+      labelsRow.appendChild(labelCell);
+    }
+    
+    // Create a thead for labels
+    const labelsThead = document.createElement("thead");
+    labelsThead.appendChild(labelsRow);
+    table.appendChild(labelsThead);
+    
+    // Table header with scale numbers only
+    const thead = document.createElement("thead");
+    const headerRow = document.createElement("tr");
+    headerRow.style.backgroundColor = "#f5f5f5";
+    headerRow.style.borderBottom = "2px solid #ddd";
+    
+    // Question column header
+    const questionHeader = document.createElement("th");
+    questionHeader.textContent = "שאלה";
+    questionHeader.style.padding = "12px";
+    questionHeader.style.textAlign = "right";
+    questionHeader.style.fontWeight = "600";
+    questionHeader.style.width = "40%";
+    questionHeader.style.borderRight = "1px solid #ddd";
+    headerRow.appendChild(questionHeader);
+    
+    // Scale headers (1-7 numbers only, equal width)
+    for (let i = 1; i <= 7; i++) {
+      const scaleHeader = document.createElement("th");
+      scaleHeader.textContent = i;
+      scaleHeader.style.padding = "12px 8px";
+      scaleHeader.style.textAlign = "center";
+      scaleHeader.style.fontWeight = "700";
+      scaleHeader.style.fontSize = "16px";
+      scaleHeader.style.width = `${60 / 7}%`; // Equal width for all scale columns
+      scaleHeader.style.borderRight = i < 7 ? "1px solid #ddd" : "none";
+      headerRow.appendChild(scaleHeader);
+    }
+    
+    thead.appendChild(headerRow);
+    table.appendChild(thead);
+    
+    // Table body with questions
+    const tbody = document.createElement("tbody");
+    
+    state.questionsConfig.model_summary_questions.trust.forEach((question, idx) => {
+      const row = document.createElement("tr");
+      row.style.borderBottom = "1px solid #e0e0e0";
+      
+      // Question text cell
+      const questionCell = document.createElement("td");
+      questionCell.textContent = question.text;
+      questionCell.style.padding = "12px";
+      questionCell.style.textAlign = "right";
+      questionCell.style.fontWeight = "500";
+      questionCell.style.borderRight = "1px solid #ddd";
+      questionCell.style.verticalAlign = "middle";
+      row.appendChild(questionCell);
+      
+      // Radio buttons for each scale point (no numbers below)
+      for (let i = 1; i <= 7; i++) {
+        const radioCell = document.createElement("td");
+        radioCell.style.padding = "12px 8px";
+        radioCell.style.textAlign = "center";
+        radioCell.style.borderRight = i < 7 ? "1px solid #ddd" : "none";
+        radioCell.style.verticalAlign = "middle";
+        
+        const radio = document.createElement("input");
+        radio.type = "radio";
+        radio.name = `model_trust_${question.id}`;
+        radio.value = i;
+        radio.id = `model_trust_${question.id}_${i}`;
+        radio.required = !state.debugMode;
+        radio.style.cursor = "pointer";
+        radio.style.width = "20px";
+        radio.style.height = "20px";
+        
+        const radioLabel = document.createElement("label");
+        radioLabel.setAttribute("for", `model_trust_${question.id}_${i}`);
+        radioLabel.style.cursor = "pointer";
+        radioLabel.style.display = "block";
+        radioLabel.style.width = "100%";
+        radioLabel.style.height = "100%";
+        
+        radioCell.appendChild(radio);
+        radioCell.appendChild(radioLabel);
+        row.appendChild(radioCell);
+      }
+      
+      tbody.appendChild(row);
+    });
+    
+    table.appendChild(tbody);
+    trustSection.appendChild(table);
+    root.appendChild(trustSection);
+  }
+  
+  const buttonGroup = document.createElement("div");
+  buttonGroup.className = "button-group";
+  
+  const continueBtn = document.createElement("button");
+  continueBtn.textContent = "המשך";
+  continueBtn.onclick = () => {
+    // Validate answers (skip in debug mode)
+    if (!state.debugMode && state.questionsConfig && state.questionsConfig.model_summary_questions) {
       // Validate trust questions
       if (state.questionsConfig.model_summary_questions.trust) {
         for (const question of state.questionsConfig.model_summary_questions.trust) {
@@ -1613,29 +1891,22 @@ function renderModelSummaryPage(root) {
       }
     }
     
-    // Collect all answers
-    const answers = {
-      workload: {},
-      trust: {}
-    };
-    
+    // Collect trust answers
+    const trustAnswers = {};
     if (state.questionsConfig && state.questionsConfig.model_summary_questions) {
-      // Collect workload answers
-      if (state.questionsConfig.model_summary_questions.workload) {
-        state.questionsConfig.model_summary_questions.workload.forEach(question => {
-          const selected = document.querySelector(`input[name="model_workload_${question.id}"]:checked`);
-          answers.workload[question.id] = selected ? parseInt(selected.value) : (state.debugMode ? "DBG" : null);
-        });
-      }
-      
-      // Collect trust answers
       if (state.questionsConfig.model_summary_questions.trust) {
         state.questionsConfig.model_summary_questions.trust.forEach(question => {
           const selected = document.querySelector(`input[name="model_trust_${question.id}"]:checked`);
-          answers.trust[question.id] = selected ? parseInt(selected.value) : (state.debugMode ? "DBG" : null);
+          trustAnswers[question.id] = selected ? parseInt(selected.value) : (state.debugMode ? "DBG" : null);
         });
       }
     }
+    
+    // Combine workload and trust answers
+    const answers = {
+      workload: state.tempWorkloadAnswers || {},
+      trust: trustAnswers
+    };
     
     logPageExit(pageName);
     
@@ -1654,7 +1925,11 @@ function renderModelSummaryPage(root) {
       exit_ts: Date.now()
     });
     
+    // Clear temporary workload answers
+    state.tempWorkloadAnswers = null;
+    
     // Navigate to next model or condition
+    const cond = state.schedule.conditions[state.conditionIndex];
     if (state.modelIndex < cond.models.length - 1) {
       state.modelIndex++;
       state.pageType = "model_intro";
@@ -1668,6 +1943,11 @@ function renderModelSummaryPage(root) {
   buttonGroup.appendChild(continueBtn);
   
   root.appendChild(buttonGroup);
+}
+
+// Keep old function name for backward compatibility, redirect to workload page
+function renderModelSummaryPage(root) {
+  renderModelSummaryWorkloadPage(root);
 }
 
 function createLikertQuestion(question, namePrefix) {
@@ -1799,78 +2079,255 @@ function createMinus10To10Question(question, namePrefix) {
   // Scale container with labels
   const scaleContainer = document.createElement("div");
   scaleContainer.style.position = "relative";
-  scaleContainer.style.marginTop = "10px";
-  scaleContainer.style.paddingTop = "40px"; // Space for labels
+  scaleContainer.style.marginTop = "20px";
+  scaleContainer.style.paddingTop = "50px"; // Space for labels and slider
   
-  // Labels row - positioned to align with the scale endpoints
+  // Labels row - positioned at the edges
   const labelsRow = document.createElement("div");
   labelsRow.style.display = "flex";
   labelsRow.style.justifyContent = "space-between";
-  labelsRow.style.marginBottom = "10px";
-  labelsRow.style.padding = "0";
+  labelsRow.style.marginBottom = "15px";
+  labelsRow.style.padding = "0 5px";
   labelsRow.style.position = "relative";
   labelsRow.dir = "rtl";
   
-  // Calculate approximate positions for labels to align with -10 and 10 radio buttons
-  // The radio buttons are centered, so we need to position labels at the edges
   const minLabel = document.createElement("span");
   minLabel.textContent = question.min_label || "";
   minLabel.style.fontSize = "13px";
   minLabel.style.color = "#666";
   minLabel.style.fontWeight = "500";
-  minLabel.style.position = "absolute";
-  minLabel.style.right = "0"; // RTL: right side aligns with -10
   
   const maxLabel = document.createElement("span");
   maxLabel.textContent = question.max_label || "";
   maxLabel.style.fontSize = "13px";
   maxLabel.style.color = "#666";
   maxLabel.style.fontWeight = "500";
-  maxLabel.style.position = "absolute";
-  maxLabel.style.left = "0"; // RTL: left side aligns with 10
   
   labelsRow.appendChild(maxLabel);
   labelsRow.appendChild(minLabel);
   scaleContainer.appendChild(labelsRow);
   
-  // Radio buttons -10 to 10
-  const radioGroup = document.createElement("div");
-  radioGroup.style.display = "flex";
-  radioGroup.style.gap = "4px";
-  radioGroup.style.justifyContent = "center";
-  radioGroup.style.flexWrap = "wrap";
-  radioGroup.style.maxWidth = "100%";
+  // Slider container
+  const sliderContainer = document.createElement("div");
+  sliderContainer.style.position = "relative";
+  sliderContainer.style.width = "100%";
+  sliderContainer.style.padding = "20px 40px";
+  sliderContainer.style.boxSizing = "border-box";
+  sliderContainer.dir = "ltr"; // Slider works in LTR for easier calculation
   
-  for (let i = -10; i <= 10; i++) {
-    const radioWrapper = document.createElement("div");
-    radioWrapper.style.display = "flex";
-    radioWrapper.style.flexDirection = "column";
-    radioWrapper.style.alignItems = "center";
-    radioWrapper.style.minWidth = "28px";
-    
-    const radio = document.createElement("input");
-    radio.type = "radio";
-    radio.name = namePrefix;
-    radio.value = i;
-    radio.id = `${namePrefix}_${i}`;
-    radio.required = !state.debugMode;
-    
-    const radioLabel = document.createElement("label");
-    radioLabel.setAttribute("for", `${namePrefix}_${i}`);
-    radioLabel.textContent = i;
-    radioLabel.style.fontSize = "11px";
-    radioLabel.style.marginTop = "3px";
-    radioLabel.style.cursor = "pointer";
-    radioLabel.style.minWidth = "20px";
-    radioLabel.style.textAlign = "center";
-    
-    radioWrapper.appendChild(radio);
-    radioWrapper.appendChild(radioLabel);
-    radioGroup.appendChild(radioWrapper);
+  // Slider track
+  const sliderTrack = document.createElement("div");
+  sliderTrack.style.position = "relative";
+  sliderTrack.style.width = "100%";
+  sliderTrack.style.height = "8px";
+  sliderTrack.style.backgroundColor = "#e0e0e0";
+  sliderTrack.style.borderRadius = "4px";
+  sliderTrack.style.cursor = "pointer";
+  sliderTrack.style.marginTop = "10px";
+  
+  // Center separator line (at 0)
+  const centerSeparator = document.createElement("div");
+  centerSeparator.style.position = "absolute";
+  centerSeparator.style.left = "50%";
+  centerSeparator.style.top = "-10px";
+  centerSeparator.style.width = "2px";
+  centerSeparator.style.height = "28px";
+  centerSeparator.style.backgroundColor = "#999";
+  centerSeparator.style.transform = "translateX(-50%)";
+  sliderTrack.appendChild(centerSeparator);
+  
+  // Tick marks container
+  const tickMarksContainer = document.createElement("div");
+  tickMarksContainer.style.position = "absolute";
+  tickMarksContainer.style.top = "8px";
+  tickMarksContainer.style.left = "0";
+  tickMarksContainer.style.width = "100%";
+  tickMarksContainer.style.height = "12px";
+  
+  // Create 21 tick marks (for -10 to 10)
+  for (let i = 0; i <= 20; i++) {
+    const tick = document.createElement("div");
+    tick.style.position = "absolute";
+    tick.style.left = `${(i / 20) * 100}%`;
+    tick.style.width = "1px";
+    tick.style.height = "8px";
+    tick.style.backgroundColor = "#999";
+    tick.style.transform = "translateX(-50%)";
+    tickMarksContainer.appendChild(tick);
   }
+  sliderTrack.appendChild(tickMarksContainer);
   
-  scaleContainer.appendChild(radioGroup);
+  // Hidden input to store the value
+  const hiddenInput = document.createElement("input");
+  hiddenInput.type = "hidden";
+  hiddenInput.name = namePrefix;
+  hiddenInput.id = `${namePrefix}_value`;
+  hiddenInput.value = "0"; // Default to 0
+  hiddenInput.required = !state.debugMode;
+  
+  // Slider handle
+  const sliderHandle = document.createElement("div");
+  sliderHandle.style.position = "absolute";
+  sliderHandle.style.top = "50%";
+  sliderHandle.style.left = "50%";
+  sliderHandle.style.width = "28px";
+  sliderHandle.style.height = "28px";
+  sliderHandle.style.backgroundColor = "#9E9E9E"; // Default grey (neutral/zero)
+  sliderHandle.style.borderRadius = "50%";
+  sliderHandle.style.border = "2px solid #fff";
+  sliderHandle.style.boxShadow = "0 2px 6px rgba(0,0,0,0.3)";
+  sliderHandle.style.cursor = "grab";
+  sliderHandle.style.transform = "translate(-50%, -50%)";
+  sliderHandle.style.zIndex = "10";
+  sliderHandle.style.transition = "background-color 0.2s";
+  sliderHandle.style.userSelect = "none";
+  
+  // Add texture/dots pattern to handle (light blue dots on grey background)
+  sliderHandle.style.backgroundImage = "radial-gradient(circle, rgba(173,216,230,0.4) 1.5px, transparent 1.5px)";
+  sliderHandle.style.backgroundSize = "5px 5px";
+  
+  // Navigation buttons
+  const leftButton = document.createElement("button");
+  leftButton.type = "button";
+  leftButton.innerHTML = "◀";
+  leftButton.style.position = "absolute";
+  leftButton.style.left = "0";
+  leftButton.style.top = "50%";
+  leftButton.style.transform = "translateY(-50%)";
+  leftButton.style.width = "30px";
+  leftButton.style.height = "30px";
+  leftButton.style.border = "1px solid #ccc";
+  leftButton.style.borderRadius = "4px";
+  leftButton.style.backgroundColor = "#fff";
+  leftButton.style.cursor = "pointer";
+  leftButton.style.fontSize = "12px";
+  leftButton.style.display = "flex";
+  leftButton.style.alignItems = "center";
+  leftButton.style.justifyContent = "center";
+  leftButton.style.padding = "0";
+  
+  const rightButton = document.createElement("button");
+  rightButton.type = "button";
+  rightButton.innerHTML = "▶";
+  rightButton.style.position = "absolute";
+  rightButton.style.right = "0";
+  rightButton.style.top = "50%";
+  rightButton.style.transform = "translateY(-50%)";
+  rightButton.style.width = "30px";
+  rightButton.style.height = "30px";
+  rightButton.style.border = "1px solid #ccc";
+  rightButton.style.borderRadius = "4px";
+  rightButton.style.backgroundColor = "#fff";
+  rightButton.style.cursor = "pointer";
+  rightButton.style.fontSize = "12px";
+  rightButton.style.display = "flex";
+  rightButton.style.alignItems = "center";
+  rightButton.style.justifyContent = "center";
+  rightButton.style.padding = "0";
+  
+  // Function to update slider position and value
+  const updateSlider = (value) => {
+    // Clamp value between -10 and 10
+    value = Math.max(-10, Math.min(10, Math.round(value)));
+    
+    // Update hidden input
+    hiddenInput.value = value.toString();
+    
+    // Update handle position (0% = -10, 50% = 0, 100% = 10)
+    const percentage = ((value + 10) / 20) * 100;
+    sliderHandle.style.left = `${percentage}%`;
+    
+    // Update handle color based on value
+    if (value < 0) {
+      sliderHandle.style.backgroundColor = "#f44336"; // Red for negative
+    } else if (value > 0) {
+      sliderHandle.style.backgroundColor = "#4CAF50"; // Green for positive
+    } else {
+      sliderHandle.style.backgroundColor = "#9E9E9E"; // Grey for zero
+    }
+  };
+  
+  // Handle drag functionality (mouse and touch)
+  let isDragging = false;
+  
+  const getValueFromEvent = (e) => {
+    const rect = sliderTrack.getBoundingClientRect();
+    const clientX = e.clientX !== undefined ? e.clientX : (e.touches && e.touches[0] ? e.touches[0].clientX : e.changedTouches[0].clientX);
+    const x = clientX - rect.left;
+    const percentage = Math.max(0, Math.min(100, (x / rect.width) * 100));
+    return Math.round((percentage / 100) * 20 - 10);
+  };
+  
+  const handleMove = (e) => {
+    if (!isDragging) return;
+    e.preventDefault();
+    const value = getValueFromEvent(e);
+    updateSlider(value);
+  };
+  
+  const handleEnd = () => {
+    isDragging = false;
+    sliderHandle.style.cursor = "grab";
+    document.removeEventListener("mousemove", handleMove);
+    document.removeEventListener("mouseup", handleEnd);
+    document.removeEventListener("touchmove", handleMove);
+    document.removeEventListener("touchend", handleEnd);
+  };
+  
+  // Mouse events
+  sliderHandle.addEventListener("mousedown", (e) => {
+    isDragging = true;
+    sliderHandle.style.cursor = "grabbing";
+    e.preventDefault();
+    document.addEventListener("mousemove", handleMove);
+    document.addEventListener("mouseup", handleEnd);
+  });
+  
+  // Touch events for mobile
+  sliderHandle.addEventListener("touchstart", (e) => {
+    isDragging = true;
+    e.preventDefault();
+    document.addEventListener("touchmove", handleMove, { passive: false });
+    document.addEventListener("touchend", handleEnd);
+  });
+  
+  // Click on track to move handle
+  sliderTrack.addEventListener("click", (e) => {
+    const value = getValueFromEvent(e);
+    updateSlider(value);
+  });
+  
+  // Touch on track for mobile
+  sliderTrack.addEventListener("touchstart", (e) => {
+    e.preventDefault();
+    const value = getValueFromEvent(e);
+    updateSlider(value);
+  });
+  
+  // Navigation buttons
+  leftButton.addEventListener("click", () => {
+    const currentValue = parseInt(hiddenInput.value) || 0;
+    updateSlider(currentValue - 1);
+  });
+  
+  rightButton.addEventListener("click", () => {
+    const currentValue = parseInt(hiddenInput.value) || 0;
+    updateSlider(currentValue + 1);
+  });
+  
+  // Initialize slider at 0
+  updateSlider(0);
+  
+  // Assemble slider
+  sliderContainer.appendChild(leftButton);
+  sliderContainer.appendChild(sliderTrack);
+  sliderContainer.appendChild(rightButton);
+  sliderTrack.appendChild(sliderHandle);
+  
+  scaleContainer.appendChild(hiddenInput);
+  scaleContainer.appendChild(sliderContainer);
   questionDiv.appendChild(scaleContainer);
+  
   return questionDiv;
 }
 
@@ -2387,43 +2844,61 @@ function renderDemographicsPage(root) {
       const scaleContainer = document.createElement("div");
       scaleContainer.style.position = "relative";
       scaleContainer.style.marginTop = isLastThreeQuestions ? "10px" : "0";
+      scaleContainer.dir = "ltr"; // Use LTR for proper 1-7 order
       
-      // Add labels row above the scale if it's one of the last 3 questions
-      if (isLastThreeQuestions) {
-        const labelsRow = document.createElement("div");
-        labelsRow.style.display = "flex";
-        labelsRow.style.justifyContent = "space-between";
-        labelsRow.style.width = "100%";
-        labelsRow.style.marginBottom = "10px";
-        labelsRow.style.padding = "0 10px";
-        labelsRow.dir = "rtl";
-        
-        const minLabel = document.createElement("span");
-        minLabel.style.fontSize = "12px";
-        minLabel.style.color = "#666";
-        minLabel.textContent = "כמעט אף פעם";
-        labelsRow.appendChild(minLabel);
-        
-        const maxLabel = document.createElement("span");
-        maxLabel.style.fontSize = "12px";
-        maxLabel.style.color = "#666";
-        maxLabel.textContent = "כל יום";
-        labelsRow.appendChild(maxLabel);
-        
-        scaleContainer.appendChild(labelsRow);
-      }
-      
+      // Create radio group container
       const radioGroup = document.createElement("div");
       radioGroup.style.display = "flex";
       radioGroup.style.gap = "10px";
       radioGroup.style.justifyContent = "center";
       radioGroup.style.alignItems = "flex-start";
+      radioGroup.style.position = "relative";
+      radioGroup.style.width = "100%";
+      radioGroup.style.marginBottom = isLastThreeQuestions ? "0" : "0";
       
+      // Add labels row above the scale if it's one of the last 3 questions
+      // Use the same structure as radio group for alignment
+      if (isLastThreeQuestions) {
+        const labelsRow = document.createElement("div");
+        labelsRow.style.display = "flex";
+        labelsRow.style.gap = "10px";
+        labelsRow.style.justifyContent = "center";
+        labelsRow.style.width = "100%";
+        labelsRow.style.marginBottom = "10px";
+        labelsRow.style.position = "relative";
+        
+        // Create cells matching radio group structure
+        for (let i = 1; i <= 7; i++) {
+          const labelCell = document.createElement("div");
+          labelCell.style.flex = "0 0 auto";
+          labelCell.style.minWidth = "40px";
+          labelCell.style.textAlign = "center";
+          labelCell.style.fontSize = "12px";
+          labelCell.style.color = "#666";
+          labelCell.style.fontWeight = "500";
+          
+          // Add labels to specific columns
+          if (i === 1) {
+            labelCell.textContent = "כמעט אף פעם";
+          } else if (i === 7) {
+            labelCell.textContent = "כל יום";
+          }
+          // Empty cells for columns 2-6
+          
+          labelsRow.appendChild(labelCell);
+        }
+        
+        scaleContainer.appendChild(labelsRow);
+      }
+      
+      // Create radio buttons in order 1-7 (not reversed)
       for (let i = 1; i <= 7; i++) {
         const radioWrapper = document.createElement("div");
         radioWrapper.style.display = "flex";
         radioWrapper.style.flexDirection = "column";
         radioWrapper.style.alignItems = "center";
+        radioWrapper.style.flex = "0 0 auto";
+        radioWrapper.style.minWidth = "40px";
         
         const radio = document.createElement("input");
         radio.type = "radio";
@@ -2431,6 +2906,9 @@ function renderDemographicsPage(root) {
         radio.value = i;
         radio.id = `demo_${question.id}_${i}`;
         radio.required = !state.debugMode;
+        radio.style.cursor = "pointer";
+        radio.style.width = "20px";
+        radio.style.height = "20px";
         
         const radioLabel = document.createElement("label");
         radioLabel.setAttribute("for", `demo_${question.id}_${i}`);
@@ -2585,7 +3063,9 @@ function render() {
       renderTrialQuestionsPage(root);
     }
   } else if (state.stage === "experiment") {
-    if (state.pageType === "info") {
+    if (state.pageType === "experiment_transition") {
+      renderExperimentTransitionPage(root);
+    } else if (state.pageType === "info") {
       renderConditionIntroPage(root);
     } else if (state.pageType === "model_intro") {
       renderModelIntroPage(root);
@@ -2595,8 +3075,10 @@ function render() {
       renderTrialPage(root);
     } else if (state.pageType === "trial_questions") {
       renderTrialQuestionsPage(root);
-    } else if (state.pageType === "model_summary") {
-      renderModelSummaryPage(root);
+    } else if (state.pageType === "model_summary" || state.pageType === "model_summary_workload") {
+      renderModelSummaryWorkloadPage(root);
+    } else if (state.pageType === "model_summary_trust") {
+      renderModelSummaryTrustPage(root);
     } else if (state.pageType === "visualization_condition") {
       renderVisualizationConditionPage(root);
     }
@@ -2615,14 +3097,15 @@ function render() {
 window.addEventListener("message", (event) => {
   // Listen for route selection from scenario iframes
   if (event.data && event.data.type === "scenario_route_selected") {
-    state.currentTrialSelectedRoute = event.data.route;
-    console.log("Route selected from scenario:", event.data.route, "for scenario:", event.data.scenarioName);
+    // Convert English route to Hebrew before storing
+    state.currentTrialSelectedRoute = convertRouteToHebrew(event.data.route);
+    console.log("Route selected from scenario:", event.data.route, "converted to:", state.currentTrialSelectedRoute, "for scenario:", event.data.scenarioName);
     
     // Automatically navigate to next page after confirmation
     const t = getCurrentTrial();
     if (t && state.pageType === "trial") {
-      // Use selected route from iframe
-      const userRoute = event.data.route || t.ai_recommended_route;
+      // Use selected route from iframe (already converted to Hebrew)
+      const userRoute = convertRouteToHebrew(event.data.route) || t.ai_recommended_route;
       const followedAi = userRoute === t.ai_recommended_route;
       const choseOptimal = userRoute === t.correct_route;
       
@@ -2688,7 +3171,7 @@ function forceSkipToNextPage() {
       
       // Log trial with default/DBG values
       const trialKey = getCurrentTrialKey();
-      const userRoute = state.currentTrialSelectedRoute || t.ai_recommended_route || "DBG";
+      const userRoute = convertRouteToHebrew(state.currentTrialSelectedRoute) || t.ai_recommended_route || "DBG";
       const trialLog = {
         trial_id: trialKey,
         participant_id: state.participantId,
@@ -2814,9 +3297,9 @@ function navigateToNextPage() {
         state.pageType = "scenario_intro";
         render();
       } else {
-        // Finished practice, go to experiment
+        // Finished practice, go to experiment transition page
         state.stage = "experiment";
-        state.pageType = "info";
+        state.pageType = "experiment_transition";
         state.conditionIndex = 0;
         state.modelIndex = 0;
         state.trialIndex = 0;
@@ -2901,27 +3384,23 @@ function navigateToNextPage() {
         state.pageType = "model_intro";
         render();
       } else {
-        // Finished this condition, go to model summary
-        state.pageType = "model_summary";
+        // Finished this condition, go to model summary workload page
+        state.pageType = "model_summary_workload";
         render();
       }
-    } else if (state.pageType === "model_summary") {
-      // Log questionnaire for model summary
-      const condSummary = state.schedule.conditions[state.conditionIndex];
-      const modelSummary = condSummary.models[state.modelIndex];
-      
+    } else if (state.pageType === "model_summary_workload") {
+      // Workload page -> trust page
+      state.pageType = "model_summary_trust";
+      render();
+    } else if (state.pageType === "model_summary_trust") {
+      // Trust page -> next model or visualization condition
       // Collect debug answers for workload and trust questions
       const debugAnswers = {
-        workload: {},
+        workload: state.tempWorkloadAnswers || {},
         trust: {}
       };
       
       if (state.questionsConfig && state.questionsConfig.model_summary_questions) {
-        if (state.questionsConfig.model_summary_questions.workload) {
-          state.questionsConfig.model_summary_questions.workload.forEach(q => {
-            debugAnswers.workload[q.id] = "DBG";
-          });
-        }
         if (state.questionsConfig.model_summary_questions.trust) {
           state.questionsConfig.model_summary_questions.trust.forEach(q => {
             debugAnswers.trust[q.id] = "DBG";
@@ -2943,6 +3422,8 @@ function navigateToNextPage() {
         exit_ts: Date.now()
       });
       
+      state.tempWorkloadAnswers = null;
+      
       // Model summary -> next model or visualization condition
       const cond = state.schedule.conditions[state.conditionIndex];
       if (state.modelIndex < cond.models.length - 1) {
@@ -2956,6 +3437,10 @@ function navigateToNextPage() {
         state.pageType = "visualization_condition";
         render();
       }
+    } else if (state.pageType === "model_summary") {
+      // Legacy: redirect to workload page
+      state.pageType = "model_summary_workload";
+      render();
     } else if (state.pageType === "visualization_condition") {
       // Log questionnaire for visualization condition
       state.logs.questionnaires.push({

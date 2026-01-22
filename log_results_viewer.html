@@ -517,11 +517,28 @@
       const stats = calculateStatistics(logData);
       const questionStats = calculateQuestionStatistics(logData.questionnaires || []);
       
+      // Extract participant details from consent form
+      const consentData = extractConsentData(logData.interactions || []);
+      
       // Participant Header
       const header = document.createElement('div');
       header.className = 'participant-header';
-      header.innerHTML = `
-        <h2>Participant: ${escapeHtml(participantId)}</h2>
+      
+      let participantDetailsHtml = `<h2>Participant: ${escapeHtml(participantId)}</h2>`;
+      if (consentData) {
+        participantDetailsHtml += `
+          <div style="margin-top: 15px; padding: 15px; background: white; border-radius: 6px; margin-bottom: 20px;">
+            <h3 style="margin-top: 0; color: #0d47a1; font-size: 16px;">Participant Details</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+              <div><strong>Name:</strong> ${escapeHtml(consentData.name || 'N/A')}</div>
+              <div><strong>ID Number:</strong> ${escapeHtml(consentData.id_number || 'N/A')}</div>
+              <div><strong>Email:</strong> ${escapeHtml(consentData.email || 'N/A')}</div>
+            </div>
+          </div>
+        `;
+      }
+      
+      participantDetailsHtml += `
         <div class="stats-grid">
           <div class="stat-card">
             <div class="stat-label">Total Trials</div>
@@ -545,7 +562,39 @@
           </div>
         </div>
       `;
+      header.innerHTML = participantDetailsHtml;
       wrapper.appendChild(header);
+      
+      // Demographics Section
+      const demographicsData = extractDemographicsData(logData.questionnaires || []);
+      if (demographicsData) {
+        const demographicsSection = document.createElement('div');
+        demographicsSection.className = 'section';
+        demographicsSection.innerHTML = '<h2>Demographics</h2>';
+        
+        const demographicsCard = document.createElement('div');
+        demographicsCard.className = 'performance-card';
+        demographicsCard.style.marginTop = '15px';
+        
+        const demographicsGrid = document.createElement('div');
+        demographicsGrid.style.display = 'grid';
+        demographicsGrid.style.gridTemplateColumns = 'repeat(auto-fit, minmax(250px, 1fr))';
+        demographicsGrid.style.gap = '15px';
+        
+        Object.entries(demographicsData).forEach(([key, value]) => {
+          const item = document.createElement('div');
+          item.style.padding = '8px';
+          item.style.background = '#f9f9f9';
+          item.style.borderRadius = '4px';
+          const label = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+          item.innerHTML = `<strong>${label}:</strong> ${escapeHtml(String(value || 'N/A'))}`;
+          demographicsGrid.appendChild(item);
+        });
+        
+        demographicsCard.appendChild(demographicsGrid);
+        demographicsSection.appendChild(demographicsCard);
+        wrapper.appendChild(demographicsSection);
+      }
       
       // Question Statistics Section
       if (questionStats.totalScenarioQuestions > 0) {
@@ -1083,7 +1132,88 @@
               answerRow.style.background = '#f9f9f9';
               answerRow.style.borderRadius = '4px';
               
-              if (key === 'scenario_questions' && typeof value === 'object') {
+              // Handle model_summary questionnaire with workload and trust sections
+              if (q.questionnaire_type === 'model_summary' && (key === 'workload' || key === 'trust') && typeof value === 'object') {
+                const sectionTitle = document.createElement('div');
+                sectionTitle.style.marginBottom = '15px';
+                sectionTitle.style.fontWeight = '600';
+                sectionTitle.style.fontSize = '16px';
+                sectionTitle.style.color = key === 'workload' ? '#1976d2' : '#2e7d32';
+                sectionTitle.style.paddingBottom = '8px';
+                sectionTitle.style.borderBottom = `2px solid ${key === 'workload' ? '#1976d2' : '#2e7d32'}`;
+                sectionTitle.textContent = key === 'workload' ? 'שאלות עומס (Workload Questions)' : 'שאלות אמון (Trust Questions)';
+                answerRow.appendChild(sectionTitle);
+                
+                const nestedDiv = document.createElement('div');
+                nestedDiv.style.marginLeft = '10px';
+                nestedDiv.style.marginTop = '8px';
+                
+                // Create a mapping for question labels (for better readability)
+                const questionLabels = {
+                  workload: {
+                    mental_demand: 'דרישה מנטלית (Mental Demand)',
+                    time_demand: 'דרישת זמן (Time Demand)',
+                    performance: 'ביצוע (Performance)',
+                    effort: 'מאמץ (Effort)',
+                    frustration: 'תסכול (Frustration)'
+                  },
+                  trust: {
+                    trust1: 'Trust Question 1: המערכת מטעה',
+                    trust2: 'Trust Question 2: המערכת מתנהגת באופן ערמומי/בלתי־הוגן',
+                    trust3: 'Trust Question 3: אני חש/ה חשד כלפי כוונת המערכת',
+                    trust4: 'Trust Question 4: אני נזהר/ת מן המערכת',
+                    trust5: 'Trust Question 5: פעולת המערכת עלולה להוביל לתוצאה מזיקה',
+                    trust6: 'Trust Question 6: יש לי ביטחון במערכת',
+                    trust7: 'Trust Question 7: המערכת מספקת ביטחון',
+                    trust8: 'Trust Question 8: למערכת יש יושרה',
+                    trust9: 'Trust Question 9: ניתן לסמוך על המערכת',
+                    trust10: 'Trust Question 10: המערכת אמינה',
+                    trust11: 'Trust Question 11: אני יכול/ה לבטוח במערכת',
+                    trust12: 'Trust Question 12: אני מכיר/ה את המערכת'
+                  }
+                };
+                
+                Object.entries(value).forEach(([questionId, answerValue]) => {
+                  const qItem = document.createElement('div');
+                  qItem.style.marginBottom = '12px';
+                  qItem.style.padding = '12px';
+                  qItem.style.background = 'white';
+                  qItem.style.borderRadius = '6px';
+                  qItem.style.border = `2px solid ${key === 'workload' ? '#e3f2fd' : '#e8f5e9'}`;
+                  
+                  const questionLabel = document.createElement('div');
+                  questionLabel.style.fontWeight = '600';
+                  questionLabel.style.marginBottom = '8px';
+                  questionLabel.style.fontSize = '14px';
+                  questionLabel.style.color = '#333';
+                  const labelText = questionLabels[key] && questionLabels[key][questionId] 
+                    ? questionLabels[key][questionId] 
+                    : `Question ID: ${questionId}`;
+                  questionLabel.textContent = labelText;
+                  qItem.appendChild(questionLabel);
+                  
+                  const answerDiv = document.createElement('div');
+                  answerDiv.style.padding = '8px';
+                  answerDiv.style.background = '#f5f5f5';
+                  answerDiv.style.borderRadius = '4px';
+                  answerDiv.style.fontSize = '15px';
+                  
+                  if (answerValue === 'DBG' || answerValue === null) {
+                    answerDiv.innerHTML = `<strong>Answer:</strong> <span style="color: #999;">${answerValue === 'DBG' ? 'DBG (Debug Mode)' : 'Not answered'}</span>`;
+                  } else {
+                    const answerNum = parseInt(answerValue);
+                    const answerColor = key === 'workload' 
+                      ? (answerNum < 0 ? '#c62828' : answerNum > 0 ? '#2e7d32' : '#666')
+                      : (answerNum <= 3 ? '#c62828' : answerNum >= 5 ? '#2e7d32' : '#666');
+                    answerDiv.innerHTML = `<strong>Answer:</strong> <span style="color: ${answerColor}; font-weight: 600; font-size: 16px;">${escapeHtml(String(answerValue))}</span>`;
+                  }
+                  
+                  qItem.appendChild(answerDiv);
+                  nestedDiv.appendChild(qItem);
+                });
+                
+                answerRow.appendChild(nestedDiv);
+              } else if (key === 'scenario_questions' && typeof value === 'object') {
                 // Handle scenario questions nested object with clear comparison
                 const scenarioTitle = document.createElement('div');
                 scenarioTitle.style.marginBottom = '10px';
@@ -1276,6 +1406,24 @@
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
+    }
+
+    function extractConsentData(interactions) {
+      for (const interaction of interactions) {
+        if (interaction.interaction_type === 'consent_form_data' && interaction.data) {
+          return interaction.data;
+        }
+      }
+      return null;
+    }
+
+    function extractDemographicsData(questionnaires) {
+      for (const q of questionnaires) {
+        if (q.questionnaire_type === 'demographics' && q.answers && typeof q.answers === 'object') {
+          return q.answers;
+        }
+      }
+      return null;
     }
   </script>
 </body>
