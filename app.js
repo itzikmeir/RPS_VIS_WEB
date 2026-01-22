@@ -437,25 +437,88 @@ function renderInfoPage(root, pageId) {
     input.dir = "rtl";
     inputContainer.appendChild(input);
   } else if (pageData.input_type === "checkbox") {
-    inputContainer.style.display = "flex";
-    inputContainer.style.flexDirection = "row";
-    inputContainer.style.alignItems = "center";
-    inputContainer.style.gap = "8px";
-    inputContainer.dir = "rtl";
-    
-    const checkbox = document.createElement("input");
-    checkbox.type = "checkbox";
-    checkbox.id = `input_${pageId}`;
-    const label = document.createElement("label");
-    label.setAttribute("for", `input_${pageId}`);
-    label.textContent = "אני מאשר/ת";
-    label.dir = "rtl";
-    label.style.marginRight = "0";
-    label.style.cursor = "pointer";
-    inputContainer.appendChild(checkbox);
-    inputContainer.appendChild(label);
+    // Special handling for consent_form page
+    if (pageId === "consent_form") {
+      // Create form fields for name, ID, and email
+      const formFields = [
+        { id: "consent_name", label: "שם:", type: "text", required: true, validation: (val) => val.trim().length > 0, errorMsg: "אנא הזן שם" },
+        { id: "consent_id", label: "ת\"ז:", type: "text", required: true, validation: (val) => /^\d{9}$/.test(val.trim()), errorMsg: "אנא הזן ת\"ז תקין (9 ספרות)" },
+        { id: "consent_email", label: "כתובת:", type: "text", required: true, validation: (val) => val.includes("@"), errorMsg: "אנא הזן כתובת תקינה (חייבת להכיל @)" }
+      ];
+      
+      formFields.forEach(field => {
+        const fieldWrapper = document.createElement("div");
+        fieldWrapper.style.marginBottom = "15px";
+        fieldWrapper.dir = "rtl";
+        
+        const fieldLabel = document.createElement("label");
+        fieldLabel.textContent = field.label;
+        fieldLabel.style.display = "block";
+        fieldLabel.style.marginBottom = "5px";
+        fieldLabel.style.fontWeight = "600";
+        fieldLabel.setAttribute("for", field.id);
+        fieldWrapper.appendChild(fieldLabel);
+        
+        const fieldInput = document.createElement("input");
+        fieldInput.type = field.type;
+        fieldInput.id = field.id;
+        fieldInput.name = field.id;
+        fieldInput.style.width = "100%";
+        fieldInput.style.padding = "10px";
+        fieldInput.style.fontSize = "14px";
+        fieldInput.style.borderRadius = "6px";
+        fieldInput.style.border = "1px solid #ccc";
+        fieldInput.dir = "rtl";
+        fieldInput.required = field.required && !state.debugMode;
+        fieldWrapper.appendChild(fieldInput);
+        
+        inputContainer.appendChild(fieldWrapper);
+      });
+      
+      // Also add the consent checkbox
+      const checkboxWrapper = document.createElement("div");
+      checkboxWrapper.style.display = "flex";
+      checkboxWrapper.style.flexDirection = "row";
+      checkboxWrapper.style.alignItems = "center";
+      checkboxWrapper.style.gap = "8px";
+      checkboxWrapper.style.marginTop = "15px";
+      checkboxWrapper.dir = "rtl";
+      
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.id = `input_${pageId}`;
+      checkbox.required = !state.debugMode;
+      const label = document.createElement("label");
+      label.setAttribute("for", `input_${pageId}`);
+      label.textContent = "אני מאשר/ת";
+      label.dir = "rtl";
+      label.style.marginRight = "0";
+      label.style.cursor = "pointer";
+      checkboxWrapper.appendChild(checkbox);
+      checkboxWrapper.appendChild(label);
+      inputContainer.appendChild(checkboxWrapper);
+    } else {
+      // Regular checkbox for other pages
+      inputContainer.style.display = "flex";
+      inputContainer.style.flexDirection = "row";
+      inputContainer.style.alignItems = "center";
+      inputContainer.style.gap = "8px";
+      inputContainer.dir = "rtl";
+      
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.id = `input_${pageId}`;
+      const label = document.createElement("label");
+      label.setAttribute("for", `input_${pageId}`);
+      label.textContent = "אני מאשר/ת";
+      label.dir = "rtl";
+      label.style.marginRight = "0";
+      label.style.cursor = "pointer";
+      inputContainer.appendChild(checkbox);
+      inputContainer.appendChild(label);
+    }
   } else if (pageData.input_type === "checkbox_list") {
-    // Show dummy checkboxes for פריט 1-5
+    // Show checkboxes for פריט 1-5
     for (let i = 1; i <= 5; i++) {
       const checkboxWrapper = document.createElement("div");
       checkboxWrapper.style.marginBottom = "10px";
@@ -469,6 +532,7 @@ function renderInfoPage(root, pageId) {
       checkbox.type = "checkbox";
       checkbox.id = `input_${pageId}_item${i}`;
       checkbox.name = `checkbox_list_${pageId}`;
+      checkbox.required = !state.debugMode;
       
       const label = document.createElement("label");
       label.setAttribute("for", `input_${pageId}_item${i}`);
@@ -515,26 +579,112 @@ function renderInfoPage(root, pageId) {
           return;
         }
       } else if (pageData.input_type === "checkbox") {
-        const checkbox = document.getElementById(`input_${pageId}`);
-        if (!checkbox || !checkbox.checked) {
-          alert("אנא סמן את תיבת הסימון");
-          return;
-        }
-      } else if (pageData.input_type === "checkbox_list") {
-        // Validate at least one checkbox is checked
-        let atLeastOneChecked = false;
-        for (let i = 1; i <= 5; i++) {
-          const checkbox = document.getElementById(`input_${pageId}_item${i}`);
-          if (checkbox && checkbox.checked) {
-            atLeastOneChecked = true;
-            break;
+        if (pageId === "consent_form") {
+          // Validate consent form fields
+          const nameInput = document.getElementById("consent_name");
+          const idInput = document.getElementById("consent_id");
+          const emailInput = document.getElementById("consent_email");
+          const checkbox = document.getElementById(`input_${pageId}`);
+          
+          if (!nameInput || !nameInput.value.trim()) {
+            alert("אנא הזן שם");
+            return;
+          }
+          
+          if (!idInput || !/^\d{9}$/.test(idInput.value.trim())) {
+            alert("אנא הזן ת\"ז תקין (9 ספרות)");
+            return;
+          }
+          
+          if (!emailInput || !emailInput.value.includes("@")) {
+            alert("אנא הזן כתובת תקינה (חייבת להכיל @)");
+            return;
+          }
+          
+          if (!checkbox || !checkbox.checked) {
+            alert("אנא סמן את תיבת הסימון");
+            return;
+          }
+        } else {
+          const checkbox = document.getElementById(`input_${pageId}`);
+          if (!checkbox || !checkbox.checked) {
+            alert("אנא סמן את תיבת הסימון");
+            return;
           }
         }
-        if (!atLeastOneChecked) {
-          alert("אנא סמן לפחות פריט אחד");
-          return;
+      } else if (pageData.input_type === "checkbox_list") {
+        // Validate ALL checkboxes are checked (for system_layout page)
+        if (pageId === "system_layout") {
+          let allChecked = true;
+          for (let i = 1; i <= 5; i++) {
+            const checkbox = document.getElementById(`input_${pageId}_item${i}`);
+            if (!checkbox || !checkbox.checked) {
+              allChecked = false;
+              break;
+            }
+          }
+          if (!allChecked) {
+            alert("אנא סמן את כל הפריטים");
+            return;
+          }
+        } else {
+          // For other checkbox_list pages, validate at least one is checked
+          let atLeastOneChecked = false;
+          for (let i = 1; i <= 5; i++) {
+            const checkbox = document.getElementById(`input_${pageId}_item${i}`);
+            if (checkbox && checkbox.checked) {
+              atLeastOneChecked = true;
+              break;
+            }
+          }
+          if (!atLeastOneChecked) {
+            alert("אנא סמן לפחות פריט אחד");
+            return;
+          }
         }
       }
+    }
+    
+    // Collect and log input data
+    if (pageId === "consent_form" && pageData.input_type === "checkbox") {
+      const nameInput = document.getElementById("consent_name");
+      const idInput = document.getElementById("consent_id");
+      const emailInput = document.getElementById("consent_email");
+      const checkbox = document.getElementById(`input_${pageId}`);
+      
+      const consentData = {
+        name: nameInput ? nameInput.value.trim() : (state.debugMode ? "DBG" : null),
+        id_number: idInput ? idInput.value.trim() : (state.debugMode ? "DBG" : null),
+        email: emailInput ? emailInput.value.trim() : (state.debugMode ? "DBG" : null),
+        consent_checked: checkbox ? checkbox.checked : false
+      };
+      
+      // Log consent data to interactions or pages log
+      state.logs.interactions.push({
+        page_name: pageName,
+        interaction_type: "consent_form_data",
+        data: consentData,
+        timestamp: Date.now()
+      });
+    } else if (pageId === "system_layout" && pageData.input_type === "checkbox_list") {
+      // Log which items were checked
+      const checkedItems = [];
+      for (let i = 1; i <= 5; i++) {
+        const checkbox = document.getElementById(`input_${pageId}_item${i}`);
+        if (checkbox && checkbox.checked) {
+          checkedItems.push(i);
+        }
+      }
+      
+      state.logs.interactions.push({
+        page_name: pageName,
+        interaction_type: "system_layout_items",
+        data: {
+          checked_items: checkedItems,
+          all_checked: checkedItems.length === 5
+        },
+        timestamp: Date.now()
+      });
     }
     
     logPageExit(pageName);
@@ -953,7 +1103,7 @@ function renderTrialQuestionsPage(root) {
       scaleLabels.appendChild(minLabel);
       questionDiv.appendChild(scaleLabels);
       
-      // Radio buttons 1-7
+      // Radio buttons 1-7 (numbers below buttons)
       const radioGroup = document.createElement("div");
       radioGroup.style.display = "flex";
       radioGroup.style.gap = "10px";
@@ -962,9 +1112,8 @@ function renderTrialQuestionsPage(root) {
       for (let i = 1; i <= 7; i++) {
         const radioWrapper = document.createElement("div");
         radioWrapper.style.display = "flex";
-        radioWrapper.style.flexDirection = "row";
+        radioWrapper.style.flexDirection = "column";
         radioWrapper.style.alignItems = "center";
-        radioWrapper.style.gap = "6px";
         
         const radio = document.createElement("input");
         radio.type = "radio";
@@ -976,9 +1125,7 @@ function renderTrialQuestionsPage(root) {
         radioLabel.setAttribute("for", `trial_fixed_${question.id}_${i}`);
         radioLabel.textContent = i;
         radioLabel.style.fontSize = "14px";
-        radioLabel.style.marginTop = "0";
-        radioLabel.style.marginRight = "0";
-        radioLabel.style.marginLeft = "0";
+        radioLabel.style.marginTop = "4px";
         radioLabel.style.cursor = "pointer";
         
         radioWrapper.appendChild(radio);
@@ -1372,11 +1519,18 @@ function renderModelSummaryPage(root) {
     const workloadTitle = document.createElement("h3");
     workloadTitle.textContent = "שאלות עומס";
     workloadTitle.dir = "rtl";
+    workloadTitle.style.marginBottom = "20px";
     workloadSection.appendChild(workloadTitle);
     
     if (state.questionsConfig.model_summary_questions.workload) {
       state.questionsConfig.model_summary_questions.workload.forEach((question, idx) => {
-        const questionDiv = createLikertQuestion(question, `model_workload_${question.id}`);
+        let questionDiv;
+        if (question.type === "scale_minus10_10") {
+          questionDiv = createMinus10To10Question(question, `model_workload_${question.id}`);
+        } else {
+          // Fallback to regular Likert if type not recognized
+          questionDiv = createLikertQuestion(question, `model_workload_${question.id}`);
+        }
         workloadSection.appendChild(questionDiv);
       });
     }
@@ -1385,11 +1539,12 @@ function renderModelSummaryPage(root) {
     
     // Render trust questions
     const trustSection = document.createElement("div");
-    trustSection.style.marginTop = "30px";
+    trustSection.style.marginTop = "40px";
     
     const trustTitle = document.createElement("h3");
     trustTitle.textContent = "שאלות אמון";
     trustTitle.dir = "rtl";
+    trustTitle.style.marginBottom = "20px";
     trustSection.appendChild(trustTitle);
     
     if (state.questionsConfig.model_summary_questions.trust) {
@@ -1408,15 +1563,43 @@ function renderModelSummaryPage(root) {
   const continueBtn = document.createElement("button");
   continueBtn.textContent = "המשך";
   continueBtn.onclick = () => {
+    // Validate answers (skip in debug mode)
+    if (!state.debugMode && state.questionsConfig && state.questionsConfig.model_summary_questions) {
+      // Validate workload questions
+      if (state.questionsConfig.model_summary_questions.workload) {
+        for (const question of state.questionsConfig.model_summary_questions.workload) {
+          const selected = document.querySelector(`input[name="model_workload_${question.id}"]:checked`);
+          if (!selected) {
+            alert(`אנא ענה על השאלה: ${question.text}`);
+            return;
+          }
+        }
+      }
+      
+      // Validate trust questions
+      if (state.questionsConfig.model_summary_questions.trust) {
+        for (const question of state.questionsConfig.model_summary_questions.trust) {
+          const selected = document.querySelector(`input[name="model_trust_${question.id}"]:checked`);
+          if (!selected) {
+            alert(`אנא ענה על השאלה: ${question.text}`);
+            return;
+          }
+        }
+      }
+    }
+    
     // Collect all answers
-    const answers = {};
+    const answers = {
+      workload: {},
+      trust: {}
+    };
     
     if (state.questionsConfig && state.questionsConfig.model_summary_questions) {
       // Collect workload answers
       if (state.questionsConfig.model_summary_questions.workload) {
         state.questionsConfig.model_summary_questions.workload.forEach(question => {
           const selected = document.querySelector(`input[name="model_workload_${question.id}"]:checked`);
-          answers[question.id] = selected ? parseInt(selected.value) : (state.debugMode ? "DBG" : null);
+          answers.workload[question.id] = selected ? parseInt(selected.value) : (state.debugMode ? "DBG" : null);
         });
       }
       
@@ -1424,7 +1607,7 @@ function renderModelSummaryPage(root) {
       if (state.questionsConfig.model_summary_questions.trust) {
         state.questionsConfig.model_summary_questions.trust.forEach(question => {
           const selected = document.querySelector(`input[name="model_trust_${question.id}"]:checked`);
-          answers[question.id] = selected ? parseInt(selected.value) : (state.debugMode ? "DBG" : null);
+          answers.trust[question.id] = selected ? parseInt(selected.value) : (state.debugMode ? "DBG" : null);
         });
       }
     }
@@ -1475,33 +1658,94 @@ function createLikertQuestion(question, namePrefix) {
   label.style.fontWeight = "600";
   questionDiv.appendChild(label);
   
-  // Radio buttons 1-7
+  // Check if this is a trust question with labels
+  const hasLabels = question.min_label && question.max_label;
+  
+  // Create container for scale with labels
+  const scaleContainer = document.createElement("div");
+  scaleContainer.style.position = "relative";
+  scaleContainer.style.marginTop = "10px";
+  
+  // Labels row above radio buttons (for trust questions)
+  // Labels span the full width of the scale
+  if (hasLabels) {
+    const labelsRow = document.createElement("div");
+    labelsRow.style.display = "flex";
+    labelsRow.style.justifyContent = "space-between";
+    labelsRow.style.alignItems = "flex-start";
+    labelsRow.style.marginBottom = "15px";
+    labelsRow.style.padding = "0 5px";
+    labelsRow.style.position = "relative";
+    labelsRow.dir = "rtl";
+    
+    // Left label (מתנגד מאוד) - aligns with radio button 1
+    const minLabel = document.createElement("div");
+    minLabel.textContent = question.min_label;
+    minLabel.style.fontSize = "12px";
+    minLabel.style.color = "#666";
+    minLabel.style.fontWeight = "500";
+    minLabel.style.textAlign = "center";
+    minLabel.style.flex = "0 0 auto";
+    minLabel.style.minWidth = "80px";
+    
+    // Right label (מסכים/ה מאוד) - aligns with radio button 7
+    const maxLabel = document.createElement("div");
+    maxLabel.textContent = question.max_label;
+    maxLabel.style.fontSize = "12px";
+    maxLabel.style.color = "#666";
+    maxLabel.style.fontWeight = "500";
+    maxLabel.style.textAlign = "center";
+    maxLabel.style.flex = "0 0 auto";
+    maxLabel.style.minWidth = "80px";
+    
+    // Middle label (ניטרלי/ת) - aligns with radio button 4
+    if (question.mid_label) {
+      const midLabel = document.createElement("div");
+      midLabel.textContent = question.mid_label;
+      midLabel.style.fontSize = "12px";
+      midLabel.style.color = "#666";
+      midLabel.style.fontWeight = "500";
+      midLabel.style.textAlign = "center";
+      midLabel.style.flex = "1 1 auto";
+      midLabel.style.padding = "0 10px";
+      
+      labelsRow.appendChild(maxLabel);
+      labelsRow.appendChild(midLabel);
+      labelsRow.appendChild(minLabel);
+    } else {
+      labelsRow.appendChild(maxLabel);
+      labelsRow.appendChild(minLabel);
+    }
+    
+    scaleContainer.appendChild(labelsRow);
+  }
+  
+  // Radio buttons 1-7 (numbers below buttons)
   const radioGroup = document.createElement("div");
   radioGroup.style.display = "flex";
-  radioGroup.style.gap = "10px";
+  radioGroup.style.gap = "8px";
   radioGroup.style.justifyContent = "center";
+  radioGroup.style.flexWrap = "wrap";
+  radioGroup.style.position = "relative";
   
   for (let i = 1; i <= 7; i++) {
     const radioWrapper = document.createElement("div");
     radioWrapper.style.display = "flex";
-    radioWrapper.style.flexDirection = "row";
+    radioWrapper.style.flexDirection = "column";
     radioWrapper.style.alignItems = "center";
-    radioWrapper.style.gap = "6px";
     
     const radio = document.createElement("input");
     radio.type = "radio";
     radio.name = namePrefix;
     radio.value = i;
     radio.id = `${namePrefix}_${i}`;
-    radio.required = true;
+    radio.required = !state.debugMode;
     
     const radioLabel = document.createElement("label");
     radioLabel.setAttribute("for", `${namePrefix}_${i}`);
     radioLabel.textContent = i;
     radioLabel.style.fontSize = "14px";
-    radioLabel.style.marginTop = "0";
-    radioLabel.style.marginRight = "0";
-    radioLabel.style.marginLeft = "0";
+    radioLabel.style.marginTop = "4px";
     radioLabel.style.cursor = "pointer";
     
     radioWrapper.appendChild(radio);
@@ -1509,7 +1753,99 @@ function createLikertQuestion(question, namePrefix) {
     radioGroup.appendChild(radioWrapper);
   }
   
-  questionDiv.appendChild(radioGroup);
+  scaleContainer.appendChild(radioGroup);
+  questionDiv.appendChild(scaleContainer);
+  return questionDiv;
+}
+
+function createMinus10To10Question(question, namePrefix) {
+  const questionDiv = document.createElement("div");
+  questionDiv.className = "form-group";
+  questionDiv.style.marginBottom = "30px";
+  
+  const label = document.createElement("label");
+  label.textContent = question.text;
+  label.dir = "rtl";
+  label.style.display = "block";
+  label.style.marginBottom = "15px";
+  label.style.fontWeight = "600";
+  questionDiv.appendChild(label);
+  
+  // Scale container with labels
+  const scaleContainer = document.createElement("div");
+  scaleContainer.style.position = "relative";
+  scaleContainer.style.marginTop = "10px";
+  scaleContainer.style.paddingTop = "40px"; // Space for labels
+  
+  // Labels row - positioned to align with the scale endpoints
+  const labelsRow = document.createElement("div");
+  labelsRow.style.display = "flex";
+  labelsRow.style.justifyContent = "space-between";
+  labelsRow.style.marginBottom = "10px";
+  labelsRow.style.padding = "0";
+  labelsRow.style.position = "relative";
+  labelsRow.dir = "rtl";
+  
+  // Calculate approximate positions for labels to align with -10 and 10 radio buttons
+  // The radio buttons are centered, so we need to position labels at the edges
+  const minLabel = document.createElement("span");
+  minLabel.textContent = question.min_label || "";
+  minLabel.style.fontSize = "13px";
+  minLabel.style.color = "#666";
+  minLabel.style.fontWeight = "500";
+  minLabel.style.position = "absolute";
+  minLabel.style.right = "0"; // RTL: right side aligns with -10
+  
+  const maxLabel = document.createElement("span");
+  maxLabel.textContent = question.max_label || "";
+  maxLabel.style.fontSize = "13px";
+  maxLabel.style.color = "#666";
+  maxLabel.style.fontWeight = "500";
+  maxLabel.style.position = "absolute";
+  maxLabel.style.left = "0"; // RTL: left side aligns with 10
+  
+  labelsRow.appendChild(maxLabel);
+  labelsRow.appendChild(minLabel);
+  scaleContainer.appendChild(labelsRow);
+  
+  // Radio buttons -10 to 10
+  const radioGroup = document.createElement("div");
+  radioGroup.style.display = "flex";
+  radioGroup.style.gap = "4px";
+  radioGroup.style.justifyContent = "center";
+  radioGroup.style.flexWrap = "wrap";
+  radioGroup.style.maxWidth = "100%";
+  
+  for (let i = -10; i <= 10; i++) {
+    const radioWrapper = document.createElement("div");
+    radioWrapper.style.display = "flex";
+    radioWrapper.style.flexDirection = "column";
+    radioWrapper.style.alignItems = "center";
+    radioWrapper.style.minWidth = "28px";
+    
+    const radio = document.createElement("input");
+    radio.type = "radio";
+    radio.name = namePrefix;
+    radio.value = i;
+    radio.id = `${namePrefix}_${i}`;
+    radio.required = !state.debugMode;
+    
+    const radioLabel = document.createElement("label");
+    radioLabel.setAttribute("for", `${namePrefix}_${i}`);
+    radioLabel.textContent = i;
+    radioLabel.style.fontSize = "11px";
+    radioLabel.style.marginTop = "3px";
+    radioLabel.style.cursor = "pointer";
+    radioLabel.style.minWidth = "20px";
+    radioLabel.style.textAlign = "center";
+    
+    radioWrapper.appendChild(radio);
+    radioWrapper.appendChild(radioLabel);
+    radioGroup.appendChild(radioWrapper);
+  }
+  
+  scaleContainer.appendChild(radioGroup);
+  questionDiv.appendChild(scaleContainer);
   return questionDiv;
 }
 
@@ -1663,14 +1999,71 @@ function renderVisualizationGlobalPage(root) {
     label.style.fontSize = "16px";
     questionDiv.appendChild(label);
     
-    // Rank 1-3 for each visualization
+    // Rank 1-3 for each visualization (no duplicates)
     if (questionData.options && questionData.options.length > 0) {
+      // Store references to all selects for reset functionality
+      const allSelects = [];
+      
+      // Function to update available ranks in all dropdowns
+      const updateAvailableRanks = (changedIndex) => {
+        // Get all currently selected ranks
+        const selectedRanks = [];
+        questionData.options.forEach((_, idx) => {
+          const select = document.getElementById(`viz_global_rank_${idx}`);
+          if (select && select.value) {
+            selectedRanks.push({
+              index: idx,
+              rank: parseInt(select.value)
+            });
+          }
+        });
+        
+        // Update all dropdowns
+        questionData.options.forEach((_, idx) => {
+          const select = document.getElementById(`viz_global_rank_${idx}`);
+          if (!select) return;
+          
+          const currentValue = select.value ? parseInt(select.value) : null;
+          
+          // Clear all options except placeholder
+          while (select.options.length > 1) {
+            select.remove(1);
+          }
+          
+          // Add available ranks
+          for (let rank = 1; rank <= 3; rank++) {
+            // Check if this rank is selected by another dropdown
+            const isSelectedByOther = selectedRanks.some(s => s.index !== idx && s.rank === rank);
+            
+            // Include rank if it's the current selection OR not selected by others
+            if (currentValue === rank || !isSelectedByOther) {
+              const option = document.createElement("option");
+              option.value = rank;
+              option.textContent = rank;
+              if (currentValue === rank) {
+                option.selected = true;
+              }
+              select.appendChild(option);
+            }
+          }
+        });
+      };
+      
+      // Reset function
+      const resetRankings = () => {
+        allSelects.forEach(select => {
+          select.value = "";
+          updateAvailableRanks(-1);
+        });
+      };
+      
       questionData.options.forEach((option, idx) => {
         const optionWrapper = document.createElement("div");
         optionWrapper.style.marginBottom = "15px";
         optionWrapper.style.display = "flex";
         optionWrapper.style.alignItems = "center";
         optionWrapper.style.gap = "10px";
+        optionWrapper.dir = "rtl";
         
         const optionLabel = document.createElement("label");
         optionLabel.textContent = option;
@@ -1683,12 +2076,22 @@ function renderVisualizationGlobalPage(root) {
         select.style.padding = "8px";
         select.style.borderRadius = "4px";
         select.style.border = "1px solid #ccc";
+        select.dir = "rtl";
+        select.required = true;
+        
+        allSelects.push(select);
+        
+        // Add change listener to update available ranks
+        select.addEventListener("change", () => {
+          updateAvailableRanks(idx);
+        });
         
         const placeholderOption = document.createElement("option");
         placeholderOption.value = "";
         placeholderOption.textContent = "בחר דירוג";
         select.appendChild(placeholderOption);
         
+        // Initially all ranks are available
         for (let rank = 1; rank <= 3; rank++) {
           const option = document.createElement("option");
           option.value = rank;
@@ -1700,9 +2103,70 @@ function renderVisualizationGlobalPage(root) {
         optionWrapper.appendChild(select);
         questionDiv.appendChild(optionWrapper);
       });
+      
+      // Add reset button
+      const resetButtonWrapper = document.createElement("div");
+      resetButtonWrapper.style.marginTop = "15px";
+      resetButtonWrapper.style.marginBottom = "20px";
+      resetButtonWrapper.dir = "rtl";
+      
+      const resetButton = document.createElement("button");
+      resetButton.textContent = "איפוס";
+      resetButton.type = "button";
+      resetButton.style.padding = "8px 16px";
+      resetButton.style.fontSize = "14px";
+      resetButton.style.backgroundColor = "#757575";
+      resetButton.style.color = "#fff";
+      resetButton.style.border = "none";
+      resetButton.style.borderRadius = "6px";
+      resetButton.style.cursor = "pointer";
+      resetButton.onclick = resetRankings;
+      resetButtonWrapper.appendChild(resetButton);
+      questionDiv.appendChild(resetButtonWrapper);
     }
     
     root.appendChild(questionDiv);
+    
+    // Add question about which element helped select the best option (AFTER ranking)
+    const helpQuestionDiv = document.createElement("div");
+    helpQuestionDiv.className = "form-group";
+    helpQuestionDiv.style.marginTop = "30px";
+    
+    const helpQuestionLabel = document.createElement("label");
+    helpQuestionLabel.textContent = "איזה אזור בממשק סייע לך הכי הרבה בהבנת המסלולים?";
+    helpQuestionLabel.dir = "rtl";
+    helpQuestionLabel.style.display = "block";
+    helpQuestionLabel.style.marginBottom = "15px";
+    helpQuestionLabel.style.fontWeight = "600";
+    helpQuestionLabel.style.fontSize = "16px";
+    helpQuestionDiv.appendChild(helpQuestionLabel);
+    
+    const helpSelect = document.createElement("select");
+    helpSelect.id = "viz_global_help_element";
+    helpSelect.name = "help_element";
+    helpSelect.style.width = "100%";
+    helpSelect.style.padding = "10px";
+    helpSelect.style.borderRadius = "6px";
+    helpSelect.style.border = "1px solid #ccc";
+    helpSelect.style.fontSize = "14px";
+    helpSelect.dir = "rtl";
+    helpSelect.required = !state.debugMode;
+    
+    const placeholderHelpOption = document.createElement("option");
+    placeholderHelpOption.value = "";
+    placeholderHelpOption.textContent = "בחר תשובה";
+    helpSelect.appendChild(placeholderHelpOption);
+    
+    const helpOptions = ["א. מפה גיאוגרפית", "ב. גאנט זמנים", "ג. ויזואליזציה"];
+    helpOptions.forEach(opt => {
+      const option = document.createElement("option");
+      option.value = opt;
+      option.textContent = opt;
+      helpSelect.appendChild(option);
+    });
+    
+    helpQuestionDiv.appendChild(helpSelect);
+    root.appendChild(helpQuestionDiv);
   }
   
   const buttonGroup = document.createElement("div");
@@ -1711,15 +2175,32 @@ function renderVisualizationGlobalPage(root) {
   const continueBtn = document.createElement("button");
   continueBtn.textContent = "המשך";
   continueBtn.onclick = () => {
-    // Validate all rankings are selected (skip in debug mode)
-    if (!state.debugMode && questionData && questionData.options) {
+    // Validate all rankings are selected and unique (even in debug mode)
+    if (questionData && questionData.options) {
+      const selectedRanks = [];
       for (let idx = 0; idx < questionData.options.length; idx++) {
         const select = document.getElementById(`viz_global_rank_${idx}`);
         if (!select || !select.value) {
-          alert("אנא דרג את כל התצוגות");
-          return;
+          if (!state.debugMode) {
+            alert("אנא דרג את כל התצוגות");
+            return;
+          }
+        } else {
+          const rank = parseInt(select.value);
+          if (selectedRanks.includes(rank)) {
+            alert("אנא בחר דירוג שונה לכל תצוגה (1, 2, 3 ללא חזרות)");
+            return;
+          }
+          selectedRanks.push(rank);
         }
       }
+    }
+    
+    // Validate help element question (skip in debug mode)
+    const helpElementSelect = document.getElementById("viz_global_help_element");
+    if (!state.debugMode && (!helpElementSelect || !helpElementSelect.value)) {
+      alert("אנא ענה על השאלה: איזה אזור בממשק סייע לך הכי הרבה בהבנת המסלולים?");
+      return;
     }
     
     // Collect rankings
@@ -1731,6 +2212,11 @@ function renderVisualizationGlobalPage(root) {
           answers[option] = parseInt(select.value);
         }
       });
+    }
+    
+    // Add help element answer
+    if (helpElementSelect) {
+      answers.help_element = helpElementSelect.value || (state.debugMode ? "DBG" : null);
     }
     
     logPageExit(pageName);
@@ -1792,7 +2278,44 @@ function renderDemographicsPage(root) {
     label.style.fontWeight = "600";
     questionDiv.appendChild(label);
     
-    if (question.type === "number" || question.type === "text") {
+    if (question.type === "number") {
+      const input = document.createElement("input");
+      input.type = question.type;
+      input.id = `demo_${question.id}`;
+      input.name = question.id;
+      input.style.width = "100%";
+      input.style.padding = "10px";
+      input.style.borderRadius = "6px";
+      input.style.border = "1px solid #ccc";
+      input.dir = "rtl";
+      questionDiv.appendChild(input);
+    } else if (question.type === "text" && question.id === "native_language") {
+      // Native language should be a dropdown
+      const select = document.createElement("select");
+      select.id = `demo_${question.id}`;
+      select.name = question.id;
+      select.style.width = "100%";
+      select.style.padding = "10px";
+      select.style.borderRadius = "6px";
+      select.style.border = "1px solid #ccc";
+      select.dir = "rtl";
+      select.required = !state.debugMode;
+      
+      const placeholderOption = document.createElement("option");
+      placeholderOption.value = "";
+      placeholderOption.textContent = "בחר שפה";
+      select.appendChild(placeholderOption);
+      
+      const languageOptions = ["עברית", "ערבית", "אנגלית", "רוסית", "אתיופית", "אחר"];
+      languageOptions.forEach(opt => {
+        const option = document.createElement("option");
+        option.value = opt;
+        option.textContent = opt;
+        select.appendChild(option);
+      });
+      
+      questionDiv.appendChild(select);
+    } else if (question.type === "text") {
       const input = document.createElement("input");
       input.type = question.type;
       input.id = `demo_${question.id}`;
@@ -1833,31 +2356,62 @@ function renderDemographicsPage(root) {
         });
       }
     } else if (question.type === "scale_1_7") {
+      // Check if this is one of the last 3 questions (navigation_use, tech_skill, viz_literacy)
+      const isLastThreeQuestions = ["navigation_use", "tech_skill", "viz_literacy"].includes(question.id);
+      
+      const scaleContainer = document.createElement("div");
+      scaleContainer.style.position = "relative";
+      scaleContainer.style.marginTop = isLastThreeQuestions ? "10px" : "0";
+      
+      // Add labels row above the scale if it's one of the last 3 questions
+      if (isLastThreeQuestions) {
+        const labelsRow = document.createElement("div");
+        labelsRow.style.display = "flex";
+        labelsRow.style.justifyContent = "space-between";
+        labelsRow.style.width = "100%";
+        labelsRow.style.marginBottom = "10px";
+        labelsRow.style.padding = "0 10px";
+        labelsRow.dir = "rtl";
+        
+        const minLabel = document.createElement("span");
+        minLabel.style.fontSize = "12px";
+        minLabel.style.color = "#666";
+        minLabel.textContent = "כמעט אף פעם";
+        labelsRow.appendChild(minLabel);
+        
+        const maxLabel = document.createElement("span");
+        maxLabel.style.fontSize = "12px";
+        maxLabel.style.color = "#666";
+        maxLabel.textContent = "כל יום";
+        labelsRow.appendChild(maxLabel);
+        
+        scaleContainer.appendChild(labelsRow);
+      }
+      
       const radioGroup = document.createElement("div");
       radioGroup.style.display = "flex";
       radioGroup.style.gap = "10px";
       radioGroup.style.justifyContent = "center";
+      radioGroup.style.alignItems = "flex-start";
       
       for (let i = 1; i <= 7; i++) {
         const radioWrapper = document.createElement("div");
         radioWrapper.style.display = "flex";
-        radioWrapper.style.flexDirection = "row";
+        radioWrapper.style.flexDirection = "column";
         radioWrapper.style.alignItems = "center";
-        radioWrapper.style.gap = "6px";
         
         const radio = document.createElement("input");
         radio.type = "radio";
         radio.name = question.id;
         radio.value = i;
         radio.id = `demo_${question.id}_${i}`;
+        radio.required = !state.debugMode;
         
         const radioLabel = document.createElement("label");
         radioLabel.setAttribute("for", `demo_${question.id}_${i}`);
         radioLabel.textContent = i;
         radioLabel.style.fontSize = "14px";
-        radioLabel.style.marginTop = "0";
-        radioLabel.style.marginRight = "0";
-        radioLabel.style.marginLeft = "0";
+        radioLabel.style.marginTop = "4px";
         radioLabel.style.cursor = "pointer";
         
         radioWrapper.appendChild(radio);
@@ -1865,7 +2419,8 @@ function renderDemographicsPage(root) {
         radioGroup.appendChild(radioWrapper);
       }
       
-      questionDiv.appendChild(radioGroup);
+      scaleContainer.appendChild(radioGroup);
+      questionDiv.appendChild(scaleContainer);
     }
     
     formContainer.appendChild(questionDiv);
@@ -1883,12 +2438,34 @@ function renderDemographicsPage(root) {
     const answers = {};
     
     questions.forEach(question => {
-      if (question.type === "number" || question.type === "text") {
+      if (question.type === "number") {
         const input = document.getElementById(`demo_${question.id}`);
         if (input) {
           if (input.value.trim()) {
-            answers[question.id] = question.type === "number" ? 
-              parseInt(input.value) : input.value;
+            answers[question.id] = parseInt(input.value);
+          } else {
+            answers[question.id] = state.debugMode ? "DBG" : null;
+          }
+        } else {
+          answers[question.id] = state.debugMode ? "DBG" : null;
+        }
+      } else if (question.type === "text" && question.id === "native_language") {
+        // Native language is now a select dropdown
+        const select = document.getElementById(`demo_${question.id}`);
+        if (select) {
+          if (select.value) {
+            answers[question.id] = select.value;
+          } else {
+            answers[question.id] = state.debugMode ? "DBG" : null;
+          }
+        } else {
+          answers[question.id] = state.debugMode ? "DBG" : null;
+        }
+      } else if (question.type === "text") {
+        const input = document.getElementById(`demo_${question.id}`);
+        if (input) {
+          if (input.value.trim()) {
+            answers[question.id] = input.value;
           } else {
             answers[question.id] = state.debugMode ? "DBG" : null;
           }
@@ -2063,6 +2640,425 @@ window.addEventListener("message", (event) => {
       render();
     }
   }
+});
+
+// Function to force skip to next page (works in both debug and normal mode)
+function forceSkipToNextPage() {
+  // Log current page exit
+  if (state.currentPageName) {
+    logPageExit(state.currentPageName);
+  }
+  
+  // Handle trial page specially - need to clean up iframe and log trial
+  if (state.pageType === "trial") {
+    const t = getCurrentTrial();
+    if (t) {
+      // Remove fullscreen iframe if it exists
+      const existingContainers = document.querySelectorAll('[id^="scenario-iframe-container"]');
+      existingContainers.forEach(container => {
+        if (container.parentNode) {
+          container.parentNode.removeChild(container);
+        }
+      });
+      
+      // Log trial with default/DBG values
+      const trialKey = getCurrentTrialKey();
+      const userRoute = state.currentTrialSelectedRoute || t.ai_recommended_route || "DBG";
+      const trialLog = {
+        trial_id: trialKey,
+        participant_id: state.participantId,
+        stage: state.stage,
+        condition_index: (state.stage === "experiment" ? state.conditionIndex : null),
+        model_index: (state.stage === "experiment" ? state.modelIndex : null),
+        trial_index: (state.stage === "practice" ? state.practiceIndex : state.trialIndex),
+        scenario_id: t.scenario_id,
+        difficulty: t.difficulty,
+        true_route: t.correct_route,
+        ai_recommended_route: t.ai_recommended_route,
+        user_selected_route: userRoute,
+        followed_ai: userRoute === t.ai_recommended_route,
+        chose_true_optimal: userRoute === t.correct_route,
+        enter_ts: state.currentPageEnterTs,
+        exit_ts: Date.now()
+      };
+      state.logs.trials.push(trialLog);
+      state.currentTrialSelectedRoute = null;
+      state.currentTrialIframeContainer = null;
+    }
+    // Navigate to trial questions
+    state.pageType = "trial_questions";
+    render();
+    return;
+  }
+  
+  // For other pages, temporarily enable debug mode to use navigateToNextPage
+  // This ensures consistent navigation logic
+  const wasDebugMode = state.debugMode;
+  state.debugMode = true;
+  navigateToNextPage();
+  state.debugMode = wasDebugMode;
+}
+
+// Function to navigate to next page (for debug mode spacebar shortcut)
+function navigateToNextPage() {
+  if (!state.debugMode) return;
+  
+  // Log current page exit
+  if (state.currentPageName) {
+    logPageExit(state.currentPageName);
+  }
+  
+  // Determine next page based on current state
+  if (state.stage === "login") {
+    // After login, go to first pre-intro page
+    state.stage = "pre";
+    state.preIntroPageIndex = 0;
+    render();
+  } else if (state.stage === "pre") {
+    // Move to next pre-intro page or to practice
+    if (state.preIntroPageIndex < PRE_INTRO_PAGE_IDS.length - 1) {
+      state.preIntroPageIndex++;
+      render();
+    } else {
+      // Last pre-intro page, go to practice
+      state.stage = "practice";
+      state.pageType = "info";
+      render();
+    }
+  } else if (state.stage === "practice") {
+    if (state.pageType === "info") {
+      // Practice intro -> first scenario intro
+      state.pageType = "scenario_intro";
+      render();
+    } else if (state.pageType === "scenario_intro") {
+      // Scenario intro -> trial
+      state.pageType = "trial";
+      render();
+    } else if (state.pageType === "trial") {
+      // Trial -> trial questions
+      const t = getCurrentTrial();
+      if (t) {
+        // Log trial with default values
+        const trialKey = getCurrentTrialKey();
+        const trialLog = {
+          trial_id: trialKey,
+          participant_id: state.participantId,
+          stage: state.stage,
+          condition_index: null,
+          model_index: null,
+          trial_index: state.practiceIndex,
+          scenario_id: t.scenario_id,
+          difficulty: t.difficulty,
+          true_route: t.correct_route,
+          ai_route: t.ai_recommended_route,
+          model_type: null,
+          user_route: t.ai_recommended_route,
+          followed_ai: true,
+          chose_true_optimal: t.ai_recommended_route === t.correct_route,
+          start_ts: state.currentPageEnterTs,
+          end_ts: Date.now()
+        };
+        state.logs.trials.push(trialLog);
+      }
+      state.pageType = "trial_questions";
+      render();
+    } else if (state.pageType === "trial_questions") {
+      // Log questionnaire for trial questions
+      const t = getCurrentTrial();
+      if (t) {
+        const trialKey = getCurrentTrialKey();
+        state.logs.questionnaires.push({
+          trial_id: trialKey,
+          participant_id: state.participantId,
+          stage: state.stage,
+          condition_index: null,
+          model_index: null,
+          trial_index: state.practiceIndex,
+          questionnaire_type: "post_scenario",
+          answers: { debug: "DBG" },
+          correct: t.correct_answers || null,
+          enter_ts: state.currentPageEnterTs,
+          exit_ts: Date.now()
+        });
+      }
+      
+      // Trial questions -> next trial or experiment
+      if (t && state.practiceIndex < state.schedule.practice.length - 1) {
+        // More practice trials
+        state.practiceIndex++;
+        state.pageType = "scenario_intro";
+        render();
+      } else {
+        // Finished practice, go to experiment
+        state.stage = "experiment";
+        state.pageType = "info";
+        state.conditionIndex = 0;
+        state.modelIndex = 0;
+        state.trialIndex = 0;
+        render();
+      }
+    }
+  } else if (state.stage === "experiment") {
+    if (state.pageType === "info") {
+      // Condition intro -> model intro
+      state.pageType = "model_intro";
+      render();
+    } else if (state.pageType === "model_intro") {
+      // Model intro -> scenario intro
+      state.pageType = "scenario_intro";
+      render();
+    } else if (state.pageType === "scenario_intro") {
+      // Scenario intro -> trial
+      state.pageType = "trial";
+      render();
+    } else if (state.pageType === "trial") {
+      // Trial -> trial questions
+      const t = getCurrentTrial();
+      if (t) {
+        const trialKey = getCurrentTrialKey();
+        const cond = state.schedule.conditions[state.conditionIndex];
+        const model = cond.models[state.modelIndex];
+        const trialLog = {
+          trial_id: trialKey,
+          participant_id: state.participantId,
+          stage: state.stage,
+          condition_index: state.conditionIndex,
+          model_index: state.modelIndex,
+          trial_index: state.trialIndex,
+          scenario_id: t.scenario_id,
+          difficulty: t.difficulty,
+          true_route: t.correct_route,
+          ai_route: t.ai_recommended_route,
+          model_type: model.model_type,
+          user_route: t.ai_recommended_route,
+          followed_ai: true,
+          chose_true_optimal: t.ai_recommended_route === t.correct_route,
+          start_ts: state.currentPageEnterTs,
+          end_ts: Date.now()
+        };
+        state.logs.trials.push(trialLog);
+      }
+      state.pageType = "trial_questions";
+      render();
+    } else if (state.pageType === "trial_questions") {
+      // Log questionnaire for trial questions
+      const t = getCurrentTrial();
+      if (t) {
+        const trialKey = getCurrentTrialKey();
+        state.logs.questionnaires.push({
+          trial_id: trialKey,
+          participant_id: state.participantId,
+          stage: state.stage,
+          condition_index: state.conditionIndex,
+          model_index: state.modelIndex,
+          trial_index: state.trialIndex,
+          questionnaire_type: "post_scenario",
+          answers: { debug: "DBG" },
+          correct: t.correct_answers || null,
+          enter_ts: state.currentPageEnterTs,
+          exit_ts: Date.now()
+        });
+      }
+      
+      // Trial questions -> next trial, model summary, or condition
+      const cond = state.schedule.conditions[state.conditionIndex];
+      const model = cond.models[state.modelIndex];
+      
+      if (state.trialIndex < model.trials.length - 1) {
+        // More trials in this model
+        state.trialIndex++;
+        state.pageType = "scenario_intro";
+        render();
+      } else if (state.modelIndex < cond.models.length - 1) {
+        // More models in this condition
+        state.modelIndex++;
+        state.trialIndex = 0;
+        state.pageType = "model_intro";
+        render();
+      } else {
+        // Finished this condition, go to model summary
+        state.pageType = "model_summary";
+        render();
+      }
+    } else if (state.pageType === "model_summary") {
+      // Log questionnaire for model summary
+      const condSummary = state.schedule.conditions[state.conditionIndex];
+      const modelSummary = condSummary.models[state.modelIndex];
+      
+      // Collect debug answers for workload and trust questions
+      const debugAnswers = {
+        workload: {},
+        trust: {}
+      };
+      
+      if (state.questionsConfig && state.questionsConfig.model_summary_questions) {
+        if (state.questionsConfig.model_summary_questions.workload) {
+          state.questionsConfig.model_summary_questions.workload.forEach(q => {
+            debugAnswers.workload[q.id] = "DBG";
+          });
+        }
+        if (state.questionsConfig.model_summary_questions.trust) {
+          state.questionsConfig.model_summary_questions.trust.forEach(q => {
+            debugAnswers.trust[q.id] = "DBG";
+          });
+        }
+      }
+      
+      state.logs.questionnaires.push({
+        trial_id: null,
+        participant_id: state.participantId,
+        stage: state.stage,
+        condition_index: state.conditionIndex,
+        model_index: state.modelIndex,
+        trial_index: null,
+        questionnaire_type: "model_summary",
+        answers: debugAnswers,
+        correct: null,
+        enter_ts: state.currentPageEnterTs,
+        exit_ts: Date.now()
+      });
+      
+      // Model summary -> next model or visualization condition
+      const cond = state.schedule.conditions[state.conditionIndex];
+      if (state.modelIndex < cond.models.length - 1) {
+        // More models
+        state.modelIndex++;
+        state.trialIndex = 0;
+        state.pageType = "model_intro";
+        render();
+      } else {
+        // Finished both models, go to visualization condition question
+        state.pageType = "visualization_condition";
+        render();
+      }
+    } else if (state.pageType === "visualization_condition") {
+      // Log questionnaire for visualization condition
+      state.logs.questionnaires.push({
+        trial_id: null,
+        participant_id: state.participantId,
+        stage: state.stage,
+        condition_index: state.conditionIndex,
+        model_index: null,
+        trial_index: null,
+        questionnaire_type: "visualization_condition",
+        answers: { debug: "DBG" },
+        correct: null,
+        enter_ts: state.currentPageEnterTs,
+        exit_ts: Date.now()
+      });
+      
+      // Visualization condition -> next condition or global
+      if (state.conditionIndex < state.schedule.conditions.length - 1) {
+        state.conditionIndex++;
+        state.modelIndex = 0;
+        state.trialIndex = 0;
+        state.pageType = "info";
+        render();
+      } else {
+        // Finished all conditions, go to visualization global
+        state.stage = "post";
+        state.pageType = "visualization_global";
+        render();
+      }
+    }
+  } else if (state.stage === "post") {
+    if (state.pageType === "visualization_global") {
+      // Log questionnaire for visualization global
+      state.logs.questionnaires.push({
+        trial_id: null,
+        participant_id: state.participantId,
+        stage: "post",
+        condition_index: null,
+        model_index: null,
+        trial_index: null,
+        questionnaire_type: "visualization_global",
+        answers: { debug: "DBG" },
+        correct: null,
+        enter_ts: state.currentPageEnterTs,
+        exit_ts: Date.now()
+      });
+      
+      // Visualization global -> demographics
+      state.pageType = "demographics";
+      render();
+    } else if (state.pageType === "demographics") {
+      // Log questionnaire for demographics
+      state.logs.questionnaires.push({
+        trial_id: null,
+        participant_id: state.participantId,
+        stage: "post",
+        condition_index: null,
+        model_index: null,
+        trial_index: null,
+        questionnaire_type: "demographics",
+        answers: { debug: "DBG" },
+        correct: null,
+        enter_ts: state.currentPageEnterTs,
+        exit_ts: Date.now()
+      });
+      
+      // Demographics -> end
+      state.stage = "end";
+      state.pageType = "end";
+      render();
+    }
+  }
+  // End page doesn't have a next page
+}
+
+// Global keyboard handler for debug mode spacebar navigation and force skip
+// Use window.addEventListener to capture events even when iframe is focused
+window.addEventListener("keydown", (event) => {
+  // Force skip with numpad '9' - works in both debug and normal mode
+  if (event.code === "Numpad9" || (event.key === "9" && event.location === 3)) {
+    // Don't trigger if user is typing in an input, textarea, or select
+    const activeElement = document.activeElement;
+    if (activeElement && (
+      activeElement.tagName === "INPUT" ||
+      activeElement.tagName === "TEXTAREA" ||
+      activeElement.tagName === "SELECT"
+    )) {
+      return;
+    }
+    
+    event.preventDefault();
+    event.stopPropagation();
+    
+    // Force skip to next page
+    console.log("Force skip triggered (Numpad 9)");
+    forceSkipToNextPage();
+    return;
+  }
+  
+  // Spacebar navigation - only in debug mode
+  if (!state.debugMode) return;
+  if (event.code !== "Space" && event.key !== " ") return;
+  
+  // Don't trigger if user is typing in an input, textarea, or select
+  const activeElement = document.activeElement;
+  if (activeElement && (
+    activeElement.tagName === "INPUT" ||
+    activeElement.tagName === "TEXTAREA" ||
+    activeElement.tagName === "SELECT"
+  )) {
+    return;
+  }
+  
+  // Special handling for trial page - if iframe is focused, spacebar might not work
+  // So we'll force skip instead
+  if (state.pageType === "trial") {
+    event.preventDefault();
+    event.stopPropagation();
+    console.log("Spacebar on trial page - force skipping");
+    forceSkipToNextPage();
+    return;
+  }
+  
+  // Prevent default spacebar behavior (scrolling)
+  event.preventDefault();
+  
+  // Navigate to next page
+  navigateToNextPage();
 });
 
 // Initialize
