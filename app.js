@@ -377,16 +377,31 @@ function renderInfoPage(root, pageId) {
   if (pageData.media) {
     const mediaContainer = document.createElement("div");
     mediaContainer.style.margin = "20px 0";
+    mediaContainer.style.display = "flex";
+    mediaContainer.style.justifyContent = "center";
+    mediaContainer.style.alignItems = "center";
     
     if (pageData.media.type === "image") {
-      // Show placeholder box instead of actual image
-      const placeholder = document.createElement("div");
-      placeholder.className = "iframe-placeholder";
-      placeholder.textContent = `IMAGE PLACEHOLDER: ${pageId}`;
-      placeholder.style.display = "flex";
-      placeholder.style.alignItems = "center";
-      placeholder.style.justifyContent = "center";
-      mediaContainer.appendChild(placeholder);
+      // Show actual image for color test, placeholder for others
+      if (pageId === "ishihara_test" && pageData.media.src) {
+        const img = document.createElement("img");
+        img.src = pageData.media.src;
+        img.alt = "Ishihara Color Test";
+        img.style.maxWidth = "50%";
+        img.style.height = "auto";
+        img.style.borderRadius = "8px";
+        img.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)";
+        mediaContainer.appendChild(img);
+      } else {
+        // Show placeholder box for other images
+        const placeholder = document.createElement("div");
+        placeholder.className = "iframe-placeholder";
+        placeholder.textContent = `IMAGE PLACEHOLDER: ${pageId}`;
+        placeholder.style.display = "flex";
+        placeholder.style.alignItems = "center";
+        placeholder.style.justifyContent = "center";
+        mediaContainer.appendChild(placeholder);
+      }
     } else if (pageData.media.type === "youtube") {
       const videoContainer = document.createElement("div");
       videoContainer.style.position = "relative";
@@ -577,6 +592,16 @@ function renderInfoPage(root, pageId) {
         if (!input || !input.value.trim()) {
           alert("אנא מלא את השדה הנדרש");
           return;
+        }
+        
+        // Special validation for color test page
+        if (pageId === "ishihara_test" && pageData.correct_answer) {
+          const userAnswer = input.value.trim();
+          const correctAnswer = pageData.correct_answer.trim();
+          if (userAnswer !== correctAnswer) {
+            alert("המספר שכתבת שגוי. אנא נסה שוב.");
+            return;
+          }
         }
       } else if (pageData.input_type === "checkbox") {
         if (pageId === "consent_form") {
