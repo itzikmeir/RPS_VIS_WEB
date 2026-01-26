@@ -500,7 +500,20 @@
         }
 
         const data = await res.json();
-        renderResults(data, pid);
+        
+        // Load participant schedule to get condition names
+        let schedule = null;
+        try {
+          const scheduleUrl = `participants_json/${pid}.json`;
+          const scheduleRes = await fetch(scheduleUrl, { cache: "no-store" });
+          if (scheduleRes.ok) {
+            schedule = await scheduleRes.json();
+          }
+        } catch (e) {
+          console.warn("Could not load participant schedule:", e);
+        }
+        
+        renderResults(data, pid, schedule);
       } catch (e) {
         console.error(e);
         showError("Error loading or parsing log file. See console for details.");
@@ -510,7 +523,7 @@
       }
     }
 
-    function renderResults(logData, participantId) {
+    function renderResults(logData, participantId, schedule = null) {
       const wrapper = document.createElement('div');
       
       // Calculate statistics
@@ -734,7 +747,7 @@
       const questionnairesTab = document.createElement('div');
       questionnairesTab.className = 'tab-content';
       questionnairesTab.id = 'tab3';
-      questionnairesTab.appendChild(createQuestionnairesView(logData.questionnaires || []));
+      questionnairesTab.appendChild(createQuestionnairesView(logData.questionnaires || [], schedule));
       tabContents.appendChild(questionnairesTab);
       
       tabsSection.appendChild(tabContents);
@@ -1071,7 +1084,7 @@
       });
     }
 
-    function createQuestionnairesView(questionnaires) {
+    function createQuestionnairesView(questionnaires, schedule = null) {
       if (questionnaires.length === 0) {
         const noData = document.createElement('div');
         noData.className = 'no-data';
@@ -1081,322 +1094,537 @@
       
       const wrapper = document.createElement('div');
       
-      // Group questionnaires by type
-      const grouped = {};
-      questionnaires.forEach(q => {
-        const type = q.questionnaire_type || 'unknown';
-        if (!grouped[type]) {
-          grouped[type] = [];
-        }
-        grouped[type].push(q);
+      // Separate questionnaires by type
+      const modelSummaries = questionnaires.filter(q => q.questionnaire_type === 'model_summary');
+      const postScenarios = questionnaires.filter(q => q.questionnaire_type === 'post_scenario');
+      const visualizations = questionnaires.filter(q => 
+        q.questionnaire_type === 'visualization_condition' || q.questionnaire_type === 'visualization_global'
+      );
+      
+      // Create sub-tabs for questionnaires
+      const subTabs = document.createElement('div');
+      subTabs.className = 'tabs';
+      subTabs.style.marginTop = '20px';
+      
+      const tabModel = document.createElement('button');
+      tabModel.className = 'tab active';
+      tabModel.textContent = `Model Summary (${modelSummaries.length})`;
+      tabModel.onclick = () => switchSubTab(0);
+      
+      const tabPostScenario = document.createElement('button');
+      tabPostScenario.className = 'tab';
+      tabPostScenario.textContent = `Post Scenario (${postScenarios.length})`;
+      tabPostScenario.onclick = () => switchSubTab(1);
+      
+      const tabVisualization = document.createElement('button');
+      tabVisualization.className = 'tab';
+      tabVisualization.textContent = `Visualization (${visualizations.length})`;
+      tabVisualization.onclick = () => switchSubTab(2);
+      
+      subTabs.appendChild(tabModel);
+      subTabs.appendChild(tabPostScenario);
+      subTabs.appendChild(tabVisualization);
+      wrapper.appendChild(subTabs);
+      
+      // Sub-tab contents
+      const subTabContents = document.createElement('div');
+      subTabContents.id = 'subTabContents';
+      
+      // Model Summary tab
+      const modelTabContent = document.createElement('div');
+      modelTabContent.className = 'tab-content active';
+      modelTabContent.id = 'subTab0';
+      modelTabContent.appendChild(createModelSummaryView(modelSummaries, schedule));
+      subTabContents.appendChild(modelTabContent);
+      
+      // Post Scenario tab
+      const postScenarioTabContent = document.createElement('div');
+      postScenarioTabContent.className = 'tab-content';
+      postScenarioTabContent.id = 'subTab1';
+      postScenarioTabContent.appendChild(createPostScenarioView(postScenarios));
+      subTabContents.appendChild(postScenarioTabContent);
+      
+      // Visualization tab
+      const visualizationTabContent = document.createElement('div');
+      visualizationTabContent.className = 'tab-content';
+      visualizationTabContent.id = 'subTab2';
+      visualizationTabContent.appendChild(createVisualizationView(visualizations));
+      subTabContents.appendChild(visualizationTabContent);
+      
+      wrapper.appendChild(subTabContents);
+      
+      return wrapper;
+    }
+    
+    function switchSubTab(index) {
+      // Update sub-tab buttons
+      const subTabs = document.getElementById('subTabContents').parentElement.querySelector('.tabs');
+      subTabs.querySelectorAll('.tab').forEach((tab, i) => {
+        tab.classList.toggle('active', i === index);
       });
       
-      Object.keys(grouped).sort().forEach(type => {
-        const typeSection = document.createElement('div');
-        typeSection.className = 'condition-group';
-        typeSection.style.marginBottom = '30px';
+      // Update sub-tab contents
+      document.querySelectorAll('#subTabContents .tab-content').forEach((content, i) => {
+        content.classList.toggle('active', i === index);
+      });
+    }
+    
+    function getConditionName(schedule, conditionIndex) {
+      if (!schedule || !schedule.conditions || conditionIndex === null || conditionIndex === undefined) {
+        return null;
+      }
+      const condition = schedule.conditions[conditionIndex];
+      return condition ? condition.visualization : null;
+    }
+    
+    function createModelSummaryView(modelSummaries, schedule) {
+      if (modelSummaries.length === 0) {
+        const noData = document.createElement('div');
+        noData.className = 'no-data';
+        noData.textContent = 'No model summary questionnaires found';
+        return noData;
+      }
+      
+      const wrapper = document.createElement('div');
+      
+      modelSummaries.forEach((q, idx) => {
+        const qCard = document.createElement('div');
+        qCard.className = 'model-group';
+        qCard.style.marginBottom = '15px';
         
-        const typeTitle = document.createElement('h3');
-        typeTitle.textContent = `${type.charAt(0).toUpperCase() + type.slice(1).replace(/_/g, ' ')} (${grouped[type].length})`;
-        typeSection.appendChild(typeTitle);
+        const qHeader = document.createElement('div');
+        qHeader.style.marginBottom = '10px';
+        qHeader.style.paddingBottom = '10px';
+        qHeader.style.borderBottom = '1px solid #e0e0e0';
         
-        grouped[type].forEach((q, idx) => {
-          const qCard = document.createElement('div');
-          qCard.className = 'model-group';
-          qCard.style.marginBottom = '15px';
-          
-          const qHeader = document.createElement('div');
-          qHeader.style.marginBottom = '10px';
-          qHeader.style.paddingBottom = '10px';
-          qHeader.style.borderBottom = '1px solid #e0e0e0';
-          
-          const headerInfo = [];
-          if (q.trial_id) headerInfo.push(`Trial: ${q.trial_id}`);
-          if (q.stage) headerInfo.push(`Stage: ${q.stage}`);
-          if (q.condition_index !== null && q.condition_index !== undefined) headerInfo.push(`Condition: ${q.condition_index + 1}`);
-          if (q.model_index !== null && q.model_index !== undefined) headerInfo.push(`Model: ${q.model_index + 1}`);
-          if (q.trial_index !== null && q.trial_index !== undefined) headerInfo.push(`Trial: ${q.trial_index + 1}`);
-          
-          qHeader.innerHTML = `<strong>${headerInfo.join(' | ')}</strong>`;
-          qCard.appendChild(qHeader);
-          
-          // Display answers
-          if (q.answers && typeof q.answers === 'object') {
-            const answersDiv = document.createElement('div');
-            answersDiv.style.marginTop = '10px';
-            
-            Object.entries(q.answers).forEach(([key, value]) => {
-              const answerRow = document.createElement('div');
-              answerRow.style.marginBottom = '8px';
-              answerRow.style.padding = '8px';
-              answerRow.style.background = '#f9f9f9';
-              answerRow.style.borderRadius = '4px';
-              
-              // Handle model_summary questionnaire with workload and trust sections
-              if (q.questionnaire_type === 'model_summary' && (key === 'workload' || key === 'trust') && typeof value === 'object') {
-                const sectionTitle = document.createElement('div');
-                sectionTitle.style.marginBottom = '15px';
-                sectionTitle.style.fontWeight = '600';
-                sectionTitle.style.fontSize = '16px';
-                sectionTitle.style.color = key === 'workload' ? '#1976d2' : '#2e7d32';
-                sectionTitle.style.paddingBottom = '8px';
-                sectionTitle.style.borderBottom = `2px solid ${key === 'workload' ? '#1976d2' : '#2e7d32'}`;
-                sectionTitle.textContent = key === 'workload' ? 'שאלות עומס (Workload Questions)' : 'שאלות אמון (Trust Questions)';
-                answerRow.appendChild(sectionTitle);
-                
-                const nestedDiv = document.createElement('div');
-                nestedDiv.style.marginLeft = '10px';
-                nestedDiv.style.marginTop = '8px';
-                
-                // Create a mapping for question labels (for better readability)
-                const questionLabels = {
-                  workload: {
-                    mental_demand: 'דרישה מנטלית (Mental Demand)',
-                    time_demand: 'דרישת זמן (Time Demand)',
-                    performance: 'ביצוע (Performance)',
-                    effort: 'מאמץ (Effort)',
-                    frustration: 'תסכול (Frustration)'
-                  },
-                  trust: {
-                    trust1: 'Trust Question 1: המערכת מטעה',
-                    trust2: 'Trust Question 2: המערכת מתנהגת באופן ערמומי/בלתי־הוגן',
-                    trust3: 'Trust Question 3: אני חש/ה חשד כלפי כוונת המערכת',
-                    trust4: 'Trust Question 4: אני נזהר/ת מן המערכת',
-                    trust5: 'Trust Question 5: פעולת המערכת עלולה להוביל לתוצאה מזיקה',
-                    trust6: 'Trust Question 6: יש לי ביטחון במערכת',
-                    trust7: 'Trust Question 7: המערכת מספקת ביטחון',
-                    trust8: 'Trust Question 8: למערכת יש יושרה',
-                    trust9: 'Trust Question 9: ניתן לסמוך על המערכת',
-                    trust10: 'Trust Question 10: המערכת אמינה',
-                    trust11: 'Trust Question 11: אני יכול/ה לבטוח במערכת',
-                    trust12: 'Trust Question 12: אני מכיר/ה את המערכת'
-                  }
-                };
-                
-                Object.entries(value).forEach(([questionId, answerValue]) => {
-                  const qItem = document.createElement('div');
-                  qItem.style.marginBottom = '12px';
-                  qItem.style.padding = '12px';
-                  qItem.style.background = 'white';
-                  qItem.style.borderRadius = '6px';
-                  qItem.style.border = `2px solid ${key === 'workload' ? '#e3f2fd' : '#e8f5e9'}`;
-                  
-                  const questionLabel = document.createElement('div');
-                  questionLabel.style.fontWeight = '600';
-                  questionLabel.style.marginBottom = '8px';
-                  questionLabel.style.fontSize = '14px';
-                  questionLabel.style.color = '#333';
-                  const labelText = questionLabels[key] && questionLabels[key][questionId] 
-                    ? questionLabels[key][questionId] 
-                    : `Question ID: ${questionId}`;
-                  questionLabel.textContent = labelText;
-                  qItem.appendChild(questionLabel);
-                  
-                  const answerDiv = document.createElement('div');
-                  answerDiv.style.padding = '8px';
-                  answerDiv.style.background = '#f5f5f5';
-                  answerDiv.style.borderRadius = '4px';
-                  answerDiv.style.fontSize = '15px';
-                  
-                  if (answerValue === 'DBG' || answerValue === null) {
-                    answerDiv.innerHTML = `<strong>Answer:</strong> <span style="color: #999;">${answerValue === 'DBG' ? 'DBG (Debug Mode)' : 'Not answered'}</span>`;
-                  } else {
-                    const answerNum = parseInt(answerValue);
-                    const answerColor = key === 'workload' 
-                      ? (answerNum < 0 ? '#c62828' : answerNum > 0 ? '#2e7d32' : '#666')
-                      : (answerNum <= 3 ? '#c62828' : answerNum >= 5 ? '#2e7d32' : '#666');
-                    answerDiv.innerHTML = `<strong>Answer:</strong> <span style="color: ${answerColor}; font-weight: 600; font-size: 16px;">${escapeHtml(String(answerValue))}</span>`;
-                  }
-                  
-                  qItem.appendChild(answerDiv);
-                  nestedDiv.appendChild(qItem);
-                });
-                
-                answerRow.appendChild(nestedDiv);
-              } else if (key === 'scenario_questions' && typeof value === 'object') {
-                // Handle scenario questions nested object with clear comparison
-                const scenarioTitle = document.createElement('div');
-                scenarioTitle.style.marginBottom = '10px';
-                scenarioTitle.style.fontWeight = '600';
-                scenarioTitle.style.fontSize = '15px';
-                scenarioTitle.textContent = 'Scenario-Specific Questions:';
-                answerRow.appendChild(scenarioTitle);
-                
-                const nestedDiv = document.createElement('div');
-                nestedDiv.style.marginLeft = '10px';
-                nestedDiv.style.marginTop = '8px';
-                
-                // Get correct answers from schedule (Q1, Q2, Q3)
-                const correctAnswers = q.correct || {};
-                const questionKeys = ['Q1', 'Q2', 'Q3'];
-                let questionIndex = 0;
-                
-                Object.entries(value).forEach(([qId, qData]) => {
-                  const qItem = document.createElement('div');
-                  qItem.style.marginBottom = '12px';
-                  qItem.style.padding = '12px';
-                  qItem.style.borderRadius = '6px';
-                  qItem.style.border = '2px solid';
-                  
-                  if (qData && typeof qData === 'object' && qData.answer_index !== undefined) {
-                    // User answered the question
-                    const isCorrect = qData.is_correct === true;
-                    qItem.style.background = isCorrect ? '#e8f5e9' : '#ffebee';
-                    qItem.style.borderColor = isCorrect ? '#4caf50' : '#f44336';
-                    
-                    const statusBadge = document.createElement('div');
-                    statusBadge.style.marginBottom = '8px';
-                    statusBadge.style.fontWeight = '600';
-                    statusBadge.style.fontSize = '14px';
-                    statusBadge.innerHTML = `<span class="badge ${isCorrect ? 'success' : 'error'}" style="font-size: 14px; padding: 4px 10px;">${isCorrect ? '✓ CORRECT' : '✗ INCORRECT'}</span>`;
-                    qItem.appendChild(statusBadge);
-                    
-                    const questionLabel = document.createElement('div');
-                    questionLabel.style.fontWeight = '600';
-                    questionLabel.style.marginBottom = '6px';
-                    questionLabel.textContent = `Question ${qId.toUpperCase()}:`;
-                    qItem.appendChild(questionLabel);
-                    
-                    // User's answer
-                    const userAnswerDiv = document.createElement('div');
-                    userAnswerDiv.style.marginBottom = '6px';
-                    userAnswerDiv.style.padding = '6px';
-                    userAnswerDiv.style.background = 'white';
-                    userAnswerDiv.style.borderRadius = '4px';
-                    userAnswerDiv.innerHTML = `<strong>Your Answer:</strong> Option ${qData.answer_index + 1} - "${escapeHtml(String(qData.answer_text || 'N/A'))}"`;
-                    qItem.appendChild(userAnswerDiv);
-                    
-                    // Correct answer - show both index and schedule value
-                    const correctAnswerDiv = document.createElement('div');
-                    correctAnswerDiv.style.padding = '6px';
-                    correctAnswerDiv.style.background = '#e3f2fd';
-                    correctAnswerDiv.style.borderRadius = '4px';
-                    const correctIndex = qData.correct_answer_index;
-                    const scheduleAnswer = correctAnswers[questionKeys[questionIndex]];
-                    
-                    let correctText = '';
-                    if (correctIndex !== undefined && correctIndex !== null) {
-                      correctText = `Option ${correctIndex + 1}`;
-                      if (scheduleAnswer) {
-                        correctText += ` (Schedule: ${escapeHtml(String(scheduleAnswer))})`;
-                      }
-                    } else if (scheduleAnswer) {
-                      correctText = `Schedule Answer: ${escapeHtml(String(scheduleAnswer))}`;
-                    } else {
-                      correctText = 'N/A';
-                    }
-                    
-                    correctAnswerDiv.innerHTML = `<strong>Correct Answer:</strong> ${correctText}`;
-                    qItem.appendChild(correctAnswerDiv);
-                    
-                    // Show indices for debugging
-                    const debugDiv = document.createElement('div');
-                    debugDiv.style.marginTop = '6px';
-                    debugDiv.style.fontSize = '11px';
-                    debugDiv.style.color = '#666';
-                    debugDiv.style.fontFamily = 'monospace';
-                    debugDiv.textContent = `[User Index: ${qData.answer_index}, Correct Index: ${correctIndex}]`;
-                    qItem.appendChild(debugDiv);
-                    
-                  } else {
-                    // No answer or DBG
-                    qItem.style.background = '#fff3e0';
-                    qItem.style.borderColor = '#ff9800';
-                    
-                    const statusBadge = document.createElement('div');
-                    statusBadge.style.marginBottom = '8px';
-                    statusBadge.style.fontWeight = '600';
-                    statusBadge.innerHTML = `<span class="badge info" style="font-size: 14px; padding: 4px 10px;">${qData === 'DBG' ? 'DBG MODE' : 'NOT ANSWERED'}</span>`;
-                    qItem.appendChild(statusBadge);
-                    
-                    const questionLabel = document.createElement('div');
-                    questionLabel.style.fontWeight = '600';
-                    questionLabel.style.marginBottom = '6px';
-                    questionLabel.textContent = `Question ${qId.toUpperCase()}:`;
-                    qItem.appendChild(questionLabel);
-                    
-                    const noAnswerDiv = document.createElement('div');
-                    noAnswerDiv.style.padding = '6px';
-                    noAnswerDiv.style.background = 'white';
-                    noAnswerDiv.style.borderRadius = '4px';
-                    noAnswerDiv.textContent = qData === 'DBG' ? 'Debug mode - answer skipped' : 'No answer provided';
-                    qItem.appendChild(noAnswerDiv);
-                    
-                    // Show correct answer if available
-                    if (correctAnswers[questionKeys[questionIndex]]) {
-                      const correctAnswerDiv = document.createElement('div');
-                      correctAnswerDiv.style.marginTop = '6px';
-                      correctAnswerDiv.style.padding = '6px';
-                      correctAnswerDiv.style.background = '#e3f2fd';
-                      correctAnswerDiv.style.borderRadius = '4px';
-                      correctAnswerDiv.innerHTML = `<strong>Correct Answer:</strong> ${escapeHtml(String(correctAnswers[questionKeys[questionIndex]]))}`;
-                      qItem.appendChild(correctAnswerDiv);
-                    }
-                  }
-                  
-                  questionIndex++;
-                  nestedDiv.appendChild(qItem);
-                });
-                answerRow.appendChild(nestedDiv);
-              } else {
-                // Regular answer
-                const displayValue = value === 'DBG' ? 'DBG (Debug Mode)' : 
-                                    value === null ? 'Not answered' : 
-                                    String(value);
-                answerRow.innerHTML = `<strong>${escapeHtml(key)}:</strong> ${escapeHtml(displayValue)}`;
-              }
-              
-              answersDiv.appendChild(answerRow);
-            });
-            
-            qCard.appendChild(answersDiv);
-          } else if (q.answers === null || q.answers === 'DBG') {
-            const noAnswerDiv = document.createElement('div');
-            noAnswerDiv.style.marginTop = '10px';
-            noAnswerDiv.style.padding = '8px';
-            noAnswerDiv.style.background = '#fff3e0';
-            noAnswerDiv.style.borderRadius = '4px';
-            noAnswerDiv.textContent = q.answers === 'DBG' ? 'DBG (Debug Mode - No answer)' : 'No answers recorded';
-            qCard.appendChild(noAnswerDiv);
+        const headerInfo = [];
+        if (q.stage) headerInfo.push(`Stage: ${q.stage}`);
+        if (q.condition_index !== null && q.condition_index !== undefined) {
+          const conditionName = getConditionName(schedule, q.condition_index);
+          if (conditionName) {
+            headerInfo.push(`Condition: ${q.condition_index + 1} (${conditionName})`);
+          } else {
+            headerInfo.push(`Condition: ${q.condition_index + 1}`);
           }
-          
-          // Show correct answers if available
-          if (q.correct && typeof q.correct === 'object') {
-            const correctDiv = document.createElement('div');
-            correctDiv.style.marginTop = '10px';
-            correctDiv.style.padding = '8px';
-            correctDiv.style.background = '#e3f2fd';
-            correctDiv.style.borderRadius = '4px';
-            
-            const correctTitle = document.createElement('strong');
-            correctTitle.textContent = 'Correct Answers: ';
-            correctDiv.appendChild(correctTitle);
-            
-            const correctText = document.createTextNode(
-              Object.entries(q.correct).map(([k, v]) => `${k}: ${v}`).join(', ')
-            );
-            correctDiv.appendChild(correctText);
-            
-            qCard.appendChild(correctDiv);
-          }
-          
-          // Show timestamps
-          const timeDiv = document.createElement('div');
-          timeDiv.style.marginTop = '8px';
-          timeDiv.style.fontSize = '12px';
-          timeDiv.style.color = '#666';
-          const duration = q.exit_ts && q.enter_ts ? q.exit_ts - q.enter_ts : null;
-          timeDiv.textContent = `Time: ${q.enter_ts ? new Date(q.enter_ts).toLocaleTimeString() : 'N/A'} - ${q.exit_ts ? new Date(q.exit_ts).toLocaleTimeString() : 'N/A'}${duration ? ` (${formatDuration(duration)})` : ''}`;
-          qCard.appendChild(timeDiv);
-          
-          typeSection.appendChild(qCard);
-        });
+        }
+        if (q.model_index !== null && q.model_index !== undefined) headerInfo.push(`Model: ${q.model_index + 1}`);
         
-        wrapper.appendChild(typeSection);
+        qHeader.innerHTML = `<strong>${headerInfo.join(' | ')}</strong>`;
+        qCard.appendChild(qHeader);
+        
+        // Display answers (same logic as before)
+        if (q.answers && typeof q.answers === 'object') {
+          const answersDiv = document.createElement('div');
+          answersDiv.style.marginTop = '10px';
+          
+          Object.entries(q.answers).forEach(([key, value]) => {
+            const answerRow = document.createElement('div');
+            answerRow.style.marginBottom = '8px';
+            answerRow.style.padding = '8px';
+            answerRow.style.background = '#f9f9f9';
+            answerRow.style.borderRadius = '4px';
+            
+            // Handle model_summary questionnaire with workload and trust sections
+            if (q.questionnaire_type === 'model_summary' && (key === 'workload' || key === 'trust') && typeof value === 'object') {
+              const sectionTitle = document.createElement('div');
+              sectionTitle.style.marginBottom = '15px';
+              sectionTitle.style.fontWeight = '600';
+              sectionTitle.style.fontSize = '16px';
+              sectionTitle.style.color = key === 'workload' ? '#1976d2' : '#2e7d32';
+              sectionTitle.style.paddingBottom = '8px';
+              sectionTitle.style.borderBottom = `2px solid ${key === 'workload' ? '#1976d2' : '#2e7d32'}`;
+              sectionTitle.textContent = key === 'workload' ? 'שאלות עומס (Workload Questions)' : 'שאלות אמון (Trust Questions)';
+              answerRow.appendChild(sectionTitle);
+              
+              const nestedDiv = document.createElement('div');
+              nestedDiv.style.marginLeft = '10px';
+              nestedDiv.style.marginTop = '8px';
+              
+              // Create a mapping for question labels (for better readability)
+              const questionLabels = {
+                workload: {
+                  mental_demand: 'דרישה מנטלית (Mental Demand)',
+                  time_demand: 'דרישת זמן (Time Demand)',
+                  performance: 'ביצוע (Performance)',
+                  effort: 'מאמץ (Effort)',
+                  frustration: 'תסכול (Frustration)'
+                },
+                trust: {
+                  trust1: 'Trust Question 1: המערכת מטעה',
+                  trust2: 'Trust Question 2: המערכת מתנהגת באופן ערמומי/בלתי־הוגן',
+                  trust3: 'Trust Question 3: אני חש/ה חשד כלפי כוונת המערכת',
+                  trust4: 'Trust Question 4: אני נזהר/ת מן המערכת',
+                  trust5: 'Trust Question 5: פעולת המערכת עלולה להוביל לתוצאה מזיקה',
+                  trust6: 'Trust Question 6: יש לי ביטחון במערכת',
+                  trust7: 'Trust Question 7: המערכת מספקת ביטחון',
+                  trust8: 'Trust Question 8: למערכת יש יושרה',
+                  trust9: 'Trust Question 9: ניתן לסמוך על המערכת',
+                  trust10: 'Trust Question 10: המערכת אמינה',
+                  trust11: 'Trust Question 11: אני יכול/ה לבטוח במערכת',
+                  trust12: 'Trust Question 12: אני מכיר/ה את המערכת'
+                }
+              };
+              
+              Object.entries(value).forEach(([questionId, answerValue]) => {
+                const qItem = document.createElement('div');
+                qItem.style.marginBottom = '12px';
+                qItem.style.padding = '12px';
+                qItem.style.background = 'white';
+                qItem.style.borderRadius = '6px';
+                qItem.style.border = `2px solid ${key === 'workload' ? '#e3f2fd' : '#e8f5e9'}`;
+                
+                const questionLabel = document.createElement('div');
+                questionLabel.style.fontWeight = '600';
+                questionLabel.style.marginBottom = '8px';
+                questionLabel.style.fontSize = '14px';
+                questionLabel.style.color = '#333';
+                const labelText = questionLabels[key] && questionLabels[key][questionId] 
+                  ? questionLabels[key][questionId] 
+                  : `Question ID: ${questionId}`;
+                questionLabel.textContent = labelText;
+                qItem.appendChild(questionLabel);
+                
+                const answerDiv = document.createElement('div');
+                answerDiv.style.padding = '8px';
+                answerDiv.style.background = '#f5f5f5';
+                answerDiv.style.borderRadius = '4px';
+                answerDiv.style.fontSize = '15px';
+                
+                if (answerValue === 'DBG' || answerValue === null) {
+                  answerDiv.innerHTML = `<strong>Answer:</strong> <span style="color: #999;">${answerValue === 'DBG' ? 'DBG (Debug Mode)' : 'Not answered'}</span>`;
+                } else {
+                  const answerNum = parseInt(answerValue);
+                  const answerColor = key === 'workload' 
+                    ? (answerNum < 0 ? '#c62828' : answerNum > 0 ? '#2e7d32' : '#666')
+                    : (answerNum <= 3 ? '#c62828' : answerNum >= 5 ? '#2e7d32' : '#666');
+                  answerDiv.innerHTML = `<strong>Answer:</strong> <span style="color: ${answerColor}; font-weight: 600; font-size: 16px;">${escapeHtml(String(answerValue))}</span>`;
+                }
+                
+                qItem.appendChild(answerDiv);
+                nestedDiv.appendChild(qItem);
+              });
+              
+              answerRow.appendChild(nestedDiv);
+            } else {
+              // Regular answer
+              const displayValue = value === 'DBG' ? 'DBG (Debug Mode)' : 
+                                value === null ? 'Not answered' : 
+                                String(value);
+              answerRow.innerHTML = `<strong>${escapeHtml(key)}:</strong> ${escapeHtml(displayValue)}`;
+            }
+            
+            answersDiv.appendChild(answerRow);
+          });
+          
+          qCard.appendChild(answersDiv);
+        } else if (q.answers === null || q.answers === 'DBG') {
+          const noAnswerDiv = document.createElement('div');
+          noAnswerDiv.style.marginTop = '10px';
+          noAnswerDiv.style.padding = '8px';
+          noAnswerDiv.style.background = '#fff3e0';
+          noAnswerDiv.style.borderRadius = '4px';
+          noAnswerDiv.textContent = q.answers === 'DBG' ? 'DBG (Debug Mode - No answer)' : 'No answers recorded';
+          qCard.appendChild(noAnswerDiv);
+        }
+        
+        // Show timestamps
+        const timeDiv = document.createElement('div');
+        timeDiv.style.marginTop = '8px';
+        timeDiv.style.fontSize = '12px';
+        timeDiv.style.color = '#666';
+        const duration = q.exit_ts && q.enter_ts ? q.exit_ts - q.enter_ts : null;
+        timeDiv.textContent = `Time: ${q.enter_ts ? new Date(q.enter_ts).toLocaleTimeString() : 'N/A'} - ${q.exit_ts ? new Date(q.exit_ts).toLocaleTimeString() : 'N/A'}${duration ? ` (${formatDuration(duration)})` : ''}`;
+        qCard.appendChild(timeDiv);
+        
+        wrapper.appendChild(qCard);
       });
       
       return wrapper;
     }
+    
+    function createPostScenarioView(postScenarios) {
+      if (postScenarios.length === 0) {
+        const noData = document.createElement('div');
+        noData.className = 'no-data';
+        noData.textContent = 'No post-scenario questionnaires found';
+        return noData;
+      }
+      
+      const wrapper = document.createElement('div');
+      
+      postScenarios.forEach((q, idx) => {
+        const qCard = document.createElement('div');
+        qCard.className = 'model-group';
+        qCard.style.marginBottom = '15px';
+        
+        const qHeader = document.createElement('div');
+        qHeader.style.marginBottom = '10px';
+        qHeader.style.paddingBottom = '10px';
+        qHeader.style.borderBottom = '1px solid #e0e0e0';
+        
+        const headerInfo = [];
+        if (q.trial_id) headerInfo.push(`Trial: ${q.trial_id}`);
+        if (q.stage) headerInfo.push(`Stage: ${q.stage}`);
+        if (q.condition_index !== null && q.condition_index !== undefined) headerInfo.push(`Condition: ${q.condition_index + 1}`);
+        if (q.model_index !== null && q.model_index !== undefined) headerInfo.push(`Model: ${q.model_index + 1}`);
+        if (q.trial_index !== null && q.trial_index !== undefined) headerInfo.push(`Trial: ${q.trial_index + 1}`);
+        
+        qHeader.innerHTML = `<strong>${headerInfo.join(' | ')}</strong>`;
+        qCard.appendChild(qHeader);
+        
+        // Display answers (scenario questions logic)
+        if (q.answers && typeof q.answers === 'object') {
+          const answersDiv = document.createElement('div');
+          answersDiv.style.marginTop = '10px';
+          
+          Object.entries(q.answers).forEach(([key, value]) => {
+            const answerRow = document.createElement('div');
+            answerRow.style.marginBottom = '8px';
+            answerRow.style.padding = '8px';
+            answerRow.style.background = '#f9f9f9';
+            answerRow.style.borderRadius = '4px';
+            
+            if (key === 'scenario_questions' && typeof value === 'object') {
+              // Handle scenario questions nested object with clear comparison
+              const scenarioTitle = document.createElement('div');
+              scenarioTitle.style.marginBottom = '10px';
+              scenarioTitle.style.fontWeight = '600';
+              scenarioTitle.style.fontSize = '15px';
+              scenarioTitle.textContent = 'Scenario-Specific Questions:';
+              answerRow.appendChild(scenarioTitle);
+              
+              const nestedDiv = document.createElement('div');
+              nestedDiv.style.marginLeft = '10px';
+              nestedDiv.style.marginTop = '8px';
+              
+              // Get correct answers from schedule (Q1, Q2, Q3)
+              const correctAnswers = q.correct || {};
+              const questionKeys = ['Q1', 'Q2', 'Q3'];
+              let questionIndex = 0;
+              
+              Object.entries(value).forEach(([qId, qData]) => {
+                const qItem = document.createElement('div');
+                qItem.style.marginBottom = '12px';
+                qItem.style.padding = '12px';
+                qItem.style.borderRadius = '6px';
+                qItem.style.border = '2px solid';
+                
+                if (qData && typeof qData === 'object' && qData.answer_index !== undefined) {
+                  // User answered the question
+                  const isCorrect = qData.is_correct === true;
+                  qItem.style.background = isCorrect ? '#e8f5e9' : '#ffebee';
+                  qItem.style.borderColor = isCorrect ? '#4caf50' : '#f44336';
+                  
+                  const statusBadge = document.createElement('div');
+                  statusBadge.style.marginBottom = '8px';
+                  statusBadge.style.fontWeight = '600';
+                  statusBadge.style.fontSize = '14px';
+                  statusBadge.innerHTML = `<span class="badge ${isCorrect ? 'success' : 'error'}" style="font-size: 14px; padding: 4px 10px;">${isCorrect ? '✓ CORRECT' : '✗ INCORRECT'}</span>`;
+                  qItem.appendChild(statusBadge);
+                  
+                  const questionLabel = document.createElement('div');
+                  questionLabel.style.fontWeight = '600';
+                  questionLabel.style.marginBottom = '6px';
+                  questionLabel.textContent = `Question ${qId.toUpperCase()}:`;
+                  qItem.appendChild(questionLabel);
+                  
+                  // User's answer
+                  const userAnswerDiv = document.createElement('div');
+                  userAnswerDiv.style.marginBottom = '6px';
+                  userAnswerDiv.style.padding = '6px';
+                  userAnswerDiv.style.background = 'white';
+                  userAnswerDiv.style.borderRadius = '4px';
+                  userAnswerDiv.innerHTML = `<strong>Your Answer:</strong> Option ${qData.answer_index + 1} - "${escapeHtml(String(qData.answer_text || 'N/A'))}"`;
+                  qItem.appendChild(userAnswerDiv);
+                  
+                  // Correct answer
+                  const correctAnswerDiv = document.createElement('div');
+                  correctAnswerDiv.style.padding = '6px';
+                  correctAnswerDiv.style.background = '#e3f2fd';
+                  correctAnswerDiv.style.borderRadius = '4px';
+                  const correctIndex = qData.correct_answer_index;
+                  const scheduleAnswer = correctAnswers[questionKeys[questionIndex]];
+                  
+                  let correctText = '';
+                  if (correctIndex !== undefined && correctIndex !== null) {
+                    correctText = `Option ${correctIndex + 1}`;
+                    if (scheduleAnswer) {
+                      correctText += ` (Schedule: ${escapeHtml(String(scheduleAnswer))})`;
+                    }
+                  } else if (scheduleAnswer) {
+                    correctText = `Schedule Answer: ${escapeHtml(String(scheduleAnswer))}`;
+                  } else {
+                    correctText = 'N/A';
+                  }
+                  
+                  correctAnswerDiv.innerHTML = `<strong>Correct Answer:</strong> ${correctText}`;
+                  qItem.appendChild(correctAnswerDiv);
+                  
+                  // Show indices for debugging
+                  const debugDiv = document.createElement('div');
+                  debugDiv.style.marginTop = '6px';
+                  debugDiv.style.fontSize = '11px';
+                  debugDiv.style.color = '#666';
+                  debugDiv.style.fontFamily = 'monospace';
+                  debugDiv.textContent = `[User Index: ${qData.answer_index}, Correct Index: ${correctIndex}]`;
+                  qItem.appendChild(debugDiv);
+                  
+                } else {
+                  // No answer or DBG
+                  qItem.style.background = '#fff3e0';
+                  qItem.style.borderColor = '#ff9800';
+                  
+                  const statusBadge = document.createElement('div');
+                  statusBadge.style.marginBottom = '8px';
+                  statusBadge.style.fontWeight = '600';
+                  statusBadge.innerHTML = `<span class="badge info" style="font-size: 14px; padding: 4px 10px;">${qData === 'DBG' ? 'DBG MODE' : 'NOT ANSWERED'}</span>`;
+                  qItem.appendChild(statusBadge);
+                  
+                  const questionLabel = document.createElement('div');
+                  questionLabel.style.fontWeight = '600';
+                  questionLabel.style.marginBottom = '6px';
+                  questionLabel.textContent = `Question ${qId.toUpperCase()}:`;
+                  qItem.appendChild(questionLabel);
+                  
+                  const noAnswerDiv = document.createElement('div');
+                  noAnswerDiv.style.padding = '6px';
+                  noAnswerDiv.style.background = 'white';
+                  noAnswerDiv.style.borderRadius = '4px';
+                  noAnswerDiv.textContent = qData === 'DBG' ? 'Debug mode - answer skipped' : 'No answer provided';
+                  qItem.appendChild(noAnswerDiv);
+                  
+                  // Show correct answer if available
+                  if (correctAnswers[questionKeys[questionIndex]]) {
+                    const correctAnswerDiv = document.createElement('div');
+                    correctAnswerDiv.style.marginTop = '6px';
+                    correctAnswerDiv.style.padding = '6px';
+                    correctAnswerDiv.style.background = '#e3f2fd';
+                    correctAnswerDiv.style.borderRadius = '4px';
+                    correctAnswerDiv.innerHTML = `<strong>Correct Answer:</strong> ${escapeHtml(String(correctAnswers[questionKeys[questionIndex]]))}`;
+                    qItem.appendChild(correctAnswerDiv);
+                  }
+                }
+                
+                questionIndex++;
+                nestedDiv.appendChild(qItem);
+              });
+              answerRow.appendChild(nestedDiv);
+            } else {
+              // Regular answer
+              const displayValue = value === 'DBG' ? 'DBG (Debug Mode)' : 
+                                value === null ? 'Not answered' : 
+                                String(value);
+              answerRow.innerHTML = `<strong>${escapeHtml(key)}:</strong> ${escapeHtml(displayValue)}`;
+            }
+            
+            answersDiv.appendChild(answerRow);
+          });
+          
+          qCard.appendChild(answersDiv);
+        }
+        
+        // Show correct answers if available
+        if (q.correct && typeof q.correct === 'object') {
+          const correctDiv = document.createElement('div');
+          correctDiv.style.marginTop = '10px';
+          correctDiv.style.padding = '8px';
+          correctDiv.style.background = '#e3f2fd';
+          correctDiv.style.borderRadius = '4px';
+          
+          const correctTitle = document.createElement('strong');
+          correctTitle.textContent = 'Correct Answers: ';
+          correctDiv.appendChild(correctTitle);
+          
+          const correctText = document.createTextNode(
+            Object.entries(q.correct).map(([k, v]) => `${k}: ${v}`).join(', ')
+          );
+          correctDiv.appendChild(correctText);
+          
+          qCard.appendChild(correctDiv);
+        }
+        
+        // Show timestamps
+        const timeDiv = document.createElement('div');
+        timeDiv.style.marginTop = '8px';
+        timeDiv.style.fontSize = '12px';
+        timeDiv.style.color = '#666';
+        const duration = q.exit_ts && q.enter_ts ? q.exit_ts - q.enter_ts : null;
+        timeDiv.textContent = `Time: ${q.enter_ts ? new Date(q.enter_ts).toLocaleTimeString() : 'N/A'} - ${q.exit_ts ? new Date(q.exit_ts).toLocaleTimeString() : 'N/A'}${duration ? ` (${formatDuration(duration)})` : ''}`;
+        qCard.appendChild(timeDiv);
+        
+        wrapper.appendChild(qCard);
+      });
+      
+      return wrapper;
+    }
+    
+    function createVisualizationView(visualizations) {
+      if (visualizations.length === 0) {
+        const noData = document.createElement('div');
+        noData.className = 'no-data';
+        noData.textContent = 'No visualization questionnaires found';
+        return noData;
+      }
+      
+      const wrapper = document.createElement('div');
+      
+      visualizations.forEach((q, idx) => {
+        const qCard = document.createElement('div');
+        qCard.className = 'model-group';
+        qCard.style.marginBottom = '15px';
+        
+        const qHeader = document.createElement('div');
+        qHeader.style.marginBottom = '10px';
+        qHeader.style.paddingBottom = '10px';
+        qHeader.style.borderBottom = '1px solid #e0e0e0';
+        
+        const headerInfo = [];
+        const typeLabel = q.questionnaire_type === 'visualization_condition' ? 'Visualization Condition' : 'Visualization Global';
+        headerInfo.push(`Type: ${typeLabel}`);
+        if (q.stage) headerInfo.push(`Stage: ${q.stage}`);
+        if (q.condition_index !== null && q.condition_index !== undefined) headerInfo.push(`Condition: ${q.condition_index + 1}`);
+        
+        qHeader.innerHTML = `<strong>${headerInfo.join(' | ')}</strong>`;
+        qCard.appendChild(qHeader);
+        
+        // Display answers
+        if (q.answers && typeof q.answers === 'object') {
+          const answersDiv = document.createElement('div');
+          answersDiv.style.marginTop = '10px';
+          
+          Object.entries(q.answers).forEach(([key, value]) => {
+            const answerRow = document.createElement('div');
+            answerRow.style.marginBottom = '8px';
+            answerRow.style.padding = '8px';
+            answerRow.style.background = '#f9f9f9';
+            answerRow.style.borderRadius = '4px';
+            
+            const displayValue = value === 'DBG' ? 'DBG (Debug Mode)' : 
+                              value === null ? 'Not answered' : 
+                              String(value);
+            answerRow.innerHTML = `<strong>${escapeHtml(key)}:</strong> ${escapeHtml(displayValue)}`;
+            
+            answersDiv.appendChild(answerRow);
+          });
+          
+          qCard.appendChild(answersDiv);
+        }
+        
+        // Show timestamps
+        const timeDiv = document.createElement('div');
+        timeDiv.style.marginTop = '8px';
+        timeDiv.style.fontSize = '12px';
+        timeDiv.style.color = '#666';
+        const duration = q.exit_ts && q.enter_ts ? q.exit_ts - q.enter_ts : null;
+        timeDiv.textContent = `Time: ${q.enter_ts ? new Date(q.enter_ts).toLocaleTimeString() : 'N/A'} - ${q.exit_ts ? new Date(q.exit_ts).toLocaleTimeString() : 'N/A'}${duration ? ` (${formatDuration(duration)})` : ''}`;
+        qCard.appendChild(timeDiv);
+        
+        wrapper.appendChild(qCard);
+      });
+      
+      return wrapper;
+    }
+    
 
     function escapeHtml(str) {
       if (str == null) return "";

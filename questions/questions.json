@@ -161,8 +161,8 @@
           "id": "performance", 
           "type": "scale_minus10_10", 
           "text": "ביצוע: עד כמה הצלחת לבצע את מה שהתבקשת לעשות?", 
-          "min_label": "טוב",
-          "max_label": "גרוע"
+          "min_label": "גרוע",
+          "max_label": "טוב"
         },
         { 
           "id": "effort", 

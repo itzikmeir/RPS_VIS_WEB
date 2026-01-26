@@ -1761,7 +1761,7 @@ function renderModelSummaryTrustPage(root) {
       labelCell.style.padding = "8px 8px";
       labelCell.style.textAlign = "center";
       labelCell.style.width = `${60 / 7}%`;
-      labelCell.style.borderRight = i < 7 ? "1px solid transparent" : "none";
+      labelCell.style.borderRight = i < 7 ? "1px solid transparent" : "1px solid transparent"; // Keep border for alignment
       labelCell.style.fontSize = "13px";
       labelCell.style.fontWeight = "500";
       labelCell.style.color = "#666";
@@ -1809,7 +1809,7 @@ function renderModelSummaryTrustPage(root) {
       scaleHeader.style.fontWeight = "700";
       scaleHeader.style.fontSize = "16px";
       scaleHeader.style.width = `${60 / 7}%`; // Equal width for all scale columns
-      scaleHeader.style.borderRight = i < 7 ? "1px solid #ddd" : "none";
+      scaleHeader.style.borderRight = "1px solid #ddd"; // All columns have right border, including between 6 and 7
       headerRow.appendChild(scaleHeader);
     }
     
@@ -1838,7 +1838,7 @@ function renderModelSummaryTrustPage(root) {
         const radioCell = document.createElement("td");
         radioCell.style.padding = "12px 8px";
         radioCell.style.textAlign = "center";
-        radioCell.style.borderRight = i < 7 ? "1px solid #ddd" : "none";
+        radioCell.style.borderRight = "1px solid #ddd"; // All columns have right border, including between 6 and 7
         radioCell.style.verticalAlign = "middle";
         
         const radio = document.createElement("input");
@@ -3368,7 +3368,7 @@ function navigateToNextPage() {
         });
       }
       
-      // Trial questions -> next trial, model summary, or condition
+      // Trial questions -> next trial or model summary
       const cond = state.schedule.conditions[state.conditionIndex];
       const model = cond.models[state.modelIndex];
       
@@ -3377,14 +3377,9 @@ function navigateToNextPage() {
         state.trialIndex++;
         state.pageType = "scenario_intro";
         render();
-      } else if (state.modelIndex < cond.models.length - 1) {
-        // More models in this condition
-        state.modelIndex++;
-        state.trialIndex = 0;
-        state.pageType = "model_intro";
-        render();
       } else {
-        // Finished this condition, go to model summary workload page
+        // Finished all trials in this model, go to model summary workload page
+        // (After model summary trust, it will navigate to next model or condition)
         state.pageType = "model_summary_workload";
         render();
       }
