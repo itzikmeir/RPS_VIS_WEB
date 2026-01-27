@@ -52,20 +52,22 @@ const PRE_INTRO_PAGE_IDS = [
   "experiment_flow"          // Page 9 - Experiment Flow Overview
 ];
 
-// Mapping from scenario_id to HTML file names
+// Optional explicit mapping from scenario_id to HTML file names.
+// If not present here, we fall back to a simple convention:
+//   Scenarios/<scenario_id>.html
 const SCENARIO_FILE_MAP = {
-  "SCN_001_OPT": "Scenario_2026-01-09_1767940439432_2026-01-09T06-39-52-484Z.html",
-  "SCN_002_OPT": "Scenario_2026-01-09_1767940439432_2026-01-09T06-46-03-199Z.html",
-  "SCN_003_OPT": "Scenario_2026-01-09_1767940439432_2026-01-09T06-51-26-898Z.html"
+  // Example of explicit overrides (kept for reference):
+  // "SCN_001_OPT": "Scenario_2026-01-09_1767940439432_2026-01-09T06-39-52-484Z.html",
 };
 
-// Function to get scenario HTML file path
+// Function to get scenario HTML file path.
+// First try an explicit mapping, otherwise use Scenarios/<scenarioId>.html.
 function getScenarioFilePath(scenarioId) {
-  const fileName = SCENARIO_FILE_MAP[scenarioId];
-  if (fileName) {
-    return `Scenarios/${fileName}`;
+  const mapped = SCENARIO_FILE_MAP[scenarioId];
+  if (mapped) {
+    return `Scenarios/${mapped}`;
   }
-  return null;
+  return `Scenarios/${scenarioId}.html`;
 }
 
 // Utility functions
