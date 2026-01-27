@@ -1,0 +1,115 @@
+## Experiment Data & App Pipeline
+
+### 1. Generate participant schedules JSON
+
+- **File**: `Untitled-1.ipynb`  
+- **Input**: `Experiment_Order_Expanded.xlsx`  
+- **Output**:  
+  - `participants_json/PXXX.json` – per‑participant schedule and trial list.  
+  - `participants_all.json` – combined list of all participants.  
+- **What it does**:  
+  - Reads the experiment design Excel (practice + 3 conditions, models, repetitions).  
+  - For each participant, builds:  
+    - `practice` trials with `scenario_id`, difficulty, etc.  
+    - `conditions[*].models[*].trials[*]` with the correct `scenario_id`s.  
+  - Writes one JSON per participant plus a combined file.  
+- **How to run**:  
+  - Open `Untitled-1.ipynb` in Jupyter / VSCode / Cursor.  
+  - Make sure `INPUT_PATH` points to `Experiment_Order_Expanded.xlsx`.  
+  - Run the main cell (entire notebook). You should see messages like:  
+    - `Written XX participant JSON files to 'participants_json'`  
+    - `Combined JSON written to 'participants_all.json'`
+
+---
+
+### 2. Build scenario‑specific question catalog
+
+- **File**: `build_scenario_questions.py`  
+- **Input**: `SCN_Questions_catalog.xlsx`  
+- **Output**: `questions/scenario_questions.json`  
+- **What it does**:  
+  - Reads one row per scenario from `SCN_Questions_catalog.xlsx`.  
+  - For each row:  
+    - Uses `Scenario_ID_H / R / S` (and `Scenario_ID`) as scenario IDs.  
+    - Reads `Q1/O1/A1`, `Q2/O2/A2`, `Q3/O3/A3`.  
+    - Parses the multi‑line options (O*) and infers the correct option index from A*.  
+  - Produces `scenario_questions.json` with entries like:  
+    - `{"scenario_id": "SCN_001_H", "question_id": "sa_1", "question_text": "...", "options": [...], "correct_answer_index": 0}`  
+- **How to run** (from project root):  
+  - `python build_scenario_questions.py`  
+  - Expect a message like:  
+    - `Wrote NNN scenario-question entries for 30 rows to 'questions\scenario_questions.json'`
+
+---
+
+### 3. Fill `correct_route` for all participants
+
+- **File**: `update_correct_routes.py`  
+- **Input**:  
+  - `SCN_Questions_catalog.xlsx` (column `CORRECT_ROUTE`)  
+  - `participants_json/*.json`  
+- **Output**:  
+  - Updated `participants_json/PXXX.json` (each trial has `correct_route` filled).  
+  - Updated `participants_all.json`.  
+- **What it does**:  
+  - Builds a mapping from each scenario ID (`Scenario_ID`, `Scenario_ID_H/R/S`) to its `CORRECT_ROUTE` (e.g. `"א׳"`, `"ב׳"`, `"ג׳"`).  
+  - Walks all participant JSONs and sets/overwrites `correct_route` for:  
+    - `practice[*].correct_route`  
+    - `conditions[*].models[*].trials[*].correct_route`  
+  - Regenerates `participants_all.json` from the updated per‑participant files.  
+- **How to run** (from project root):  
+  - `python update_correct_routes.py`  
+  - Expect output like:  
+    - `Loaded XXX scenario -> correct_route mappings from 'SCN_Questions_catalog.xlsx'`  
+    - `Processed P001.json ...`  
+    - `Updated 30 participant files and rewrote 'participants_all.json'`
+
+---
+
+### 4. Wire scenarios to the parent app (only if scenario HTMLs change)
+
+- **File**: `wire_scenario_postmessage.py`  
+- **Input**: `Scenarios/SCN_*.html`  
+- **Output**: Modified scenario HTML files in `Scenarios/`.  
+- **What it does**:  
+  - Replaces the old confirm handler in every `SCN_*.html` with a `postMessage` call that sends:  
+    - `{ type: "scenario_route_selected", route: picked, scenarioName: ... }`  
+  - This lets `app.js` receive the route choice and advance from the map to the questions page.  
+- **How to run** (from project root, usually only once after regenerating scenarios):  
+  - `python wire_scenario_postmessage.py`
+
+---
+
+### 5. Run the experiment web app
+
+- **Key files**:  
+  - `index.html`  
+  - `app.js`  
+  - `style.css`  
+  - `Scenarios/` (all `SCN_*.html` scenario files)  
+  - `questions/` (`questions.json`, `scenario_questions.json`)  
+  - `participants_json/` (per‑participant schedules)  
+- **What it does**:  
+  - `index.html` loads `app.js` into the `#app` div.  
+  - `app.js`:  
+    - Loads question configuration (`questions/questions.json`) and scenario questions (`questions/scenario_questions.json`).  
+    - Loads a participant schedule (`participants_json/PXXX.json`) based on the entered ID.  
+    - For each trial, loads the matching scenario HTML from `Scenarios/<scenario_id>.html`.  
+    - Receives route selection via `postMessage` from the iframe, then shows:  
+      - 2 fixed slider questions.  
+      - 3 scenario‑specific multiple‑choice questions.  
+    - Logs the session into `Participants_log/PXXX_log.json`.  
+- **How to run**:  
+  - Open `index.html` in a browser (ideally via a simple HTTP server).  
+  - Enter a participant ID (e.g. `P001`) and follow the flow.
+
+---
+
+### Recommended order when updating data
+
+1. **Update experiment design** in `Experiment_Order_Expanded.xlsx` → run `Untitled-1.ipynb`.  
+2. **Update scenario questions / options / correct answers** in `SCN_Questions_catalog.xlsx` → run `build_scenario_questions.py`.  
+3. **Update correct routes** (same Excel) → run `update_correct_routes.py`.  
+4. **If you regenerated scenario HTMLs** from another tool → run `wire_scenario_postmessage.py`.  
+5. Open `index.html` and test a full run for a participant (e.g. `P001`).
+
