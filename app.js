@@ -1081,38 +1081,43 @@ function renderTrialQuestionsPage(root) {
   
   const title = document.createElement("h1");
   title.className = "page-title";
-  title.textContent = `שאלון לאחר תרחיש – ${t.scenario_id}`;
+  // In real experiment we hide the scenario id from the title; keep it only in debugMode
+  title.textContent = state.debugMode
+    ? `שאלון לאחר תרחיש – ${t.scenario_id}`
+    : "שאלון לאחר תרחיש";
   title.dir = "rtl";
   root.appendChild(title);
   
-  // Show scenario info at top
-  const infoBox = document.createElement("div");
-  infoBox.className = "info-box";
-  
-  const infoTitle = document.createElement("h3");
-  infoTitle.textContent = "פרטי התרחיש";
-  infoTitle.dir = "rtl";
-  infoBox.appendChild(infoTitle);
-  
-  const scenarioItem = document.createElement("div");
-  scenarioItem.className = "info-item";
-  scenarioItem.innerHTML = `<span class="info-label">מזהה תרחיש:</span> ${escapeHtml(t.scenario_id)}`;
-  scenarioItem.dir = "rtl";
-  infoBox.appendChild(scenarioItem);
-  
-  const stageItem = document.createElement("div");
-  stageItem.className = "info-item";
-  if (state.stage === "experiment") {
-    const cond = state.schedule.conditions[state.conditionIndex];
-    const model = cond.models[state.modelIndex];
-    stageItem.innerHTML = `<span class="info-label">שלב:</span> ${state.stage} - תנאי ${state.conditionIndex + 1}, מודל ${model.tag}`;
-  } else {
-    stageItem.innerHTML = `<span class="info-label">שלב:</span> ${state.stage}`;
+  // Show scenario info only in debug mode
+  if (state.debugMode) {
+    const infoBox = document.createElement("div");
+    infoBox.className = "info-box";
+    
+    const infoTitle = document.createElement("h3");
+    infoTitle.textContent = "פרטי התרחיש";
+    infoTitle.dir = "rtl";
+    infoBox.appendChild(infoTitle);
+    
+    const scenarioItem = document.createElement("div");
+    scenarioItem.className = "info-item";
+    scenarioItem.innerHTML = `<span class="info-label">מזהה תרחיש:</span> ${escapeHtml(t.scenario_id)}`;
+    scenarioItem.dir = "rtl";
+    infoBox.appendChild(scenarioItem);
+    
+    const stageItem = document.createElement("div");
+    stageItem.className = "info-item";
+    if (state.stage === "experiment") {
+      const cond = state.schedule.conditions[state.conditionIndex];
+      const model = cond.models[state.modelIndex];
+      stageItem.innerHTML = `<span class="info-label">שלב:</span> ${state.stage} - תנאי ${state.conditionIndex + 1}, מודל ${model.tag}`;
+    } else {
+      stageItem.innerHTML = `<span class="info-label">שלב:</span> ${state.stage}`;
+    }
+    stageItem.dir = "rtl";
+    infoBox.appendChild(stageItem);
+    
+    root.appendChild(infoBox);
   }
-  stageItem.dir = "rtl";
-  infoBox.appendChild(stageItem);
-  
-  root.appendChild(infoBox);
   
   // Render fixed questions (confidence and mental_workload)
   if (state.questionsConfig && state.questionsConfig.trial_fixed_questions) {
@@ -1580,28 +1585,6 @@ function renderModelIntroPage(root) {
   content.dir = "rtl";
   content.style.whiteSpace = "pre-wrap";
   root.appendChild(content);
-  
-  const infoBox = document.createElement("div");
-  infoBox.className = "info-box";
-  
-  const infoItems = [
-    ["Condition", `${state.conditionIndex + 1}: ${cond.visualization}`],
-    ["Model Tag", model.tag],
-    ["Model Type", model.model_type]
-  ];
-  
-  infoItems.forEach(([label, value]) => {
-    const item = document.createElement("div");
-    item.className = "info-item";
-    const labelSpan = document.createElement("span");
-    labelSpan.className = "info-label";
-    labelSpan.textContent = `${label}: `;
-    item.appendChild(labelSpan);
-    item.appendChild(document.createTextNode(String(value)));
-    infoBox.appendChild(item);
-  });
-  
-  root.appendChild(infoBox);
   
   const buttonGroup = document.createElement("div");
   buttonGroup.className = "button-group";
