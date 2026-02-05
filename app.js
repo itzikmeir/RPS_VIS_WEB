@@ -53,21 +53,23 @@ const PRE_INTRO_PAGE_IDS = [
 ];
 
 // Optional explicit mapping from scenario_id to HTML file names.
-// If not present here, we fall back to a simple convention:
-//   Scenarios/<scenario_id>.html
+// If not present here, we fall back to a simple convention that also
+// respects whether the AI recommendation is meant to be correct or inaccurate.
 const SCENARIO_FILE_MAP = {
   // Example of explicit overrides (kept for reference):
   // "SCN_001_OPT": "Scenario_2026-01-09_1767940439432_2026-01-09T06-39-52-484Z.html",
 };
 
 // Function to get scenario HTML file path.
-// First try an explicit mapping, otherwise use Scenarios/<scenarioId>.html.
-function getScenarioFilePath(scenarioId) {
+// First try an explicit mapping, otherwise use:
+//   Scenarios/<subfolder>/<scenarioId>.html
+// where <subfolder> is either "Correct_Scenarios" or "Inaccurate_Scenarios".
+function getScenarioFilePath(scenarioId, baseFolder) {
   const mapped = SCENARIO_FILE_MAP[scenarioId];
   if (mapped) {
-    return `Scenarios/${mapped}`;
+    return `${baseFolder}/${mapped}`;
   }
-  return `Scenarios/${scenarioId}.html`;
+  return `${baseFolder}/${scenarioId}.html`;
 }
 
 // Utility functions
@@ -976,8 +978,15 @@ function renderTrialPage(root) {
     root.appendChild(debugBox);
   }
   
-  // Check if we have a scenario HTML file for this scenario
-  const scenarioFilePath = getScenarioFilePath(t.scenario_id);
+  // Determine scenario folder based on whether the AI recommendation should be correct.
+  // If rec_correct === "לא" → use Inaccurate_Scenarios, otherwise use Correct_Scenarios.
+  const scenarioFolder =
+    t.rec_correct === "לא"
+      ? "Scenarios/Inaccurate_Scenarios"
+      : "Scenarios/Correct_Scenarios";
+
+  // Check if we have a scenario HTML file for this scenario in the chosen folder
+  const scenarioFilePath = getScenarioFilePath(t.scenario_id, scenarioFolder);
   
   if (scenarioFilePath) {
     // Load actual scenario HTML in fullscreen iframe

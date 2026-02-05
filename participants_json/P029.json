@@ -9,9 +9,9 @@
       "correct_route": "א׳",
       "ai_recommended_route": null,
       "correct_answers": {
-        "Q1": null,
-        "Q2": null,
-        "Q3": null
+        "Q1": "א",
+        "Q2": "ב",
+        "Q3": "2"
       }
     },
     {
@@ -21,9 +21,9 @@
       "correct_route": "ב׳",
       "ai_recommended_route": null,
       "correct_answers": {
-        "Q1": null,
-        "Q2": null,
-        "Q3": null
+        "Q1": "ב",
+        "Q2": "2",
+        "Q3": "א"
       }
     },
     {
@@ -33,9 +33,9 @@
       "correct_route": "ג׳",
       "ai_recommended_route": null,
       "correct_answers": {
-        "Q1": null,
-        "Q2": null,
-        "Q3": null
+        "Q1": "ג",
+        "Q2": "א",
+        "Q3": "0"
       }
     }
   ],
@@ -53,49 +53,53 @@
               "slot": 1,
               "scenario_id": "SCN_005_R",
               "difficulty": "E",
-              "correct_route": "ב׳",
-              "ai_recommended_route": null,
+              "correct_route": "א׳",
+              "ai_recommended_route": "ב׳",
               "correct_answers": {
-                "Q1": null,
-                "Q2": null,
-                "Q3": null
-              }
+                "Q1": "ב",
+                "Q2": "1",
+                "Q3": "2"
+              },
+              "rec_correct": "לא"
             },
             {
               "slot": 2,
               "scenario_id": "SCN_010_R",
               "difficulty": "H",
               "correct_route": "א׳",
-              "ai_recommended_route": null,
+              "ai_recommended_route": "ב׳",
               "correct_answers": {
-                "Q1": null,
-                "Q2": null,
-                "Q3": null
-              }
+                "Q1": "א",
+                "Q2": "2",
+                "Q3": "3"
+              },
+              "rec_correct": "לא"
             },
             {
               "slot": 3,
               "scenario_id": "SCN_011_R",
               "difficulty": "E",
-              "correct_route": "ב׳",
-              "ai_recommended_route": null,
+              "correct_route": "א׳",
+              "ai_recommended_route": "א׳",
               "correct_answers": {
-                "Q1": null,
-                "Q2": null,
-                "Q3": null
-              }
+                "Q1": "ב",
+                "Q2": "3",
+                "Q3": "0"
+              },
+              "rec_correct": "כן"
             },
             {
               "slot": 4,
               "scenario_id": "SCN_013_R",
               "difficulty": "H",
-              "correct_route": "א׳",
-              "ai_recommended_route": null,
+              "correct_route": "ג׳",
+              "ai_recommended_route": "ג׳",
               "correct_answers": {
-                "Q1": null,
-                "Q2": null,
-                "Q3": null
-              }
+                "Q1": "א",
+                "Q2": "ב",
+                "Q3": "2"
+              },
+              "rec_correct": "כן"
             }
           ]
         },
@@ -107,61 +111,66 @@
               "slot": 1,
               "scenario_id": "SCN_004_R",
               "difficulty": "E",
-              "correct_route": "א׳",
-              "ai_recommended_route": null,
+              "correct_route": "ב׳",
+              "ai_recommended_route": "ב׳",
               "correct_answers": {
-                "Q1": null,
-                "Q2": null,
-                "Q3": null
-              }
+                "Q1": "א",
+                "Q2": "0",
+                "Q3": "1"
+              },
+              "rec_correct": "כן"
             },
             {
               "slot": 2,
               "scenario_id": "SCN_006_R",
               "difficulty": "H",
-              "correct_route": "ג׳",
-              "ai_recommended_route": null,
+              "correct_route": "א׳",
+              "ai_recommended_route": "א׳",
               "correct_answers": {
-                "Q1": null,
-                "Q2": null,
-                "Q3": null
-              }
+                "Q1": "ג",
+                "Q2": "2",
+                "Q3": "3"
+              },
+              "rec_correct": "כן"
             },
             {
               "slot": 3,
               "scenario_id": "SCN_007_R",
               "difficulty": "E",
-              "correct_route": "א׳",
-              "ai_recommended_route": null,
+              "correct_route": "ב׳",
+              "ai_recommended_route": "ב׳",
               "correct_answers": {
-                "Q1": null,
-                "Q2": null,
-                "Q3": null
-              }
+                "Q1": "א",
+                "Q2": "ב",
+                "Q3": "0"
+              },
+              "rec_correct": "כן"
             },
             {
               "slot": 4,
               "scenario_id": "SCN_008_R",
               "difficulty": "H",
               "correct_route": "ב׳",
-              "ai_recommended_route": null,
+              "ai_recommended_route": "ג׳",
               "correct_answers": {
-                "Q1": null,
-                "Q2": null,
-                "Q3": null
-              }
+                "Q1": "ב",
+                "Q2": "0",
+                "Q3": "א"
+              },
+              "rec_correct": "לא"
             },
             {
               "slot": 5,
               "scenario_id": "SCN_009_R",
               "difficulty": "E",
-              "correct_route": "ג׳",
-              "ai_recommended_route": null,
+              "correct_route": "ב׳",
+              "ai_recommended_route": "ב׳",
               "correct_answers": {
-                "Q1": null,
-                "Q2": null,
-                "Q3": null
-              }
+                "Q1": "ג",
+                "Q2": "א",
+                "Q3": "2"
+              },
+              "rec_correct": "כן"
             }
           ]
         }
@@ -181,60 +190,65 @@
               "scenario_id": "SCN_024_H",
               "difficulty": "H",
               "correct_route": "ג׳",
-              "ai_recommended_route": null,
+              "ai_recommended_route": "א׳",
               "correct_answers": {
-                "Q1": null,
-                "Q2": null,
-                "Q3": null
-              }
+                "Q1": "ג",
+                "Q2": "0",
+                "Q3": "1"
+              },
+              "rec_correct": "לא"
             },
             {
               "slot": 2,
               "scenario_id": "SCN_026_H",
               "difficulty": "H",
               "correct_route": "ב׳",
-              "ai_recommended_route": null,
+              "ai_recommended_route": "ב׳",
               "correct_answers": {
-                "Q1": null,
-                "Q2": null,
-                "Q3": null
-              }
+                "Q1": "ב",
+                "Q2": "2",
+                "Q3": "א"
+              },
+              "rec_correct": "כן"
             },
             {
               "slot": 3,
               "scenario_id": "SCN_027_H",
               "difficulty": "E",
-              "correct_route": "ג׳",
-              "ai_recommended_route": null,
+              "correct_route": "א׳",
+              "ai_recommended_route": "א׳",
               "correct_answers": {
-                "Q1": null,
-                "Q2": null,
-                "Q3": null
-              }
+                "Q1": "ג",
+                "Q2": "א",
+                "Q3": "0"
+              },
+              "rec_correct": "כן"
             },
             {
               "slot": 4,
               "scenario_id": "SCN_028_H",
               "difficulty": "H",
-              "correct_route": "א׳",
-              "ai_recommended_route": null,
+              "correct_route": "ב׳",
+              "ai_recommended_route": "ב׳",
               "correct_answers": {
-                "Q1": null,
-                "Q2": null,
-                "Q3": null
-              }
+                "Q1": "א",
+                "Q2": "0",
+                "Q3": "1"
+              },
+              "rec_correct": "כן"
             },
             {
               "slot": 5,
               "scenario_id": "SCN_030_H",
               "difficulty": "E",
               "correct_route": "ג׳",
-              "ai_recommended_route": null,
+              "ai_recommended_route": "ג׳",
               "correct_answers": {
-                "Q1": null,
-                "Q2": null,
-                "Q3": null
-              }
+                "Q1": "ג",
+                "Q2": "2",
+                "Q3": "3"
+              },
+              "rec_correct": "כן"
             }
           ]
         },
@@ -246,49 +260,53 @@
               "slot": 1,
               "scenario_id": "SCN_021_H",
               "difficulty": "E",
-              "correct_route": "ג׳",
-              "ai_recommended_route": null,
+              "correct_route": "ב׳",
+              "ai_recommended_route": "ב׳",
               "correct_answers": {
-                "Q1": null,
-                "Q2": null,
-                "Q3": null
-              }
+                "Q1": "ג",
+                "Q2": "א",
+                "Q3": "2"
+              },
+              "rec_correct": "כן"
             },
             {
               "slot": 2,
               "scenario_id": "SCN_022_H",
               "difficulty": "H",
               "correct_route": "א׳",
-              "ai_recommended_route": null,
+              "ai_recommended_route": "א׳",
               "correct_answers": {
-                "Q1": null,
-                "Q2": null,
-                "Q3": null
-              }
+                "Q1": "א",
+                "Q2": "2",
+                "Q3": "3"
+              },
+              "rec_correct": "כן"
             },
             {
               "slot": 3,
               "scenario_id": "SCN_023_H",
               "difficulty": "E",
               "correct_route": "ב׳",
-              "ai_recommended_route": null,
+              "ai_recommended_route": "ג׳",
               "correct_answers": {
-                "Q1": null,
-                "Q2": null,
-                "Q3": null
-              }
+                "Q1": "ב",
+                "Q2": "3",
+                "Q3": "0"
+              },
+              "rec_correct": "לא"
             },
             {
               "slot": 4,
               "scenario_id": "SCN_029_H",
               "difficulty": "H",
-              "correct_route": "ב׳",
-              "ai_recommended_route": null,
+              "correct_route": "א׳",
+              "ai_recommended_route": "ב׳",
               "correct_answers": {
-                "Q1": null,
-                "Q2": null,
-                "Q3": null
-              }
+                "Q1": "ב",
+                "Q2": "1",
+                "Q3": "2"
+              },
+              "rec_correct": "לא"
             }
           ]
         }
@@ -307,49 +325,53 @@
               "slot": 1,
               "scenario_id": "SCN_015_S",
               "difficulty": "E",
-              "correct_route": "ג׳",
-              "ai_recommended_route": null,
+              "correct_route": "ב׳",
+              "ai_recommended_route": "ב׳",
               "correct_answers": {
-                "Q1": null,
-                "Q2": null,
-                "Q3": null
-              }
+                "Q1": "ג",
+                "Q2": "א",
+                "Q3": "0"
+              },
+              "rec_correct": "כן"
             },
             {
               "slot": 2,
               "scenario_id": "SCN_018_S",
               "difficulty": "H",
-              "correct_route": "ג׳",
-              "ai_recommended_route": null,
+              "correct_route": "ב׳",
+              "ai_recommended_route": "ג׳",
               "correct_answers": {
-                "Q1": null,
-                "Q2": null,
-                "Q3": null
-              }
+                "Q1": "ג",
+                "Q2": "2",
+                "Q3": "3"
+              },
+              "rec_correct": "לא"
             },
             {
               "slot": 3,
               "scenario_id": "SCN_019_S",
               "difficulty": "E",
-              "correct_route": "א׳",
-              "ai_recommended_route": null,
+              "correct_route": "ב׳",
+              "ai_recommended_route": "ג׳",
               "correct_answers": {
-                "Q1": null,
-                "Q2": null,
-                "Q3": null
-              }
+                "Q1": "א",
+                "Q2": "ב",
+                "Q3": "0"
+              },
+              "rec_correct": "לא"
             },
             {
               "slot": 4,
               "scenario_id": "SCN_020_S",
               "difficulty": "H",
-              "correct_route": "ב׳",
-              "ai_recommended_route": null,
+              "correct_route": "א׳",
+              "ai_recommended_route": "א׳",
               "correct_answers": {
-                "Q1": null,
-                "Q2": null,
-                "Q3": null
-              }
+                "Q1": "ב",
+                "Q2": "0",
+                "Q3": "א"
+              },
+              "rec_correct": "כן"
             }
           ]
         },
@@ -362,60 +384,65 @@
               "scenario_id": "SCN_012_S",
               "difficulty": "H",
               "correct_route": "ג׳",
-              "ai_recommended_route": null,
+              "ai_recommended_route": "ג׳",
               "correct_answers": {
-                "Q1": null,
-                "Q2": null,
-                "Q3": null
-              }
+                "Q1": "ג",
+                "Q2": "0",
+                "Q3": "1"
+              },
+              "rec_correct": "כן"
             },
             {
               "slot": 2,
               "scenario_id": "SCN_014_S",
               "difficulty": "E",
-              "correct_route": "ב׳",
-              "ai_recommended_route": null,
+              "correct_route": "ג׳",
+              "ai_recommended_route": "ג׳",
               "correct_answers": {
-                "Q1": null,
-                "Q2": null,
-                "Q3": null
-              }
+                "Q1": "ב",
+                "Q2": "2",
+                "Q3": "א"
+              },
+              "rec_correct": "כן"
             },
             {
               "slot": 3,
               "scenario_id": "SCN_016_S",
               "difficulty": "H",
-              "correct_route": "א׳",
-              "ai_recommended_route": null,
+              "correct_route": "ג׳",
+              "ai_recommended_route": "ג׳",
               "correct_answers": {
-                "Q1": null,
-                "Q2": null,
-                "Q3": null
-              }
+                "Q1": "א",
+                "Q2": "0",
+                "Q3": "1"
+              },
+              "rec_correct": "כן"
             },
             {
               "slot": 4,
               "scenario_id": "SCN_017_S",
               "difficulty": "E",
               "correct_route": "ב׳",
-              "ai_recommended_route": null,
+              "ai_recommended_route": "ב׳",
               "correct_answers": {
-                "Q1": null,
-                "Q2": null,
-                "Q3": null
-              }
+                "Q1": "ב",
+                "Q2": "1",
+                "Q3": "2"
+              },
+              "rec_correct": "כן"
             },
             {
               "slot": 5,
               "scenario_id": "SCN_025_S",
               "difficulty": "E",
-              "correct_route": "א׳",
-              "ai_recommended_route": null,
+              "correct_route": "ג׳",
+              "ai_recommended_route": "א׳",
               "correct_answers": {
-                "Q1": null,
-                "Q2": null,
-                "Q3": null
-              }
+                "Q1": "א",
+                "Q2": "ב",
+                "Q3": "2"
+              },
+              "rec_correct": "לא"
             }
           ]
         }

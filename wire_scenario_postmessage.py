@@ -32,8 +32,17 @@ NEW_SNIPPET = """document.getElementById('doConfirm').onclick = () => {
 
 
 def main():
-    pattern = os.path.join(SCENARIOS_DIR, "SCN_*.html")
-    files = glob.glob(pattern)
+    # Wire all scenario HTML files in both Correct_Scenarios and Inaccurate_Scenarios.
+    patterns = [
+        os.path.join(SCENARIOS_DIR, "SCN_*.html"),
+        os.path.join(SCENARIOS_DIR, "Correct_Scenarios", "SCN_*.html"),
+        os.path.join(SCENARIOS_DIR, "Inaccurate_Scenarios", "SCN_*.html"),
+    ]
+
+    files = []
+    for pattern in patterns:
+        files.extend(glob.glob(pattern))
+
     changed = 0
 
     for path in files:
@@ -48,7 +57,7 @@ def main():
             with open(path, "w", encoding="utf-8") as f:
                 f.write(new_text)
             changed += 1
-            print(f"Updated: {os.path.basename(path)}")
+            print(f"Updated: {path.replace(SCENARIOS_DIR + os.sep, '')}")
 
     print(f"Done. Updated {changed} scenario files.")
 

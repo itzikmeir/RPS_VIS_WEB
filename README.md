@@ -69,8 +69,10 @@
 ### 4. Wire scenarios to the parent app (only if scenario HTMLs change)
 
 - **File**: `wire_scenario_postmessage.py`  
-- **Input**: `Scenarios/SCN_*.html`  
-- **Output**: Modified scenario HTML files in `Scenarios/`.  
+- **Input**:  
+  - `Scenarios/Correct_Scenarios/SCN_*.html`  
+  - `Scenarios/Inaccurate_Scenarios/SCN_*.html`  
+- **Output**: Modified scenario HTML files in both subfolders under `Scenarios/`.  
 - **What it does**:  
   - Replaces the old confirm handler in every `SCN_*.html` with a `postMessage` call that sends:  
     - `{ type: "scenario_route_selected", route: picked, scenarioName: ... }`  
@@ -80,13 +82,44 @@
 
 ---
 
-### 5. Run the experiment web app
+### 5. (Optional) Update per-participant AI recommendations
+
+- **File**: `update_recommendations.py`  
+- **Input**: `rec_long.xlsx` with columns (per row):  
+  - `participant_id` – e.g. `P001` (or `001`, which will be normalized to `P001`)  
+  - `Scenario_ID` – e.g. `SCN_004_H`  
+  - `Rec_Correct` – whether the AI recommendation is correct for this trial (e.g. `כן` / `לא`)  
+  - `correct_answer` – the true optimal route for that participant & scenario (e.g. `א׳` / `ב׳` / `ג׳`)  
+  - `System_recommendation` – the route recommended by the system (e.g. `א׳` / `ב׳` / `ג׳`)  
+- **Output**:  
+  - Updated `participants_json/PXXX.json` with, per trial:  
+    - `rec_correct` – copied from `Rec_Correct`.  
+    - `correct_route` – overwritten from `correct_answer`.  
+    - `ai_recommended_route` – filled from `System_recommendation`.  
+  - Updated `participants_all.json`.  
+- **What it does**:  
+  - Reads `rec_long.xlsx` and builds a mapping per `(participant_id, Scenario_ID)`.  
+  - For each participant JSON:  
+    - Looks up each `practice` and `conditions[*].models[*].trials[*]` by `(participant_id, scenario_id)`.  
+    - Writes `rec_correct`, `correct_route`, and `ai_recommended_route` according to the Excel.  
+- **How to run** (from project root):  
+  - Make sure `rec_long.xlsx` has the columns above (exact English names).  
+  - `python update_recommendations.py`  
+  - You should see something like:  
+    - `Loaded N participant-scenario recommendation entries from 'rec_long.xlsx'`  
+    - `Processed P001.json ...`  
+    - `Updated 30 participant files and rewrote 'participants_all.json'`
+
+---
+
+### 6. Run the experiment web app
 
 - **Key files**:  
   - `index.html`  
   - `app.js`  
   - `style.css`  
-  - `Scenarios/` (all `SCN_*.html` scenario files)  
+  - `Scenarios/Correct_Scenarios/SCN_*.html` – scenarios where the AI recommendation should be correct.  
+  - `Scenarios/Inaccurate_Scenarios/SCN_*.html` – scenarios where the AI recommendation should be inaccurate.  
   - `questions/` (`questions.json`, `scenario_questions.json`)  
   - `participants_json/` (per‑participant schedules)  
 - **What it does**:  
@@ -94,7 +127,9 @@
   - `app.js`:  
     - Loads question configuration (`questions/questions.json`) and scenario questions (`questions/scenario_questions.json`).  
     - Loads a participant schedule (`participants_json/PXXX.json`) based on the entered ID.  
-    - For each trial, loads the matching scenario HTML from `Scenarios/<scenario_id>.html`.  
+    - For each trial, looks at `rec_correct` in the trial data:  
+      - If `rec_correct === "לא"` → loads `Scenarios/Inaccurate_Scenarios/<scenario_id>.html`.  
+      - Otherwise → loads `Scenarios/Correct_Scenarios/<scenario_id>.html`.  
     - Receives route selection via `postMessage` from the iframe, then shows:  
       - 2 fixed slider questions.  
       - 3 scenario‑specific multiple‑choice questions.  
@@ -110,6 +145,7 @@
 1. **Update experiment design** in `Experiment_Order_Expanded.xlsx` → run `Untitled-1.ipynb`.  
 2. **Update scenario questions / options / correct answers** in `SCN_Questions_catalog.xlsx` → run `build_scenario_questions.py`.  
 3. **Update correct routes** (same Excel) → run `update_correct_routes.py`.  
-4. **If you regenerated scenario HTMLs** from another tool → run `wire_scenario_postmessage.py`.  
-5. Open `index.html` and test a full run for a participant (e.g. `P001`).
+4. **(Optional) Update per-participant AI recommendations** in `rec_long.xlsx` → run `update_recommendations.py`.  
+5. **If you regenerated scenario HTMLs** from another tool → run `wire_scenario_postmessage.py`.  
+6. Open `index.html` and test a full run for a participant (e.g. `P001`).
 
