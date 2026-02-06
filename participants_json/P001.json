@@ -53,8 +53,8 @@
               "slot": 1,
               "scenario_id": "SCN_024_S",
               "difficulty": "H",
-              "correct_route": "ג׳",
-              "ai_recommended_route": "ג׳",
+              "correct_route": "א׳",
+              "ai_recommended_route": "א׳",
               "correct_answers": {
                 "Q1": "ג",
                 "Q2": "0",
@@ -66,8 +66,8 @@
               "slot": 2,
               "scenario_id": "SCN_026_S",
               "difficulty": "H",
-              "correct_route": "ב׳",
-              "ai_recommended_route": "ב׳",
+              "correct_route": "א׳",
+              "ai_recommended_route": "א׳",
               "correct_answers": {
                 "Q1": "ב",
                 "Q2": "2",

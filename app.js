@@ -41,15 +41,15 @@ const state = {
 // Pre-intro page sequence - mapped to questions.json intro_pages
 // These will be populated from questionsConfig when loaded
 const PRE_INTRO_PAGE_IDS = [
-  "ishihara_test",           // Page 1 - Ishihara Color Test
-  "invitation_letter",       // Page 2 - Invitation to Participate
-  "consent_form",            // Page 3 - Informed Consent Form
-  "experiment_explanation_1", // Page 4 - Experiment Explanation (Text)
-  "experiment_video",        // Page 5 - Experiment Explanation (Video)
-  "system_layout",           // Page 6 - System Layout
-  "system_criteria",         // Page 7 - System Criteria Display
-  "helper_explanation",      // Page 8 - Helper View Explanation
-  "experiment_flow"          // Page 9 - Experiment Flow Overview
+  "ishihara_test",      // Page 1 - Ishihara Color Test
+  "invitation_letter",  // Page 2 - Invitation to Participate
+  "consent_form",       // Page 3 - Informed Consent Form
+  // Removed experiment_explanation_1 (text page) – jump directly to video
+  "experiment_video",   // Page 4 - Experiment Explanation (Video)
+  "system_layout",      // Page 5 - System Layout
+  "system_criteria",    // Page 6 - System Criteria Display
+  // Removed helper_explanation (redundant helper view)
+  "experiment_flow"     // Page 7 - Experiment Flow Overview
 ];
 
 // Optional explicit mapping from scenario_id to HTML file names.
@@ -291,6 +291,23 @@ function renderLoginPage(root) {
   debugGroup.appendChild(debugLabel);
   
   form.appendChild(debugGroup);
+
+  // Experiment instructions for the experimenter and participant (Hebrew, multi-line)
+  const instructions = document.createElement("div");
+  instructions.className = "info-box";
+  instructions.dir = "rtl";
+  instructions.style.marginTop = "16px";
+  instructions.style.whiteSpace = "pre-line";
+  instructions.textContent =
+    "הניסוי ייקח כשעה.\n" +
+    "במהלך הניסוי אין הפסקות ולכן עכשיו זה הזמן להתפנות לשירותים.\n" +
+    "ניתן לשתות במהלך הניסוי, ניתן להביא כוס מים מפינת הקפה.\n" +
+    "האם מיקום המסך, המקלדת, העכבר וכן גובה הכיסא נוחים לך? כעת זה זמן טוב לסדר את זה.\n" +
+    "האם הטמפרטורה מתאימה?.\n" +
+    "האם התאורה מתאימה?.\n" +
+    "וודא אודיו (אוזניות) תקין- נסיין.\n" +
+    "נסיין- התחל הקלטת מסך.";
+  form.appendChild(instructions);
   
   const errorDiv = document.createElement("div");
   errorDiv.id = "loginError";
@@ -398,6 +415,19 @@ function renderInfoPage(root, pageId) {
   content.dir = "rtl";
   content.style.whiteSpace = "pre-wrap";
   root.appendChild(content);
+
+  // Extra emphasized warning at the end of experiment_flow page
+  if (pageId === "experiment_flow") {
+    const warning = document.createElement("div");
+    warning.className = "page-content";
+    warning.dir = "rtl";
+    warning.style.whiteSpace = "pre-wrap";
+    warning.style.marginTop = "16px";
+    warning.style.fontWeight = "700";
+    warning.textContent =
+      "בלחיצה על \"המשך לתרגול\" תעבור ישירות לתרחיש התרגול ללא יכולת להפסיק את הניסוי משלב זה.\n\nבהצלחה";
+    root.appendChild(warning);
+  }
   
   // Render media if present
   if (pageData.media) {
@@ -408,12 +438,15 @@ function renderInfoPage(root, pageId) {
     mediaContainer.style.alignItems = "center";
     
     if (pageData.media.type === "image") {
-      // Show actual image for color test, placeholder for others
-      if (pageId === "ishihara_test" && pageData.media.src) {
+      // Show actual image for specific pages (color test, system layout, system criteria), placeholder for others
+      if ((pageId === "ishihara_test" || pageId === "system_layout" || pageId === "system_criteria") && pageData.media.src) {
         const img = document.createElement("img");
         img.src = pageData.media.src;
-        img.alt = "Ishihara Color Test";
-        img.style.maxWidth = "50%";
+        img.alt =
+          pageId === "ishihara_test"
+            ? "Ishihara Color Test"
+            : (pageId === "system_layout" ? "System Layout" : "System Criteria");
+        img.style.maxWidth = "80%";
         img.style.height = "auto";
         img.style.borderRadius = "8px";
         img.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)";
@@ -559,7 +592,18 @@ function renderInfoPage(root, pageId) {
       inputContainer.appendChild(label);
     }
   } else if (pageData.input_type === "checkbox_list") {
-    // Show checkboxes for פריט 1-5
+    // Show checkboxes for פריט 1-5 (or custom labels for specific pages)
+    let labels = null;
+    if (pageId === "system_layout") {
+      labels = [
+        "1. פאנל פירוט המטלה ואישור הבחירה.",
+        "2. מפה וכלי מפה.",
+        "3. גרף זמני המקטעים ובחירת מסלול.",
+        "4. ויזואליזציה (משתנה) של פירוט המקטעים במסלול הבחור.",
+        "5. מקרא ויזואליזציה."
+      ];
+    }
+
     for (let i = 1; i <= 5; i++) {
       const checkboxWrapper = document.createElement("div");
       checkboxWrapper.style.marginBottom = "10px";
@@ -577,7 +621,11 @@ function renderInfoPage(root, pageId) {
       
       const label = document.createElement("label");
       label.setAttribute("for", `input_${pageId}_item${i}`);
-      label.textContent = `פריט ${i}`;
+      if (labels && labels[i - 1]) {
+        label.textContent = labels[i - 1];
+      } else {
+        label.textContent = `פריט ${i}`;
+      }
       label.dir = "rtl";
       label.style.marginRight = "0";
       label.style.cursor = "pointer";
@@ -595,11 +643,18 @@ function renderInfoPage(root, pageId) {
   // Navigation buttons
   const buttonGroup = document.createElement("div");
   buttonGroup.className = "button-group";
+  buttonGroup.style.display = "flex";
+  buttonGroup.style.justifyContent = "space-between";
+  buttonGroup.style.gap = "12px";
   
   if (state.preIntroPageIndex > 0) {
     const backBtn = document.createElement("button");
     backBtn.textContent = "חזור";
     backBtn.dir = "rtl";
+    // Style back button as secondary (gray)
+    backBtn.style.backgroundColor = "#6b7280"; // gray
+    backBtn.style.borderColor = "#6b7280";
+    backBtn.style.color = "#ffffff";
     backBtn.onclick = () => {
       logPageExit(pageName);
       state.preIntroPageIndex--;
