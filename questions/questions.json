@@ -188,8 +188,8 @@
     "visualization_condition_question": {
       "id": "model_preference",
       "type": "single_choice",
-      "text": "לאחר תנאי ויזואליזציה זה, איזה מודל בינה העדפת יותר?",
-      "options": ["מודל A", "מודל B"]
+      "text": "איזה מודל לדעתך נתן המלצה שהתאימה יותר לדרישות שהוגדרו במטלה?",
+      "options": []
     },
   
     "visualization_global_question": {

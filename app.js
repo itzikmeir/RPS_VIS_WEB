@@ -1,3 +1,24 @@
+// Toggle for display-only model labels:
+// - false  => show only A/B across all conditions (original behavior)
+// - true   => show A–F (per condition × model) in UI
+const USE_MODEL_LABELS_A_TO_F = false;
+
+// Map (conditionIndex, modelIndex) -> display model letter (for UI only)
+function getDisplayModelLetter(conditionIndex, modelIndex) {
+  if (USE_MODEL_LABELS_A_TO_F) {
+    // 3 conditions × 2 models = 6 display names A–F
+    const labelsAF = ["A", "B", "C", "D", "E", "F"];
+    const idxAF = conditionIndex * 2 + modelIndex; // 0..5
+    return labelsAF[idxAF] || "?";
+  }
+  // Original A/B display only, regardless of condition
+  const labelsAB = ["A", "B"];
+  return labelsAB[modelIndex] || "?";
+}
+
+function getDisplayModelName(conditionIndex, modelIndex) {
+  return `מודל ${getDisplayModelLetter(conditionIndex, modelIndex)}`;
+}
 // Global state
 const state = {
   participantId: null,
@@ -798,8 +819,10 @@ function renderInfoPage(root, pageId) {
       state.preIntroPageIndex++;
       render();
     } else {
+      // Skip standalone practice intro page – go directly to scenario intro
       state.stage = "practice";
-      state.pageType = "info";
+      state.pageType = "scenario_intro";
+      state.practiceIndex = 0;
       render();
     }
   };
@@ -868,32 +891,170 @@ function renderScenarioIntroPage(root) {
   logPageEntry("ScenarioIntroPage");
   
   root.innerHTML = "";
-  
-  // Get scenario intro data from questionsConfig
-  let pageData = null;
-  if (state.questionsConfig && state.questionsConfig.scenario_intro) {
-    pageData = state.questionsConfig.scenario_intro;
-  }
-  
-  // Fallback
-  if (!pageData) {
-    pageData = {
-      title: "התחלת תרחיש",
-      text: "בלחיצה על המשך יופיע מסך מערכת תכנון הנסיעה. תזכורת: המערכת תמליץ על אחד המסלולים שיסומן בכוכבית (*). עלייך לבחון את כל המסלולים ולבחור את המסלול האופטימלי ביותר. המסלול המומלץ על ידי המערכת אינו בהכרח האופטימלי ביותר."
+
+  // --- Practice-specific scenario intro (3 practice trials with different visualizations) ---
+  if (state.stage === "practice") {
+    const practiceIdx = state.practiceIndex || 0; // 0,1,2 for 3 practice trials
+
+    let titleText = "התחלת תרחיש";
+    let imageSrc = null;
+    let imageAlt = null;
+    let vizLabel = "";
+
+    if (practiceIdx === 0) {
+      titleText = "תרגול 1 – עמודות נערמות";
+      imageSrc = "Images/STACKED.png";
+      imageAlt = "Stacked visualization";
+      vizLabel = "עמודות נערמות";
+    } else if (practiceIdx === 1) {
+      titleText = "תרגול 2 – רדאר";
+      imageSrc = "Images/RADAR.png";
+      imageAlt = "Radar visualization";
+      vizLabel = "רדאר";
+    } else {
+      titleText = "תרגול 3 – מפת חום";
+      imageSrc = "Images/HEATֹMAP.png";
+      imageAlt = "Heatmap visualization";
+      vizLabel = "מפת חום";
+    }
+
+    const title = document.createElement("h1");
+    title.className = "page-title";
+    title.textContent = titleText;
+    title.dir = "rtl";
+    root.appendChild(title);
+
+    const content = document.createElement("div");
+    content.className = "page-content";
+    content.dir = "rtl";
+    content.style.whiteSpace = "pre-wrap";
+
+    // Intro line
+    const pIntro = document.createElement("p");
+    pIntro.textContent = "בלחיצה על המשך יופיע מסך מערכת תכנון הנסיעה עם:";
+    content.appendChild(pIntro);
+
+    // Bullet list
+    const list = document.createElement("ul");
+    list.style.marginTop = "4px";
+    list.style.paddingRight = "20px";
+
+    const liViz = document.createElement("li");
+    const liVizBold = document.createElement("span");
+    liVizBold.style.fontWeight = "700";
+    liVizBold.textContent = `ויזואליזציה ${vizLabel}`;
+    liViz.appendChild(liVizBold);
+    list.appendChild(liViz);
+
+    const liModel = document.createElement("li");
+    const liModelBold = document.createElement("span");
+    liModelBold.style.fontWeight = "700";
+    liModelBold.textContent = "חישוב באמצעות מודל בינה מלאכותית";
+    liModel.appendChild(liModelBold);
+    list.appendChild(liModel);
+
+    content.appendChild(list);
+
+    // Final paragraph with partially bold sentence
+    const p2 = document.createElement("p");
+    p2.dir = "rtl";
+    p2.style.marginTop = "8px";
+    p2.append("בצע את המטלה במהירות, אך ");
+    const boldSpan = document.createElement("span");
+    boldSpan.style.fontWeight = "700";
+    boldSpan.textContent = "הקפד/י לבצע השוואה בין כל המסלולים";
+    p2.appendChild(boldSpan);
+    p2.append(" ולאמת שבחירתך עומדת בדרישות המטלה לפני אישור.");
+
+    content.appendChild(p2);
+    root.appendChild(content);
+
+    if (imageSrc) {
+      const imgContainer = document.createElement("div");
+      imgContainer.style.margin = "20px 0";
+      imgContainer.style.display = "flex";
+      imgContainer.style.justifyContent = "center";
+      imgContainer.style.alignItems = "center";
+
+      const img = document.createElement("img");
+      img.src = imageSrc;
+      img.alt = imageAlt || titleText;
+      img.style.maxWidth = "90%";
+      img.style.height = "auto";
+      img.style.borderRadius = "8px";
+      img.style.boxShadow = "0 2px 8px rgba(0,0,0,0.2)";
+
+      imgContainer.appendChild(img);
+      root.appendChild(imgContainer);
+    }
+
+    const buttonGroup = document.createElement("div");
+    buttonGroup.className = "button-group";
+
+    const continueBtn = document.createElement("button");
+    continueBtn.textContent = "המשך";
+    continueBtn.onclick = () => {
+      logPageExit("ScenarioIntroPage");
+      state.pageType = "trial";
+      render();
     };
+    buttonGroup.appendChild(continueBtn);
+
+    root.appendChild(buttonGroup);
+    return;
   }
-  
+
+  // --- Default scenario intro (experiment stage) ---
+  const cond = state.schedule.conditions[state.conditionIndex];
+  const model = cond.models[state.modelIndex];
+  const displayModelName = getDisplayModelName(state.conditionIndex, state.modelIndex);
+
   const title = document.createElement("h1");
   title.className = "page-title";
-  title.textContent = pageData.title;
+  title.textContent = "התחלת תרחיש";
   title.dir = "rtl";
   root.appendChild(title);
-  
+
   const content = document.createElement("div");
   content.className = "page-content";
-  content.textContent = pageData.text;
   content.dir = "rtl";
   content.style.whiteSpace = "pre-wrap";
+
+  const pIntro = document.createElement("p");
+  pIntro.textContent = "בלחיצה על המשך יופיע מסך מערכת תכנון הנסיעה עם:";
+  content.appendChild(pIntro);
+
+  const list = document.createElement("ul");
+  list.style.marginTop = "4px";
+  list.style.paddingRight = "20px";
+
+  const liViz = document.createElement("li");
+  const liVizBold = document.createElement("span");
+  liVizBold.style.fontWeight = "700";
+  liVizBold.textContent = `ויזואליזציה ${cond.visualization || ""}`;
+  liViz.appendChild(liVizBold);
+  list.appendChild(liViz);
+
+  const liModel = document.createElement("li");
+  const liModelBold = document.createElement("span");
+  liModelBold.style.fontWeight = "700";
+  liModelBold.textContent = `חישוב באמצעות מודל בינה מלאכותית \"${displayModelName}\"`;
+  liModel.appendChild(liModelBold);
+  list.appendChild(liModel);
+
+  content.appendChild(list);
+
+  const p2 = document.createElement("p");
+  p2.dir = "rtl";
+  p2.style.marginTop = "8px";
+  p2.append("בצע את המטלה במהירות, אך ");
+  const boldSpan2 = document.createElement("span");
+  boldSpan2.style.fontWeight = "700";
+  boldSpan2.textContent = "הקפד/י לבצע השוואה בין כל המסלולים";
+  p2.appendChild(boldSpan2);
+  p2.append(" ולאמת שבחירתך עומדת בדרישות המטלה לפני אישור.");
+
+  content.appendChild(p2);
   root.appendChild(content);
   
   const buttonGroup = document.createElement("div");
@@ -1145,10 +1306,8 @@ function renderTrialQuestionsPage(root) {
   
   const title = document.createElement("h1");
   title.className = "page-title";
-  // In real experiment we hide the scenario id from the title; keep it only in debugMode
-  title.textContent = state.debugMode
-    ? `שאלון לאחר תרחיש – ${t.scenario_id}`
-    : "שאלון לאחר תרחיש";
+  // Always show generic title without scenario code
+  title.textContent = "שאלון לאחר תרחיש";
   title.dir = "rtl";
   root.appendChild(title);
   
@@ -1579,13 +1738,58 @@ function renderConditionIntroPage(root) {
   
   const title = document.createElement("h1");
   title.className = "page-title";
-  title.textContent = `Condition ${state.conditionIndex + 1} – Visualization: ${cond.visualization}`;
+  // Show only the visualization name as title (e.g., עמודות מוערמות / רדאר / מפת חום)
+  title.textContent = cond.visualization || "תצוגת ויזואליזציה";
+  title.dir = "rtl";
   root.appendChild(title);
-  
+
+  // Short description text and visualization image
   const content = document.createElement("div");
   content.className = "page-content";
-  content.textContent = `This is the intro for this visualization type: ${cond.visualization}.`;
+  content.dir = "rtl";
+  content.style.whiteSpace = "pre-wrap";
+
+  let descriptionText = "";
+  let imageSrc = null;
+  let imageAlt = null;
+
+  if (cond.visualization === "עמודות מוערמות") {
+    descriptionText = "ויזואליזציית עמודות נערמות";
+    imageSrc = "Images/STACKED.png";
+    imageAlt = "Stacked visualization";
+  } else if (cond.visualization === "רדאר") {
+    descriptionText = "ויזואליזציית רדאר";
+    imageSrc = "Images/RADAR.png";
+    imageAlt = "Radar visualization";
+  } else if (cond.visualization === "מפת חום") {
+    descriptionText = "ויזואליזציית מפת חום";
+    imageSrc = "Images/HEATֹMAP.png";
+    imageAlt = "Heatmap visualization";
+  } else {
+    descriptionText = cond.visualization || "";
+  }
+
+  content.textContent = descriptionText;
   root.appendChild(content);
+
+  if (imageSrc) {
+    const imgContainer = document.createElement("div");
+    imgContainer.style.margin = "20px 0";
+    imgContainer.style.display = "flex";
+    imgContainer.style.justifyContent = "center";
+    imgContainer.style.alignItems = "center";
+
+    const img = document.createElement("img");
+    img.src = imageSrc;
+    img.alt = imageAlt || cond.visualization;
+    img.style.maxWidth = "90%";
+    img.style.height = "auto";
+    img.style.borderRadius = "8px";
+    img.style.boxShadow = "0 2px 8px rgba(0,0,0,0.2)";
+
+    imgContainer.appendChild(img);
+    root.appendChild(imgContainer);
+  }
   
   const buttonGroup = document.createElement("div");
   buttonGroup.className = "button-group";
@@ -1614,38 +1818,20 @@ function renderModelIntroPage(root) {
   
   root.innerHTML = "";
   
-  // Get model intro data from questionsConfig
-  let pageData = null;
-  let introText = "";
-  if (state.questionsConfig && state.questionsConfig.model_intro) {
-    pageData = state.questionsConfig.model_intro;
-    // Use text_model_a for OPT, text_model_b for SUB (or vice versa based on model order)
-    // For now, use text_model_a for first model, text_model_b for second
-    if (state.modelIndex === 0) {
-      introText = pageData.text_model_a || pageData.text_model_b || "";
-    } else {
-      introText = pageData.text_model_b || pageData.text_model_a || "";
-    }
-  }
-  
-  // Fallback
-  if (!pageData) {
-    pageData = {
-      title: "התחלת מודל בינה מלאכותית",
-      text: `בלחיצה על המשך יוצגו לפניך מספר תרחישים שמדמים מערכת לתכנון מסלול נסיעה באמצעות בינה מלאכותית שמשתמשת במודל מסוג ${model.model_type}.`
-    };
-    introText = pageData.text;
-  }
+  const displayModelName = getDisplayModelName(state.conditionIndex, state.modelIndex); // e.g., מודל A..F
   
   const title = document.createElement("h1");
   title.className = "page-title";
-  title.textContent = pageData.title || `Model ${model.tag} – Type: ${model.model_type}`;
+  title.textContent = `התחלת מודל בינה מלאכותית – ${displayModelName}`;
   title.dir = "rtl";
   root.appendChild(title);
   
   const content = document.createElement("div");
   content.className = "page-content";
-  content.textContent = introText || `בלחיצה על המשך יוצגו לפניך מספר תרחישים שמדמים מערכת לתכנון מסלול נסיעה באמצעות בינה מלאכותית שמשתמשת במודל מסוג ${model.model_type}.`;
+  content.dir = "rtl";
+  content.style.whiteSpace = "pre-wrap";
+  content.textContent =
+    `במסכים הבאים יוצגו לך מספר תרחישים בהם השתמשנו במודל בינה מסוג \"${displayModelName}\" לחישוב המסלולים ולבחירת ההמלצה.`;
   content.dir = "rtl";
   content.style.whiteSpace = "pre-wrap";
   root.appendChild(content);
@@ -1679,7 +1865,8 @@ function renderModelSummaryWorkloadPage(root) {
   
   const title = document.createElement("h1");
   title.className = "page-title";
-  title.textContent = `שאלון מסכם מודל – שאלות עומס – תנאי ${state.conditionIndex + 1} מודל ${model.tag}`;
+  const displayModelName = getDisplayModelName(state.conditionIndex, state.modelIndex);
+  title.textContent = `שאלון מסכם מודל ${displayModelName}`;
   title.dir = "rtl";
   root.appendChild(title);
   
@@ -1776,7 +1963,8 @@ function renderModelSummaryTrustPage(root) {
   
   const title = document.createElement("h1");
   title.className = "page-title";
-  title.textContent = `שאלון מסכם מודל – שאלות אמון – תנאי ${state.conditionIndex + 1} מודל ${model.tag}`;
+  const displayModelName = getDisplayModelName(state.conditionIndex, state.modelIndex);
+  title.textContent = `שאלון מסכם מודל ${displayModelName}`;
   title.dir = "rtl";
   root.appendChild(title);
   
@@ -2392,17 +2580,27 @@ function renderVisualizationConditionPage(root) {
   
   const title = document.createElement("h1");
   title.className = "page-title";
-  title.textContent = `שאלה לאחר תנאי ויזואליזציה ${state.conditionIndex + 1}`;
+  // Include actual visualization name in the title
+  title.textContent = `שאלה לאחר תנאי ויזואליזציה – ${cond.visualization}`;
   title.dir = "rtl";
   root.appendChild(title);
   
-  // Get question from questionsConfig
-  let questionData = null;
+  // Build question based on questionsConfig, but options depend on the two models in this condition
+  let baseQuestion = null;
   if (state.questionsConfig && state.questionsConfig.visualization_condition_question) {
-    questionData = state.questionsConfig.visualization_condition_question;
+    baseQuestion = state.questionsConfig.visualization_condition_question;
   }
   
-  if (questionData) {
+  if (baseQuestion) {
+    const questionData = {
+      id: baseQuestion.id,
+      text: baseQuestion.text,
+      // Options are the display names of the two models shown in this condition (e.g., מודל A / מודל B / ...).
+      options: [
+        getDisplayModelName(state.conditionIndex, 0),
+        getDisplayModelName(state.conditionIndex, 1)
+      ]
+    };
     const questionDiv = document.createElement("div");
     questionDiv.className = "form-group";
     questionDiv.style.marginTop = "20px";
@@ -2530,6 +2728,45 @@ function renderVisualizationGlobalPage(root) {
     label.style.fontSize = "16px";
     questionDiv.appendChild(label);
     
+    // Show reminder images of the three visualizations
+    const imagesRow = document.createElement("div");
+    imagesRow.style.display = "flex";
+    imagesRow.style.justifyContent = "center";
+    imagesRow.style.gap = "16px";
+    imagesRow.style.marginBottom = "24px";
+    imagesRow.dir = "rtl";
+
+    const vizImages = [
+      { src: "Images/STACKED.png", alt: "עמודות מוערמות" },
+      { src: "Images/RADAR.png", alt: "רדאר" },
+      { src: "Images/HEATֹMAP.png", alt: "מפת חום" }
+    ];
+
+    vizImages.forEach(info => {
+      const wrapper = document.createElement("div");
+      wrapper.style.maxWidth = "200px";
+
+      const img = document.createElement("img");
+      img.src = info.src;
+      img.alt = info.alt;
+      img.style.width = "100%";
+      img.style.height = "auto";
+      img.style.borderRadius = "8px";
+      img.style.boxShadow = "0 2px 8px rgba(0,0,0,0.2)";
+
+      const caption = document.createElement("div");
+      caption.textContent = info.alt;
+      caption.style.textAlign = "center";
+      caption.style.marginTop = "4px";
+      caption.style.fontSize = "13px";
+
+      wrapper.appendChild(img);
+      wrapper.appendChild(caption);
+      imagesRow.appendChild(wrapper);
+    });
+
+    questionDiv.appendChild(imagesRow);
+
     // Rank 1-3 for each visualization (no duplicates)
     if (questionData.options && questionData.options.length > 0) {
       // Store references to all selects for reset functionality
@@ -2570,7 +2807,12 @@ function renderVisualizationGlobalPage(root) {
             if (currentValue === rank || !isSelectedByOther) {
               const option = document.createElement("option");
               option.value = rank;
-              option.textContent = rank;
+              // Map numeric rank to descriptive text
+              let labelText = "";
+              if (rank === 1) labelText = "הטובה ביותר";
+              else if (rank === 2) labelText = "בינונית";
+              else labelText = "פחות טובה";
+              option.textContent = labelText;
               if (currentValue === rank) {
                 option.selected = true;
               }
@@ -2622,11 +2864,15 @@ function renderVisualizationGlobalPage(root) {
         placeholderOption.textContent = "בחר דירוג";
         select.appendChild(placeholderOption);
         
-        // Initially all ranks are available
+        // Initially all ranks are available (with descriptive labels)
         for (let rank = 1; rank <= 3; rank++) {
           const option = document.createElement("option");
           option.value = rank;
-          option.textContent = rank;
+          let labelText = "";
+          if (rank === 1) labelText = "הטובה ביותר";
+          else if (rank === 2) labelText = "בינונית";
+          else labelText = "פחות טובה";
+          option.textContent = labelText;
           select.appendChild(option);
         }
         
@@ -2658,19 +2904,37 @@ function renderVisualizationGlobalPage(root) {
     
     root.appendChild(questionDiv);
     
-    // Add question about which element helped select the best option (AFTER ranking)
+    // Add question about which element helped understand the routes (AFTER ranking)
     const helpQuestionDiv = document.createElement("div");
     helpQuestionDiv.className = "form-group";
     helpQuestionDiv.style.marginTop = "30px";
     
     const helpQuestionLabel = document.createElement("label");
-    helpQuestionLabel.textContent = "איזה אזור בממשק סייע לך הכי הרבה בהבנת המסלולים?";
+    helpQuestionLabel.textContent = "במהלך ביצוע המטלות, איזה רכיב ממשק שימש אותך במידה הרבה ביותר לצורך השוואת החלופות וקבלת החלטה לגבי המסלול?";
     helpQuestionLabel.dir = "rtl";
     helpQuestionLabel.style.display = "block";
     helpQuestionLabel.style.marginBottom = "15px";
     helpQuestionLabel.style.fontWeight = "600";
     helpQuestionLabel.style.fontSize = "16px";
     helpQuestionDiv.appendChild(helpQuestionLabel);
+
+    // Layouts image underneath the question text
+    const layoutsImgWrapper = document.createElement("div");
+    layoutsImgWrapper.style.margin = "10px 0 20px";
+    layoutsImgWrapper.style.display = "flex";
+    layoutsImgWrapper.style.justifyContent = "center";
+    layoutsImgWrapper.style.alignItems = "center";
+
+    const layoutsImg = document.createElement("img");
+    layoutsImg.src = "Images/LAYOUTS.png";
+    layoutsImg.alt = "ממשק המערכת – אזורי מסך";
+    layoutsImg.style.maxWidth = "90%";
+    layoutsImg.style.height = "auto";
+    layoutsImg.style.borderRadius = "8px";
+    layoutsImg.style.boxShadow = "0 2px 8px rgba(0,0,0,0.2)";
+
+    layoutsImgWrapper.appendChild(layoutsImg);
+    helpQuestionDiv.appendChild(layoutsImgWrapper);
     
     const helpSelect = document.createElement("select");
     helpSelect.id = "viz_global_help_element";
@@ -2688,7 +2952,11 @@ function renderVisualizationGlobalPage(root) {
     placeholderHelpOption.textContent = "בחר תשובה";
     helpSelect.appendChild(placeholderHelpOption);
     
-    const helpOptions = ["א. מפה גיאוגרפית", "ב. גאנט זמנים", "ג. ויזואליזציה"];
+    const helpOptions = [
+      "א. המפה הגיאוגרפית",
+      "ב. גרף זמני המקטעים",
+      "ג. אזור הוויזואליזציות (עמודות נערמות / רדאר / מפת חום)"
+    ];
     helpOptions.forEach(opt => {
       const option = document.createElement("option");
       option.value = opt;
@@ -2806,7 +3074,8 @@ function renderDemographicsPage(root) {
     label.dir = "rtl";
     label.style.display = "block";
     label.style.marginBottom = "8px";
-    label.style.fontWeight = "600";
+    // Make main question text visually bolder than option labels
+    label.style.fontWeight = "700";
     questionDiv.appendChild(label);
     
     if (question.type === "number") {
@@ -2880,6 +3149,8 @@ function renderDemographicsPage(root) {
           radioLabel.dir = "rtl";
           radioLabel.style.marginRight = "0";
           radioLabel.style.cursor = "pointer";
+          // Option labels should be normal-weight so question text stands out
+          radioLabel.style.fontWeight = "400";
           
           optionWrapper.appendChild(radio);
           optionWrapper.appendChild(radioLabel);
@@ -2916,8 +3187,8 @@ function renderDemographicsPage(root) {
         labelsRow.style.marginBottom = "10px";
         labelsRow.style.position = "relative";
         
-        // Create cells matching radio group structure
-        for (let i = 1; i <= 7; i++) {
+        // Create cells matching radio group structure (reversed 7→1)
+        for (let i = 7; i >= 1; i--) {
           const labelCell = document.createElement("div");
           labelCell.style.flex = "0 0 auto";
           labelCell.style.minWidth = "40px";
@@ -2926,7 +3197,7 @@ function renderDemographicsPage(root) {
           labelCell.style.color = "#666";
           labelCell.style.fontWeight = "500";
           
-          // Add labels to specific columns
+          // Add labels to specific columns (now reversed)
           if (i === 1) {
             labelCell.textContent = "כמעט אף פעם";
           } else if (i === 7) {
@@ -2940,8 +3211,8 @@ function renderDemographicsPage(root) {
         scaleContainer.appendChild(labelsRow);
       }
       
-      // Create radio buttons in order 1-7 (not reversed)
-      for (let i = 1; i <= 7; i++) {
+      // Create radio buttons in order 7-1 (reversed)
+      for (let i = 7; i >= 1; i--) {
         const radioWrapper = document.createElement("div");
         radioWrapper.style.display = "flex";
         radioWrapper.style.flexDirection = "column";
