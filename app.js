@@ -325,6 +325,7 @@ function renderLoginPage(root) {
     "ניתן לשתות במהלך הניסוי, ניתן להביא כוס מים מפינת הקפה.\n" +
     "האם מיקום המסך, המקלדת, העכבר וכן גובה הכיסא נוחים לך? כעת זה זמן טוב לסדר את זה.\n" +
     "האם הטמפרטורה מתאימה?.\n" +
+    " טלפון מושתק ולא בהישג יד.\n" +
     "האם התאורה מתאימה?.\n" +
     "וודא אודיו (אוזניות) תקין- נסיין.\n" +
     "נסיין- התחל הקלטת מסך.";
@@ -428,14 +429,106 @@ function renderInfoPage(root, pageId) {
   title.textContent = pageData.title;
   title.dir = "rtl";
   root.appendChild(title);
-  
+ 
   // Render text content
-  const content = document.createElement("div");
-  content.className = "page-content";
-  content.textContent = pageData.text || "";
-  content.dir = "rtl";
-  content.style.whiteSpace = "pre-wrap";
-  root.appendChild(content);
+  if (pageId === "invitation_letter") {
+    // Custom rendering to show bullet points for the numbered section
+    const text = pageData.text || "";
+    const lines = text.split("\n");
+
+    const content = document.createElement("div");
+    content.className = "page-content";
+    content.dir = "rtl";
+
+    const introLines = [];
+    const bulletLines = [];
+    const footerLines = [];
+    let section = "intro";
+    let bulletsHeading = null;
+
+    for (const rawLine of lines) {
+      const line = rawLine;
+      const trimmed = line.trim();
+      if (section === "intro") {
+        if (trimmed === "מספר דגשים:") {
+          bulletsHeading = line;
+          section = "bullets";
+        } else {
+          if (trimmed !== "") {
+            introLines.push(line);
+          }
+        }
+      } else if (section === "bullets") {
+        if (trimmed === "") {
+          section = "footer";
+        } else {
+          bulletLines.push(line);
+        }
+      } else {
+        if (trimmed !== "") {
+          footerLines.push(line);
+        }
+      }
+    }
+
+    // Intro paragraphs
+    introLines.forEach((line) => {
+      const p = document.createElement("p");
+      p.textContent = line;
+      p.style.marginBottom = "8px";
+      content.appendChild(p);
+    });
+
+    // Bullets heading
+    if (bulletsHeading) {
+      const headingP = document.createElement("p");
+      headingP.textContent = bulletsHeading;
+      headingP.style.marginBottom = "4px";
+      headingP.style.fontWeight = "700";
+      content.appendChild(headingP);
+    }
+
+    // Bullet list
+    if (bulletLines.length > 0) {
+      const ul = document.createElement("ul");
+      ul.dir = "rtl";
+      ul.style.marginTop = "0";
+      bulletLines.forEach((line) => {
+        const li = document.createElement("li");
+        li.textContent = line;
+        li.style.marginBottom = "4px";
+        ul.appendChild(li);
+      });
+      content.appendChild(ul);
+    }
+
+    // Footer paragraphs
+    footerLines.forEach((line) => {
+      const p = document.createElement("p");
+      p.textContent = line;
+      p.style.marginTop = "8px";
+      content.appendChild(p);
+    });
+
+    root.appendChild(content);
+
+    // Extra emphasized reward line at the end (last bullet-like line, but bold)
+    const reward = document.createElement("div");
+    reward.className = "page-content";
+    reward.dir = "rtl";
+    reward.style.whiteSpace = "pre-wrap";
+    reward.style.marginTop = "16px";
+    reward.style.fontWeight = "700";
+    reward.textContent = "כאות תודה על ההשתתפות, תקבל/י 70 ₪ עבור השלמת הניסוי.";
+    root.appendChild(reward);
+  } else {
+    const content = document.createElement("div");
+    content.className = "page-content";
+    content.textContent = pageData.text || "";
+    content.dir = "rtl";
+    content.style.whiteSpace = "pre-wrap";
+    root.appendChild(content);
+  }
 
   // Extra emphasized warning at the end of experiment_flow page
   if (pageId === "experiment_flow") {
@@ -667,6 +760,7 @@ function renderInfoPage(root, pageId) {
   buttonGroup.style.display = "flex";
   buttonGroup.style.justifyContent = "space-between";
   buttonGroup.style.gap = "12px";
+  buttonGroup.style.flexDirection = "row-reverse"; // Back on right, continue on left
   
   if (state.preIntroPageIndex > 0) {
     const backBtn = document.createElement("button");
@@ -929,44 +1023,50 @@ function renderScenarioIntroPage(root) {
     content.dir = "rtl";
     content.style.whiteSpace = "pre-wrap";
 
-    // Intro line
+    // Intro lines
     const pIntro = document.createElement("p");
-    pIntro.textContent = "בלחיצה על המשך יופיע מסך מערכת תכנון הנסיעה עם:";
+    pIntro.textContent = "בלחיצה על המשך יופיע תרחיש במסך מערכת תכנון הנסיעה הכולל:";
     content.appendChild(pIntro);
 
-    // Bullet list
-    const list = document.createElement("ul");
-    list.style.marginTop = "4px";
-    list.style.paddingRight = "20px";
+    // Bullet list for routes + visualization
+    const introList = document.createElement("ul");
+    introList.style.marginTop = "4px";
+    introList.style.paddingRight = "20px";
 
-    const liViz = document.createElement("li");
-    const liVizBold = document.createElement("span");
-    liVizBold.style.fontWeight = "700";
-    liVizBold.textContent = `ויזואליזציה ${vizLabel}`;
-    liViz.appendChild(liVizBold);
-    list.appendChild(liViz);
+    const introLiRoutes = document.createElement("li");
+    introLiRoutes.textContent = "3 מסלולים שחושבו באמצעות מודל בינה מלאכותית";
+    introList.appendChild(introLiRoutes);
 
-    const liModel = document.createElement("li");
-    const liModelBold = document.createElement("span");
-    liModelBold.style.fontWeight = "700";
-    liModelBold.textContent = "חישוב באמצעות מודל בינה מלאכותית";
-    liModel.appendChild(liModelBold);
-    list.appendChild(liModel);
+    const introLiViz = document.createElement("li");
+    introLiViz.textContent = `ויזואליזציה ${vizLabel}`;
+    introList.appendChild(introLiViz);
 
-    content.appendChild(list);
+    content.appendChild(introList);
 
-    // Final paragraph with partially bold sentence
-    const p2 = document.createElement("p");
-    p2.dir = "rtl";
-    p2.style.marginTop = "8px";
-    p2.append("בצע את המטלה במהירות, אך ");
-    const boldSpan = document.createElement("span");
-    boldSpan.style.fontWeight = "700";
-    boldSpan.textContent = "הקפד/י לבצע השוואה בין כל המסלולים";
-    p2.appendChild(boldSpan);
-    p2.append(" ולאמת שבחירתך עומדת בדרישות המטלה לפני אישור.");
+    // Emphasized bullets under "דגשים:"
+    const tipsHeading = document.createElement("p");
+    tipsHeading.textContent = "דגשים:";
+    tipsHeading.style.marginTop = "12px";
+    tipsHeading.style.fontWeight = "700";
+    content.appendChild(tipsHeading);
 
-    content.appendChild(p2);
+    const tipsList = document.createElement("ul");
+    tipsList.style.marginTop = "4px";
+    tipsList.style.paddingRight = "20px";
+
+    const tip1 = document.createElement("li");
+    tip1.textContent = "בצע את המטלה במהירות";
+    tipsList.appendChild(tip1);
+
+    const tip2 = document.createElement("li");
+    tip2.textContent = "הקפד/י לבצע השוואה בין כל המסלולים";
+    tipsList.appendChild(tip2);
+
+    const tip3 = document.createElement("li");
+    tip3.textContent = "וודא שבחירתך עומדת בדרישות המטלה לפני אישור";
+    tipsList.appendChild(tip3);
+
+    content.appendChild(tipsList);
     root.appendChild(content);
 
     if (imageSrc) {
@@ -1019,43 +1119,84 @@ function renderScenarioIntroPage(root) {
   content.className = "page-content";
   content.dir = "rtl";
   content.style.whiteSpace = "pre-wrap";
-
+  // Intro lines
   const pIntro = document.createElement("p");
-  pIntro.textContent = "בלחיצה על המשך יופיע מסך מערכת תכנון הנסיעה עם:";
+  pIntro.textContent = "בלחיצה על המשך יופיע תרחיש במסך מערכת תכנון הנסיעה הכולל:";
   content.appendChild(pIntro);
 
-  const list = document.createElement("ul");
-  list.style.marginTop = "4px";
-  list.style.paddingRight = "20px";
+  // Bullet list for routes + visualization
+  const introList = document.createElement("ul");
+  introList.style.marginTop = "4px";
+  introList.style.paddingRight = "20px";
 
-  const liViz = document.createElement("li");
-  const liVizBold = document.createElement("span");
-  liVizBold.style.fontWeight = "700";
-  liVizBold.textContent = `ויזואליזציה ${cond.visualization || ""}`;
-  liViz.appendChild(liVizBold);
-  list.appendChild(liViz);
+  const introLiRoutes = document.createElement("li");
+  introLiRoutes.textContent = `3 מסלולים שחושבו באמצעות מודל בינה מלאכותית \"${displayModelName}\"`;
+  introList.appendChild(introLiRoutes);
 
-  const liModel = document.createElement("li");
-  const liModelBold = document.createElement("span");
-  liModelBold.style.fontWeight = "700";
-  liModelBold.textContent = `חישוב באמצעות מודל בינה מלאכותית \"${displayModelName}\"`;
-  liModel.appendChild(liModelBold);
-  list.appendChild(liModel);
+  const introLiViz = document.createElement("li");
+  introLiViz.textContent = `ויזואליזציה ${cond.visualization || ""}`;
+  introList.appendChild(introLiViz);
 
-  content.appendChild(list);
+  content.appendChild(introList);
 
-  const p2 = document.createElement("p");
-  p2.dir = "rtl";
-  p2.style.marginTop = "8px";
-  p2.append("בצע את המטלה במהירות, אך ");
-  const boldSpan2 = document.createElement("span");
-  boldSpan2.style.fontWeight = "700";
-  boldSpan2.textContent = "הקפד/י לבצע השוואה בין כל המסלולים";
-  p2.appendChild(boldSpan2);
-  p2.append(" ולאמת שבחירתך עומדת בדרישות המטלה לפני אישור.");
+  // Emphasized bullets under "דגשים:"
+  const tipsHeading = document.createElement("p");
+  tipsHeading.textContent = "דגשים:";
+  tipsHeading.style.marginTop = "12px";
+  tipsHeading.style.fontWeight = "700";
+  content.appendChild(tipsHeading);
 
-  content.appendChild(p2);
+  const tipsList = document.createElement("ul");
+  tipsList.style.marginTop = "4px";
+  tipsList.style.paddingRight = "20px";
+
+  const tip1 = document.createElement("li");
+  tip1.textContent = "בצע את המטלה במהירות";
+  tipsList.appendChild(tip1);
+
+  const tip2 = document.createElement("li");
+  tip2.textContent = "הקפד/י לבצע השוואה בין כל המסלולים";
+  tipsList.appendChild(tip2);
+
+  const tip3 = document.createElement("li");
+  tip3.textContent = "וודא שבחירתך עומדת בדרישות המטלה לפני אישור";
+  tipsList.appendChild(tip3);
+
+  content.appendChild(tipsList);
   root.appendChild(content);
+
+  // Visualization image reminder below text and above buttons
+  let imageSrc = null;
+  let imageAlt = null;
+  if (cond.visualization === "עמודות מוערמות") {
+    imageSrc = "Images/STACKED.png";
+    imageAlt = "Stacked visualization";
+  } else if (cond.visualization === "רדאר") {
+    imageSrc = "Images/RADAR.png";
+    imageAlt = "Radar visualization";
+  } else if (cond.visualization === "מפת חום") {
+    imageSrc = "Images/HEATֹMAP.png";
+    imageAlt = "Heatmap visualization";
+  }
+
+  if (imageSrc) {
+    const imgContainer = document.createElement("div");
+    imgContainer.style.margin = "20px 0";
+    imgContainer.style.display = "flex";
+    imgContainer.style.justifyContent = "center";
+    imgContainer.style.alignItems = "center";
+
+    const img = document.createElement("img");
+    img.src = imageSrc;
+    img.alt = imageAlt || cond.visualization;
+    img.style.maxWidth = "90%";
+    img.style.height = "auto";
+    img.style.borderRadius = "8px";
+    img.style.boxShadow = "0 2px 8px rgba(0,0,0,0.2)";
+
+    imgContainer.appendChild(img);
+    root.appendChild(imgContainer);
+  }
   
   const buttonGroup = document.createElement("div");
   buttonGroup.className = "button-group";
@@ -1410,6 +1551,9 @@ function renderTrialQuestionsPage(root) {
           radioLabel.style.fontSize = "14px";
           radioLabel.style.marginTop = "4px";
           radioLabel.style.cursor = "pointer";
+          // Slight vertical tweak so text aligns with radio circle
+          radioLabel.style.position = "relative";
+          radioLabel.style.top = "1px";
           
           radioWrapper.appendChild(radio);
           radioWrapper.appendChild(radioLabel);
@@ -1477,13 +1621,15 @@ function renderTrialQuestionsPage(root) {
           radio.id = `scenario_${questionData.question_id}_${idx}_opt_${optIdx}`;
           radio.required = true;
           
-          const radioLabel = document.createElement("label");
-          radioLabel.setAttribute("for", `scenario_${questionData.question_id}_${idx}_opt_${optIdx}`);
-          radioLabel.textContent = option;
-          radioLabel.dir = "rtl";
-          radioLabel.style.marginRight = "0";
-          radioLabel.style.cursor = "pointer";
-          radioLabel.style.fontSize = "14px";
+        const radioLabel = document.createElement("label");
+        radioLabel.setAttribute("for", `scenario_${questionData.question_id}_${idx}_opt_${optIdx}`);
+        radioLabel.textContent = option;
+        radioLabel.dir = "rtl";
+        radioLabel.style.marginRight = "0";
+        radioLabel.style.cursor = "pointer";
+        radioLabel.style.fontSize = "14px";
+        radioLabel.style.position = "relative";
+        radioLabel.style.top = "1px";
           
           optionWrapper.appendChild(radio);
           optionWrapper.appendChild(radioLabel);
@@ -1706,7 +1852,12 @@ function renderExperimentTransitionPage(root) {
   content.style.borderRadius = "8px";
   content.style.fontSize = "16px";
   content.style.lineHeight = "1.8";
-  content.textContent = "סיימת את שלב התרגול. כעת נתחיל בניסוי האמיתי. הניסוי יכלול מספר תנאי ויזואליזציה, ובכל תנאי מספר מודלי בינה מלאכותית. בכל מודל תוצג לך סדרה של תרחישים.";
+  content.style.whiteSpace = "pre-wrap";
+  content.textContent =
+    "סיימת את שלב התרגול.\n" +
+    "כעת נתחיל בניסוי האמיתי.\n\n" +
+    "הניסוי יכלול תרחישים בויזואליזציות שונות (עמודות נערמות, רדאר ומפת חום)\n" +
+    "ובכל ויזואליזציה יבוצע שימוש במודלי בינה מלאכותית מסוגים שונים.";
   content.dir = "rtl";
   root.appendChild(content);
   
@@ -1795,7 +1946,7 @@ function renderConditionIntroPage(root) {
   buttonGroup.className = "button-group";
   
   const continueBtn = document.createElement("button");
-  continueBtn.textContent = "Continue";
+  continueBtn.textContent = "המשך";
   continueBtn.onclick = () => {
     logPageExit(pageName);
     state.pageType = "model_intro";
@@ -1866,7 +2017,8 @@ function renderModelSummaryWorkloadPage(root) {
   const title = document.createElement("h1");
   title.className = "page-title";
   const displayModelName = getDisplayModelName(state.conditionIndex, state.modelIndex);
-  title.textContent = `שאלון מסכם מודל ${displayModelName}`;
+  // Avoid repeating the word "מודל" twice in the title
+  title.textContent = `שאלון מסכם ${displayModelName}`;
   title.dir = "rtl";
   root.appendChild(title);
   
@@ -1964,7 +2116,8 @@ function renderModelSummaryTrustPage(root) {
   const title = document.createElement("h1");
   title.className = "page-title";
   const displayModelName = getDisplayModelName(state.conditionIndex, state.modelIndex);
-  title.textContent = `שאלון מסכם מודל ${displayModelName}`;
+  // Avoid repeating the word "מודל" twice in the title
+  title.textContent = `שאלון מסכם ${displayModelName}`;
   title.dir = "rtl";
   root.appendChild(title);
   
@@ -2303,27 +2456,54 @@ function createLikertQuestion(question, namePrefix) {
 function createMinus10To10Question(question, namePrefix) {
   const questionDiv = document.createElement("div");
   questionDiv.className = "form-group";
-  questionDiv.style.marginBottom = "30px";
+  // Space between this question block (text + slider) and the next question
+  questionDiv.style.marginBottom = "32px";
   
   const label = document.createElement("label");
-  label.textContent = question.text;
   label.dir = "rtl";
   label.style.display = "block";
-  label.style.marginBottom = "15px";
+  // Make question text sit very close to its slider
+  label.style.marginBottom = "0px";
   label.style.fontWeight = "600";
+
+  // If text is in the form "Heading: question...", split into heading and body
+  const fullText = question.text || "";
+  const parts = fullText.split(":");
+  if (parts.length > 1) {
+    const headingText = parts[0].trim();
+    const bodyText = parts.slice(1).join(":").trim();
+
+    const headingSpan = document.createElement("span");
+    headingSpan.textContent = headingText + ":";
+    headingSpan.style.fontWeight = "700";
+
+    label.appendChild(headingSpan);
+    if (bodyText) {
+      label.appendChild(document.createElement("br"));
+      const bodySpan = document.createElement("span");
+      bodySpan.textContent = bodyText;
+      bodySpan.style.fontWeight = "400";
+      label.appendChild(bodySpan);
+    }
+  } else {
+    label.textContent = fullText;
+  }
+
   questionDiv.appendChild(label);
   
   // Scale container with labels
   const scaleContainer = document.createElement("div");
   scaleContainer.style.position = "relative";
-  scaleContainer.style.marginTop = "20px";
-  scaleContainer.style.paddingTop = "50px"; // Space for labels and slider
+  // Minimal spacing above the slider; keep enough for the min/max labels
+  scaleContainer.style.marginTop = "0px";
+  scaleContainer.style.paddingTop = "22px"; // Space for labels and slider
   
   // Labels row - positioned at the edges
   const labelsRow = document.createElement("div");
   labelsRow.style.display = "flex";
   labelsRow.style.justifyContent = "space-between";
-  labelsRow.style.marginBottom = "15px";
+  // Small gap between labels row and slider
+  labelsRow.style.marginBottom = "4px";
   labelsRow.style.padding = "0 5px";
   labelsRow.style.position = "relative";
   labelsRow.dir = "rtl";
@@ -2350,6 +2530,8 @@ function createMinus10To10Question(question, namePrefix) {
   sliderContainer.style.width = "100%";
   sliderContainer.style.padding = "20px 40px";
   sliderContainer.style.boxSizing = "border-box";
+  // Add some space below the slider so the next question isn't stuck to it
+  sliderContainer.style.marginBottom = "16px";
   sliderContainer.dir = "ltr"; // Slider works in LTR for easier calculation
   
   // Slider track
@@ -2426,7 +2608,7 @@ function createMinus10To10Question(question, namePrefix) {
   // Navigation buttons
   const leftButton = document.createElement("button");
   leftButton.type = "button";
-  leftButton.innerHTML = "◀";
+  // Use image icon on the left for decreasing value
   leftButton.style.position = "absolute";
   leftButton.style.left = "0";
   leftButton.style.top = "50%";
@@ -2437,15 +2619,21 @@ function createMinus10To10Question(question, namePrefix) {
   leftButton.style.borderRadius = "4px";
   leftButton.style.backgroundColor = "#fff";
   leftButton.style.cursor = "pointer";
-  leftButton.style.fontSize = "12px";
   leftButton.style.display = "flex";
   leftButton.style.alignItems = "center";
   leftButton.style.justifyContent = "center";
   leftButton.style.padding = "0";
+  // Minus image
+  const minusImg = new Image();
+  minusImg.src = "Images/minus.jpg";
+  minusImg.alt = "-";
+  minusImg.style.width = "16px";
+  minusImg.style.height = "16px";
+  leftButton.appendChild(minusImg);
   
   const rightButton = document.createElement("button");
   rightButton.type = "button";
-  rightButton.innerHTML = "▶";
+  // Use image icon on the right for increasing value
   rightButton.style.position = "absolute";
   rightButton.style.right = "0";
   rightButton.style.top = "50%";
@@ -2456,11 +2644,17 @@ function createMinus10To10Question(question, namePrefix) {
   rightButton.style.borderRadius = "4px";
   rightButton.style.backgroundColor = "#fff";
   rightButton.style.cursor = "pointer";
-  rightButton.style.fontSize = "12px";
   rightButton.style.display = "flex";
   rightButton.style.alignItems = "center";
   rightButton.style.justifyContent = "center";
   rightButton.style.padding = "0";
+  // Plus image
+  const plusImg = new Image();
+  plusImg.src = "Images/plus.png";
+  plusImg.alt = "+";
+  plusImg.style.width = "16px";
+  plusImg.style.height = "16px";
+  rightButton.appendChild(plusImg);
   
   // Function to update slider position and value
   const updateSlider = (value) => {
@@ -2474,14 +2668,8 @@ function createMinus10To10Question(question, namePrefix) {
     const percentage = ((value + 10) / 20) * 100;
     sliderHandle.style.left = `${percentage}%`;
     
-    // Update handle color based on value
-    if (value < 0) {
-      sliderHandle.style.backgroundColor = "#f44336"; // Red for negative
-    } else if (value > 0) {
-      sliderHandle.style.backgroundColor = "#4CAF50"; // Green for positive
-    } else {
-      sliderHandle.style.backgroundColor = "#9E9E9E"; // Grey for zero
-    }
+    // Keep a neutral color for all values (no red/green)
+    sliderHandle.style.backgroundColor = "#9E9E9E";
   };
   
   // Handle drag functionality (mouse and touch)
@@ -2581,7 +2769,7 @@ function renderVisualizationConditionPage(root) {
   const title = document.createElement("h1");
   title.className = "page-title";
   // Include actual visualization name in the title
-  title.textContent = `שאלה לאחר תנאי ויזואליזציה – ${cond.visualization}`;
+  title.textContent = `שאלה לאחר ויזואליזציה – ${cond.visualization}`;
   title.dir = "rtl";
   root.appendChild(title);
   
@@ -2638,6 +2826,8 @@ function renderVisualizationConditionPage(root) {
         radioLabel.dir = "rtl";
         radioLabel.style.marginRight = "0";
         radioLabel.style.cursor = "pointer";
+        radioLabel.style.position = "relative";
+        radioLabel.style.top = "1px";
         
         optionWrapper.appendChild(radio);
         optionWrapper.appendChild(radioLabel);
@@ -3048,6 +3238,12 @@ function renderDemographicsPage(root) {
   logPageEntry(pageName);
   
   root.innerHTML = "";
+  // Ensure the page always starts scrolled to the top
+  try {
+    window.scrollTo(0, 0);
+  } catch (e) {
+    // Ignore if window is not available (shouldn't happen in browser)
+  }
   
   const title = document.createElement("h1");
   title.className = "page-title";
@@ -3151,6 +3347,8 @@ function renderDemographicsPage(root) {
           radioLabel.style.cursor = "pointer";
           // Option labels should be normal-weight so question text stands out
           radioLabel.style.fontWeight = "400";
+          radioLabel.style.position = "relative";
+          radioLabel.style.top = "1px";
           
           optionWrapper.appendChild(radio);
           optionWrapper.appendChild(radioLabel);
@@ -3236,6 +3434,8 @@ function renderDemographicsPage(root) {
         radioLabel.style.fontSize = "14px";
         radioLabel.style.marginTop = "4px";
         radioLabel.style.cursor = "pointer";
+        radioLabel.style.position = "relative";
+        radioLabel.style.top = "1px";
         
         radioWrapper.appendChild(radio);
         radioWrapper.appendChild(radioLabel);
@@ -3303,7 +3503,10 @@ function renderDemographicsPage(root) {
         answers[question.id] = selected ? parseInt(selected.value) : (state.debugMode ? "DBG" : null);
       }
     });
-    
+
+    // Before ending the experiment, download the logs (same as end page button)
+    downloadLogs();
+
     logPageExit(pageName);
     
     // Log questionnaire
@@ -3344,7 +3547,17 @@ function renderEndPage(root) {
   
   const content = document.createElement("div");
   content.className = "page-content";
-  content.textContent = "תודה על השתתפותך בניסוי. לחץ/י למטה כדי לשמור את קובץ הלוג.";
+  content.dir = "rtl";
+  content.style.whiteSpace = "pre-wrap";
+  // First sentence bold, with line breaks as requested
+  const boldSpan = document.createElement("span");
+  boldSpan.textContent = "הניסוי הסתיים";
+  boldSpan.style.fontWeight = "700";
+  content.appendChild(boldSpan);
+  content.appendChild(document.createElement("br"));
+  content.appendChild(document.createTextNode("תודה על השתתפותך"));
+  content.appendChild(document.createElement("br"));
+  content.appendChild(document.createTextNode("כעת הנסיין יעביר לך את התשלום המובטח"));
   content.dir = "rtl";
   root.appendChild(content);
   

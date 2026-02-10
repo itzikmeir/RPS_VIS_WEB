@@ -140,6 +140,33 @@
 
 ---
 
+### 7. Inspect and export results (HTML tools)
+
+- **File**: `log_results_viewer.html`  
+  - **Purpose**: Inspect a **single participant** log interactively.  
+  - **Input**: `Participants_log/PXXX_log.json` (load via file input in the browser).  
+  - **Features**:  
+    - Summary cards (trial counts, followed AI, optimal choices, total time).  
+    - Detailed views for practice/experiment trials, page visits, and all questionnaires.  
+    - **Questionnaires CSV export** button that downloads a UTF‑8 CSV with, per answered question:  
+      - Participant and questionnaire metadata (type, stage, condition/model indices, trial_id).  
+      - Question group/id/label.  
+      - **Scenario metadata**: `scenario_id`, `rec_correct`, `ai_recommended_route`, `correct_route` (when linked to a trial).  
+      - Answer value and correctness (for scenario questions).  
+
+- **File**: `logs_overview.html`  
+  - **Purpose**: Inspect and export **multiple participants’ logs at once**.  
+  - **Input**: Select multiple `Participants_log/PXXX_log.json` files in the browser.  
+  - **Features**:  
+    - High‑level stats across all loaded logs (participants, trials, questionnaires, overall accuracy).  
+    - Per‑participant summary table (trials, questionnaires, pages, interactions, % optimal trials).  
+    - CSV exports for:  
+      - **All questionnaires** (same columns as the per‑participant viewer, for all participants).  
+      - **All trials** (participant, stage, condition/model indices, scenario_id, difficulty, `true_route`, `ai_route`, `user_route`, `followed_ai`, `chose_true_optimal`, `rec_correct`, timestamps).  
+    - CSVs are emitted with a UTF‑8 BOM so Excel correctly displays Hebrew text.
+
+---
+
 ### Recommended order when updating data
 
 1. **Update experiment design** in `Experiment_Order_Expanded.xlsx` → run `Untitled-1.ipynb`.  

@@ -747,7 +747,7 @@
       const questionnairesTab = document.createElement('div');
       questionnairesTab.className = 'tab-content';
       questionnairesTab.id = 'tab3';
-      questionnairesTab.appendChild(createQuestionnairesView(logData.questionnaires || [], schedule));
+      questionnairesTab.appendChild(createQuestionnairesView(logData.questionnaires || [], schedule, logData.trials || []));
       tabContents.appendChild(questionnairesTab);
       
       tabsSection.appendChild(tabContents);
@@ -1084,7 +1084,7 @@
       });
     }
 
-    function createQuestionnairesView(questionnaires, schedule = null) {
+    function createQuestionnairesView(questionnaires, schedule = null, trials = []) {
       if (questionnaires.length === 0) {
         const noData = document.createElement('div');
         noData.className = 'no-data';
@@ -1093,6 +1093,41 @@
       }
       
       const wrapper = document.createElement('div');
+      
+      // Download CSV button for all questionnaire answers
+      const downloadRow = document.createElement('div');
+      downloadRow.style.display = 'flex';
+      downloadRow.style.justifyContent = 'flex-end';
+      downloadRow.style.marginBottom = '10px';
+      const downloadBtn = document.createElement('button');
+      downloadBtn.textContent = 'Download Questionnaires CSV';
+      downloadBtn.onclick = () => {
+        try {
+          const csv = buildQuestionnairesCsv(questionnaires, schedule, trials);
+          if (!csv) {
+            alert('No questionnaire data to export.');
+            return;
+          }
+          // Prepend UTF-8 BOM so Excel correctly detects Hebrew/Unicode
+          const bom = '\uFEFF';
+          const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8;' });
+          const url = URL.createObjectURL(blob);
+          
+          const link = document.createElement('a');
+          link.href = url;
+          const pid = (questionnaires[0] && questionnaires[0].participant_id) ? questionnaires[0].participant_id : 'participant';
+          link.download = `${pid}_questionnaires.csv`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+        } catch (e) {
+          console.error('Failed to build CSV', e);
+          alert('Failed to generate CSV.');
+        }
+      };
+      downloadRow.appendChild(downloadBtn);
+      wrapper.appendChild(downloadRow);
       
       // Separate questionnaires by type
       const modelSummaries = questionnaires.filter(q => q.questionnaire_type === 'model_summary');
@@ -1167,6 +1202,250 @@
       document.querySelectorAll('#subTabContents .tab-content').forEach((content, i) => {
         content.classList.toggle('active', i === index);
       });
+    }
+    
+    // Build a flat CSV with one row per answered question across all questionnaires
+    function buildQuestionnairesCsv(questionnaires, schedule = null, trials = []) {
+      if (!questionnaires || questionnaires.length === 0) return '';
+      
+      // Map trial_id -> trial meta for scenario information
+      const trialMap = {};
+      if (Array.isArray(trials)) {
+        trials.forEach(t => {
+          if (t && t.trial_id) {
+            trialMap[t.trial_id] = t;
+          }
+        });
+      }
+
+      const rows = [];
+      const header = [
+        'participant_id',
+        'questionnaire_type',
+        'stage',
+        'condition_index',
+        'condition_name',
+        'model_index',
+        'trial_index',
+        'trial_id',
+        'question_group',
+        'question_id',
+        'question_label',
+        'scenario_id',
+        'rec_correct',
+        'ai_recommended_route',
+        'correct_route',
+        'answer_value',
+        'is_correct',
+        'enter_ts',
+        'exit_ts'
+      ];
+      rows.push(header);
+      
+      questionnaires.forEach(q => {
+        const base = {
+          participant_id: q.participant_id || '',
+          questionnaire_type: q.questionnaire_type || '',
+          stage: q.stage || '',
+          condition_index: (q.condition_index !== null && q.condition_index !== undefined) ? q.condition_index : '',
+          condition_name: getConditionName(schedule, q.condition_index) || '',
+          model_index: (q.model_index !== null && q.model_index !== undefined) ? q.model_index : '',
+          trial_index: (q.trial_index !== null && q.trial_index !== undefined) ? q.trial_index : '',
+          trial_id: q.trial_id || '',
+          enter_ts: q.enter_ts || '',
+          exit_ts: q.exit_ts || ''
+        };
+
+        const linkedTrial = base.trial_id && trialMap[base.trial_id] ? trialMap[base.trial_id] : null;
+        const scenarioMeta = {
+          scenario_id: linkedTrial && linkedTrial.scenario_id ? linkedTrial.scenario_id : '',
+          rec_correct: linkedTrial && linkedTrial.rec_correct !== undefined ? linkedTrial.rec_correct : '',
+          ai_route: linkedTrial && (linkedTrial.ai_route || linkedTrial.ai_recommended_route) ? (linkedTrial.ai_route || linkedTrial.ai_recommended_route) : '',
+          true_route: linkedTrial && (linkedTrial.true_route || linkedTrial.correct_route) ? (linkedTrial.true_route || linkedTrial.correct_route) : ''
+        };
+        
+        if (!q.answers || typeof q.answers !== 'object') {
+          // Still add an empty row to indicate questionnaire existence
+          rows.push([
+            base.participant_id,
+            base.questionnaire_type,
+            base.stage,
+            base.condition_index,
+            base.condition_name,
+            base.model_index,
+            base.trial_index,
+            base.trial_id,
+            '',
+            '',
+            scenarioMeta.scenario_id,
+            scenarioMeta.rec_correct,
+            scenarioMeta.ai_route,
+            scenarioMeta.true_route,
+            '',
+            q.answers === 'DBG' ? 'DBG' : '',
+            '',
+            base.enter_ts,
+            base.exit_ts
+          ]);
+          return;
+        }
+        
+        // Post-scenario special nested structure (scenario_questions)
+        if (q.questionnaire_type === 'post_scenario' && q.answers.scenario_questions && typeof q.answers.scenario_questions === 'object') {
+          const sq = q.answers.scenario_questions;
+          Object.entries(sq).forEach(([qid, info]) => {
+            const label = `Scenario ${qid}`;
+            const ansText = (info && typeof info === 'object' && 'answer_text' in info) ? info.answer_text : '';
+            const isCorrect = (info && typeof info === 'object' && 'is_correct' in info) ? info.is_correct : '';
+            rows.push([
+              base.participant_id,
+              base.questionnaire_type,
+              base.stage,
+              base.condition_index,
+              base.condition_name,
+              base.model_index,
+              base.trial_index,
+              base.trial_id,
+              'scenario_questions',
+              qid,
+              label,
+              scenarioMeta.scenario_id,
+              scenarioMeta.rec_correct,
+              scenarioMeta.ai_route,
+              scenarioMeta.true_route,
+              ansText,
+              isCorrect,
+              base.enter_ts,
+              base.exit_ts
+            ]);
+          });
+          
+          // Also include any non-scenario_questions answers (e.g., fixed sliders)
+          Object.entries(q.answers).forEach(([key, value]) => {
+            if (key === 'scenario_questions') return;
+            const val = value === 'DBG' || value === null ? String(value) : String(value);
+            rows.push([
+              base.participant_id,
+              base.questionnaire_type,
+              base.stage,
+              base.condition_index,
+              base.condition_name,
+              base.model_index,
+              base.trial_index,
+              base.trial_id,
+              'fixed',
+              key,
+              key,
+              scenarioMeta.scenario_id,
+              scenarioMeta.rec_correct,
+              scenarioMeta.ai_route,
+              scenarioMeta.true_route,
+              val,
+              '',
+              base.enter_ts,
+              base.exit_ts
+            ]);
+          });
+          return;
+        }
+        
+        // Model summary workload/trust nested structures
+        if (q.questionnaire_type === 'model_summary' && (q.answers.workload || q.answers.trust)) {
+          const groups = ['workload', 'trust'];
+          groups.forEach(group => {
+            const obj = q.answers[group];
+            if (!obj || typeof obj !== 'object') return;
+            Object.entries(obj).forEach(([qid, value]) => {
+              rows.push([
+                base.participant_id,
+                base.questionnaire_type,
+                base.stage,
+                base.condition_index,
+                base.condition_name,
+                base.model_index,
+                base.trial_index,
+                base.trial_id,
+                group,
+                qid,
+                qid,
+                scenarioMeta.scenario_id,
+                scenarioMeta.rec_correct,
+                scenarioMeta.ai_route,
+                scenarioMeta.true_route,
+                value === 'DBG' || value === null ? String(value) : String(value),
+                '',
+                base.enter_ts,
+                base.exit_ts
+              ]);
+            });
+          });
+          
+          // Any other top-level answers on this questionnaire
+          Object.entries(q.answers).forEach(([key, value]) => {
+            if (key === 'workload' || key === 'trust') return;
+            rows.push([
+              base.participant_id,
+              base.questionnaire_type,
+              base.stage,
+              base.condition_index,
+              base.condition_name,
+              base.model_index,
+              base.trial_index,
+              base.trial_id,
+              '',
+              key,
+              key,
+              scenarioMeta.scenario_id,
+              scenarioMeta.rec_correct,
+              scenarioMeta.ai_route,
+              scenarioMeta.true_route,
+              value === 'DBG' || value === null ? String(value) : String(value),
+              '',
+              base.enter_ts,
+              base.exit_ts
+            ]);
+          });
+          
+          return;
+        }
+        
+        // All other questionnaires (visualization, demographics, etc.) - flat answers object
+        Object.entries(q.answers).forEach(([key, value]) => {
+          const val = value === 'DBG' || value === null ? String(value) : String(value);
+          rows.push([
+            base.participant_id,
+            base.questionnaire_type,
+            base.stage,
+            base.condition_index,
+            base.condition_name,
+            base.model_index,
+            base.trial_index,
+            base.trial_id,
+            '',
+            key,
+            key,
+          scenarioMeta.scenario_id,
+          scenarioMeta.rec_correct,
+          scenarioMeta.ai_route,
+          scenarioMeta.true_route,
+            val,
+            '',
+            base.enter_ts,
+            base.exit_ts
+          ]);
+        });
+      });
+      
+      // Convert array-of-arrays to CSV string
+      const escapeCell = (cell) => {
+        const str = cell === undefined || cell === null ? '' : String(cell);
+        if (/[",\n]/.test(str)) {
+          return '"' + str.replace(/"/g, '""') + '"';
+        }
+        return str;
+      };
+      
+      return rows.map(row => row.map(escapeCell).join(',')).join('\n');
     }
     
     function getConditionName(schedule, conditionIndex) {

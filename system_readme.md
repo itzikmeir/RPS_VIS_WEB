@@ -15,6 +15,7 @@ High‑level components:
 - `Scenarios/Inaccurate_Scenarios/*.html` – Scenario screens with “inaccurate” AI recommendations.
 - `Images/*.png` – Static explanation images used in intro and summary pages.
 - Python helper scripts – Offline data preparation (Excel → JSON).
+ - Log analysis HTML tools – Offline inspection/CSV export of saved logs (`log_results_viewer.html`, `logs_overview.html`).
 
 Everything runs client‑side in the browser; no backend server is required beyond static file hosting.
 
@@ -349,5 +350,10 @@ You can build separate analysis tools (e.g. `results_viewer.html`, `log_results_
    - Run through the entire flow (pre‑intro → practice → experiment → visualization questions → demographics).
 
 10. Collect logs:
-    - After each participant, copy `Participants_log/PXXX_log.json` and any derived summaries (`results_viewer.html` etc.) for analysis.
+    - After each participant, download the JSON log via the **end‑of‑flow screens**:
+      - The demographics page `"שאלון דמוגרפי"` triggers `downloadLogs()` when pressing `"המשך"` (in addition to logging the questionnaire).
+      - The final `"סיום הניסוי"` page has a button to download the log again as a safety net.
+    - Copy `Participants_log/PXXX_log.json` files and, if needed, use:
+      - `log_results_viewer.html` for per‑participant inspection and questionnaire CSV export (including `scenario_id`, `rec_correct`, `ai_recommended_route`, `correct_route` where linked to a trial).
+      - `logs_overview.html` for multi‑participant summaries and combined CSV exports (all trials and all questionnaires).
 
