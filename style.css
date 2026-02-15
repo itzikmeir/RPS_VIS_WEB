@@ -1,0 +1,237 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  margin: 0;
+  padding: 20px;
+  background: #f4f4f4;
+}
+
+#app {
+  max-width: 900px;
+  margin: 0 auto;
+  background: #ffffff;
+  padding: 30px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+h1 {
+  margin-top: 0;
+  color: #1976d2;
+}
+
+h2 {
+  margin-top: 0;
+  color: #333;
+}
+
+.page-title {
+  font-size: 24px;
+  margin-bottom: 20px;
+  color: #1976d2;
+}
+
+.page-content {
+  margin-bottom: 30px;
+  line-height: 1.6;
+  color: #555;
+  font-size: 16px;
+}
+
+[dir="rtl"] {
+  direction: rtl;
+  text-align: right;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+/* Fix alignment for inline checkbox / radio controls inside form groups
+   Keep global label display:block for other inputs, but when a checkbox
+   or radio is placed immediately before a label inside a .form-group,
+   show the label inline and vertically center it with the control. */
+.form-group input[type="checkbox"] + label,
+.form-group input[type="radio"] + label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0; /* remove block spacing */
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.form-group input[type="checkbox"],
+.form-group input[type="radio"] {
+  vertical-align: middle;
+  margin: 0 0.25rem 0 0.25rem;
+  position: relative;
+  top: 2px; /* move inputs a few pixels down to align with text */
+}
+
+input[type="text"] {
+  width: 100%;
+  padding: 10px;
+  font-size: 14px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+input[type="text"]:focus {
+  outline: none;
+  border-color: #1976d2;
+}
+
+input[type="checkbox"] {
+  margin-right: 8px;
+}
+
+button {
+  padding: 10px 20px;
+  border-radius: 6px;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  background: #1976d2;
+  color: #fff;
+  transition: background 0.2s;
+}
+
+button:hover:not(:disabled) {
+  background: #1565c0;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.button-group {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.error {
+  color: #c62828;
+  margin-top: 10px;
+  padding: 10px;
+  background: #ffebee;
+  border-radius: 6px;
+}
+
+.info-box {
+  background: #e3f2fd;
+  padding: 15px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+}
+
+.info-box h3 {
+  margin-top: 0;
+  color: #0d47a1;
+}
+
+.info-item {
+  margin: 8px 0;
+}
+
+.info-label {
+  font-weight: 600;
+  color: #555;
+}
+
+.debug-info {
+  background: #fff3e0;
+  padding: 15px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  border-left: 4px solid #ff9800;
+}
+
+.debug-info h4 {
+  margin-top: 0;
+  color: #e65100;
+}
+
+.debug-item {
+  margin: 6px 0;
+  font-family: monospace;
+  font-size: 13px;
+}
+
+.iframe-placeholder {
+  width: 100%;
+  height: 400px;
+  background: #e0e0e0;
+  border: 2px dashed #999;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+  font-size: 16px;
+  margin: 20px 0;
+  text-align: center;
+}
+
+select {
+  width: 100%;
+  padding: 10px;
+  font-size: 14px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  margin-bottom: 20px;
+}
+
+select:focus {
+  outline: none;
+  border-color: #1976d2;
+}
+
+.correct-answers {
+  background: #f5f5f5;
+  padding: 15px;
+  border-radius: 6px;
+  margin: 20px 0;
+}
+
+.correct-answers h4 {
+  margin-top: 0;
+}
+
+.answer-item {
+  margin: 8px 0;
+}
+
+/* Video wrapper styles for experiment explanation video */
+.video-wrapper {
+  max-width: 900px;
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.video-wrapper video {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Page-specific tweaks for the experiment video page only */
+#mediaSlot_experiment_video { margin: 0 0 6px 0; }
+.video-instr { margin: 6px 0 4px 0; font-size: 15px; color: #555; }
+#mediaSlot_experiment_video .video-wrapper { margin-top: 0; }
+#mediaSlot_experiment_video .iframe-placeholder { margin: 6px 0; }
+
+
