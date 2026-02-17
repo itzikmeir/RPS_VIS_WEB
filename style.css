@@ -57,6 +57,28 @@ label {
   color: #333;
 }
 
+/* Fix alignment for inline checkbox / radio controls inside form groups
+   Keep global label display:block for other inputs, but when a checkbox
+   or radio is placed immediately before a label inside a .form-group,
+   show the label inline and vertically center it with the control. */
+.form-group input[type="checkbox"] + label,
+.form-group input[type="radio"] + label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0; /* remove block spacing */
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.form-group input[type="checkbox"],
+.form-group input[type="radio"] {
+  vertical-align: middle;
+  margin: 0 0.25rem 0 0.25rem;
+  position: relative;
+  top: 2px; /* move inputs a few pixels down to align with text */
+}
+
 input[type="text"] {
   width: 100%;
   padding: 10px;
@@ -192,5 +214,24 @@ select:focus {
 .answer-item {
   margin: 8px 0;
 }
+
+/* Video wrapper styles for experiment explanation video */
+.video-wrapper {
+  max-width: 900px;
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.video-wrapper video {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Page-specific tweaks for the experiment video page only */
+#mediaSlot_experiment_video { margin: 0 0 6px 0; }
+.video-instr { margin: 6px 0 4px 0; font-size: 15px; color: #555; }
+#mediaSlot_experiment_video .video-wrapper { margin-top: 0; }
+#mediaSlot_experiment_video .iframe-placeholder { margin: 6px 0; }
 
 

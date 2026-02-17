@@ -68,7 +68,6 @@ const PRE_INTRO_PAGE_IDS = [
   // Removed experiment_explanation_1 (text page) – jump directly to video
   "experiment_video",   // Page 4 - Experiment Explanation (Video)
   "system_layout",      // Page 5 - System Layout
-  "system_criteria",    // Page 6 - System Criteria Display
   // Removed helper_explanation (redundant helper view)
   "experiment_flow"     // Page 7 - Experiment Flow Overview
 ];
@@ -365,6 +364,67 @@ function renderLoginPage(root) {
       state.schedule = schedule;
       state.questionsConfig = questionsConfig;
       state.scenarioQuestions = scenarioQuestions;
+
+      // Ensure new practice trials (one extra per visualization) are included
+      // If the experimenter added SCN_031_S, SCN_032_R, SCN_033_H files
+      // but participant JSON wasn't updated, append lightweight entries so
+      // the practice phase will include them.
+      try {
+        const extraPractice = ["SCN_031_S", "SCN_032_R", "SCN_033_H"];
+        if (!state.schedule.practice) state.schedule.practice = [];
+        const existingIds = state.schedule.practice.map(p => p.scenario_id);
+        extraPractice.forEach((sid) => {
+          if (!existingIds.includes(sid)) {
+            state.schedule.practice.push({
+              slot: state.schedule.practice.length + 1,
+              scenario_id: sid,
+              difficulty: "E",
+              correct_route: null,
+              ai_recommended_route: null,
+              correct_answers: {}
+            });
+          }
+        });
+        // Reorder practice trials so they appear as:
+        //  - two stacked-bars (suffix _S)
+        //  - two radar (suffix _R)
+        //  - two heatmap (suffix _H)
+        try {
+          const practice = state.schedule.practice || [];
+          const groups = { S: [], R: [], H: [], other: [] };
+          practice.forEach(p => {
+            const sid = (p && p.scenario_id) ? String(p.scenario_id) : "";
+            const m = sid.match(/_([SRH])$/i);
+            if (m) {
+              const k = m[1].toUpperCase();
+              if (groups[k]) groups[k].push(p);
+              else groups.other.push(p);
+            } else {
+              groups.other.push(p);
+            }
+          });
+
+          const newPractice = [];
+          newPractice.push(...groups.S.slice(0, 2));
+          newPractice.push(...groups.R.slice(0, 2));
+          newPractice.push(...groups.H.slice(0, 2));
+
+          // Append any remaining trials that weren't included above
+          const included = new Set(newPractice.map(p => p.scenario_id));
+          practice.forEach(p => {
+            if (!included.has(p.scenario_id)) newPractice.push(p);
+          });
+
+          // Renumber slots
+          newPractice.forEach((p, idx) => { p.slot = idx + 1; });
+          state.schedule.practice = newPractice;
+        } catch (re) {
+          console.warn('Could not reorder practice trials', re);
+        }
+      } catch (err) {
+        // non-fatal — proceed without modifying schedule
+        console.warn('Could not append extra practice scenarios', err);
+      }
       
       logPageExit("LoginPage");
       state.stage = "pre";
@@ -409,7 +469,7 @@ function renderInfoPage(root, pageId) {
       "invitation_letter": "בקשה להשתתפותך במחקר",
       "consent_form": "הסכמה מדעת",
       "experiment_explanation_1": "הסבר על הניסוי",
-      "experiment_video": "הסבר על הניסוי (וידאו)",
+      "experiment_video": "הסבר על הניסוי",
       "system_layout": "תצוגת המערכת",
       "system_criteria": "תצוגת שיקולי המערכת",
       "helper_explanation": "עזר תצוגת שיקולי מערכת",
@@ -527,6 +587,11 @@ function renderInfoPage(root, pageId) {
     content.textContent = pageData.text || "";
     content.dir = "rtl";
     content.style.whiteSpace = "pre-wrap";
+    // If there's no text for this page (common for the video page),
+    // remove the default bottom margin so media sits directly below the title.
+    if (!pageData.text || String(pageData.text).trim() === "") {
+      content.style.marginBottom = "0";
+    }
     root.appendChild(content);
   }
 
@@ -542,11 +607,28 @@ function renderInfoPage(root, pageId) {
       "בלחיצה על \"המשך לתרגול\" תעבור ישירות לתרחיש התרגול ללא יכולת להפסיק את הניסוי משלב זה.\n\nבהצלחה";
     root.appendChild(warning);
   }
+  // Insert a dedicated media slot so all media (images, video, iframe)
+  // appear immediately after the page content and before inputs/buttons.
+  const mediaSlot = document.createElement("div");
+  mediaSlot.id = `mediaSlot_${pageId}`;
+  mediaSlot.style.margin = "8px 0";
+  // For the experiment video page, show a short instruction above the media
+  if (pageId === "experiment_video") {
+    const instr = document.createElement("p");
+    instr.className = "page-content video-instr";
+    instr.dir = "rtl";
+    instr.style.marginTop = "2px";
+    instr.style.marginBottom = "6px";
+    root.appendChild(instr);
+  }
+  root.appendChild(mediaSlot);
   
-  // Render media if present
-  if (pageData.media) {
+  // Render media if present (skip YouTube for the experiment video page
+  // because we prefer loading a local file first and will fallback to
+  // the configured media if the local file fails).
+  if (pageData.media && !(pageId === "experiment_video" && pageData.media.type === "youtube")) {
     const mediaContainer = document.createElement("div");
-    mediaContainer.style.margin = "20px 0";
+    mediaContainer.style.margin = "8px 0";
     mediaContainer.style.display = "flex";
     mediaContainer.style.justifyContent = "center";
     mediaContainer.style.alignItems = "center";
@@ -605,7 +687,115 @@ function renderInfoPage(root, pageId) {
       mediaContainer.appendChild(videoContainer);
     }
     
-    root.appendChild(mediaContainer);
+    mediaSlot.appendChild(mediaContainer);
+  }
+
+  // For the experiment video page, prefer a local video file but
+  // fall back to the configured media (e.g., YouTube) if the local file fails to load.
+  if (pageId === "experiment_video") {
+    const mediaContainer = document.createElement("div");
+    mediaContainer.style.margin = "8px 0";
+    mediaContainer.style.display = "flex";
+    mediaContainer.style.justifyContent = "center";
+    mediaContainer.style.alignItems = "center";
+
+    const videoWrapper = document.createElement("div");
+    videoWrapper.className = "video-wrapper";
+
+    const video = document.createElement("video");
+    video.id = "experimentVideo";
+    video.controls = true;
+    // Autoplay muted so browsers allow automatic playback on page load
+    video.autoplay = true;
+    video.muted = true;
+    video.setAttribute('muted', '');
+    video.setAttribute('autoplay', '');
+    video.playsInline = true;
+    video.preload = "metadata";
+    video.style.width = "100%";
+    video.style.height = "auto";
+    video.style.display = "block";
+
+    const source = document.createElement("source");
+    source.src = "Videos/Introduction.mp4";
+    source.type = "video/mp4";
+    video.appendChild(source);
+
+    // If the local video fails to load, fall back to pageData.media (youtube or placeholder)
+    let handled = false;
+    function fallbackToConfiguredMedia() {
+      if (handled) return;
+      handled = true;
+      // remove video wrapper
+      if (videoWrapper.parentNode) videoWrapper.parentNode.removeChild(videoWrapper);
+
+      // If there's a configured media and it's YouTube, embed it
+      if (pageData && pageData.media && pageData.media.type === "youtube") {
+        const videoContainer = document.createElement("div");
+        videoContainer.style.position = "relative";
+        videoContainer.style.paddingBottom = "56.25%";
+        videoContainer.style.height = "0";
+        videoContainer.style.overflow = "hidden";
+
+        const iframe = document.createElement("iframe");
+        const videoId = extractYouTubeId(pageData.media.src);
+        if (videoId) {
+          iframe.src = `https://www.youtube.com/embed/${videoId}`;
+          iframe.style.position = "absolute";
+          iframe.style.top = "0";
+          iframe.style.left = "0";
+          iframe.style.width = "100%";
+          iframe.style.height = "100%";
+          iframe.frameBorder = "0";
+          iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
+          iframe.allowFullscreen = true;
+          videoContainer.appendChild(iframe);
+        } else {
+          const placeholder = document.createElement("div");
+          placeholder.className = "iframe-placeholder";
+          placeholder.textContent = `VIDEO PLACEHOLDER: ${pageData.media.src}`;
+          videoContainer.appendChild(placeholder);
+        }
+
+        mediaContainer.appendChild(videoContainer);
+        mediaSlot.appendChild(mediaContainer);
+        return;
+      }
+
+      // Otherwise show placeholder indicating missing local file
+      const placeholder = document.createElement("div");
+      placeholder.className = "iframe-placeholder";
+      placeholder.textContent = "וידאו לא נמצא (Videos/Introduction.mp4)";
+      mediaContainer.appendChild(placeholder);
+      mediaSlot.appendChild(mediaContainer);
+    }
+
+    // If loadedmetadata fires, assume file exists and show video
+    video.addEventListener("loadedmetadata", () => {
+      if (handled) return;
+      handled = true;
+      videoWrapper.appendChild(video);
+      mediaContainer.appendChild(videoWrapper);
+      mediaSlot.appendChild(mediaContainer);
+    });
+
+    // On error, fallback
+    video.addEventListener("error", () => {
+      fallbackToConfiguredMedia();
+    });
+
+    // Start by attempting to load the local video (append but hidden until loaded)
+    // Append to DOM so browser attempts to load resource.
+    videoWrapper.appendChild(video);
+    mediaContainer.appendChild(videoWrapper);
+    mediaSlot.appendChild(mediaContainer);
+
+    // As a safety: if neither loadedmetadata nor error triggers within 2s, fallback
+    setTimeout(() => {
+      if (!handled) {
+        fallbackToConfiguredMedia();
+      }
+    }, 2000);
   }
   
   // Render input based on input_type
@@ -780,6 +970,108 @@ function renderInfoPage(root, pageId) {
   
   const nextBtn = document.createElement("button");
   nextBtn.textContent = state.preIntroPageIndex < PRE_INTRO_PAGE_IDS.length - 1 ? "המשך" : "המשך לתרגול";
+  // If this is the experiment video page, disable the continue button until
+  // the local video finishes playing (or a fallback media is loaded).
+  if (pageId === "experiment_video") {
+    nextBtn.disabled = true;
+    nextBtn.setAttribute('aria-disabled', 'true');
+    const enableNext = () => {
+      try {
+        nextBtn.disabled = false;
+        nextBtn.removeAttribute('aria-disabled');
+      } catch (e) {}
+    };
+
+    const mediaSlotEl = document.getElementById(`mediaSlot_${pageId}`);
+
+    // If video already present, attach ended listener
+    const attachToExistingVideo = () => {
+      const v = document.getElementById("experimentVideo");
+      if (v) {
+        v.addEventListener("ended", enableNext);
+        v.addEventListener("error", enableNext);
+        // If video is already ended (unlikely) or readyState indicates ended, enable
+        if (v.ended) enableNext();
+        return true;
+      }
+      return false;
+    };
+
+    if (!attachToExistingVideo() && mediaSlotEl) {
+      // Observe mediaSlot for additions (video / iframe / placeholder)
+      const mo = new MutationObserver((mutations, observer) => {
+        for (const m of mutations) {
+          for (const node of m.addedNodes) {
+            if (node.nodeType !== 1) continue;
+            // If a video element appears, attach ended listener
+            if (node.id === "experimentVideo" || (node.querySelector && node.querySelector('#experimentVideo'))) {
+              attachToExistingVideo();
+              observer.disconnect();
+              return;
+            }
+            // If an iframe or placeholder is added (fallback), enable next immediately
+            if (node.tagName === 'IFRAME' || (node.classList && node.classList.contains('iframe-placeholder'))) {
+              enableNext();
+              observer.disconnect();
+              return;
+            }
+            // Also check subtree for iframe
+            if (node.querySelector && node.querySelector('iframe')) {
+              enableNext();
+              observer.disconnect();
+              return;
+            }
+          }
+        }
+      });
+      mo.observe(mediaSlotEl, { childList: true, subtree: true });
+      // Safety timeout: if nothing happens after 5s, enable button to avoid blocking
+      setTimeout(() => { enableNext(); mo.disconnect(); }, 5000);
+    }
+  }
+
+  // For the system_layout page, require all checkbox items be checked
+  // before enabling the continue button.
+  if (pageId === "system_layout") {
+    nextBtn.disabled = true;
+    nextBtn.setAttribute('aria-disabled', 'true');
+
+    const updateSystemLayoutNext = () => {
+      let allChecked = true;
+      for (let i = 1; i <= 5; i++) {
+        const cb = document.getElementById(`input_${pageId}_item${i}`);
+        if (!cb || !cb.checked) { allChecked = false; break; }
+      }
+      if (allChecked) {
+        nextBtn.disabled = false;
+        nextBtn.removeAttribute('aria-disabled');
+      } else {
+        nextBtn.disabled = true;
+        nextBtn.setAttribute('aria-disabled', 'true');
+      }
+    };
+
+    // Attach listeners to existing checkboxes or observe for their addition
+    for (let i = 1; i <= 5; i++) {
+      const id = `input_${pageId}_item${i}`;
+      const cb = document.getElementById(id);
+      if (cb) {
+        cb.addEventListener('change', updateSystemLayoutNext);
+      } else {
+        const mo = new MutationObserver((mutations, observer) => {
+          const el = document.getElementById(id);
+          if (el) {
+            el.addEventListener('change', updateSystemLayoutNext);
+            observer.disconnect();
+          }
+        });
+        mo.observe(root, { childList: true, subtree: true });
+      }
+    }
+
+    // Run an initial check (in case checkboxes are pre-checked)
+    setTimeout(updateSystemLayoutNext, 0);
+  }
   nextBtn.onclick = () => {
     // Validate input if required (skip in debug mode)
     if (!state.debugMode) {
@@ -1034,7 +1326,7 @@ function renderScenarioIntroPage(root) {
     introList.style.paddingRight = "20px";
 
     const introLiRoutes = document.createElement("li");
-    introLiRoutes.textContent = "3 מסלולים שחושבו באמצעות מודל בינה מלאכותית";
+    introLiRoutes.textContent = "`שימוש בבינה מלאכותית  ";
     introList.appendChild(introLiRoutes);
 
     const introLiViz = document.createElement("li");
@@ -1130,7 +1422,7 @@ function renderScenarioIntroPage(root) {
   introList.style.paddingRight = "20px";
 
   const introLiRoutes = document.createElement("li");
-  introLiRoutes.textContent = `3 מסלולים שחושבו באמצעות מודל בינה מלאכותית \"${displayModelName}\"`;
+  introLiRoutes.textContent = `שימוש בבינה מלאכותית מסוג \"${displayModelName}\"`;
   introList.appendChild(introLiRoutes);
 
   const introLiViz = document.createElement("li");
