@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>All Logs Overview (Model-Ordered)</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 0; padding: 20px; background: #f4f4f4; }
+    .container { max-width: 1400px; margin: 0 auto; background: #ffffff; padding: 30px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    h1 { margin-top: 0; color: #1976d2; border-bottom: 3px solid #1976d2; padding-bottom: 10px; }
+    h2 { margin-top: 30px; color: #333; border-bottom: 2px solid #e0e0e0; padding-bottom: 8px; }
+    .input-section { background: #f5f5f5; padding: 20px; border-radius: 8px; margin-bottom: 30px; }
+    .input-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    label { font-weight: 600; font-size: 14px; color: #333; }
+    input[type="file"] { font-size: 14px; }
+    button { padding: 10px 20px; border-radius: 6px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; background: #1976d2; color: #fff; transition: background 0.2s; }
+    button:hover:not(:disabled) { background: #1565c0; }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    .error { color: #c62828; margin-top: 10px; padding: 10px; background: #ffebee; border-radius: 6px; display: none; }
+    .error.show { display: block; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; background: white; }
+    th { background: #f5f5f5; padding: 10px 8px; text-align: left; font-weight: 600; color: #555; border-bottom: 2px solid #ddd; }
+    td { padding: 8px 8px; border-bottom: 1px solid #e0e0e0; }
+    tr:hover { background: #f9f9f9; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin: 20px 0; }
+    .stat-card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); text-align: center; }
+    .stat-value { font-size: 28px; font-weight: 700; color: #1976d2; margin: 8px 0; }
+    .stat-label { font-size: 13px; color: #666; }
+    .downloads-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>All Logs Overview (Model-Ordered)</h1>
+    <div class="input-section">
+      <div class="input-row">
+        <label for="logFiles">Select log JSON files (multiple):</label>
+        <input type="file" id="logFiles" accept=".json" multiple />
+        <button id="loadLogsBtn">Load Logs</button>
+      </div>
+      <div id="overviewError" class="error"></div>
+    </div>
+    <div id="overviewContent"></div>
+  </div>
+
+  <script>
+    const logInput = document.getElementById('logFiles');
+    const loadLogsBtn = document.getElementById('loadLogsBtn');
+    const overviewError = document.getElementById('overviewError');
+    const overviewContent = document.getElementById('overviewContent');
+
+    function showOverviewError(msg) { overviewError.textContent = msg; overviewError.classList.add('show'); }
+    function clearOverviewError() { overviewError.textContent = ''; overviewError.classList.remove('show'); }
+
+    loadLogsBtn.addEventListener('click', () => {
+      clearOverviewError();
+      overviewContent.innerHTML = '';
+      const files = Array.from(logInput.files || []);
+      if (files.length === 0) {
+        showOverviewError('Please select one or more JSON log files.');
+        return;
+      }
+      loadLogsBtn.disabled = true;
+      const readers = files.map(file => {
+        return new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            try {
+              const data = JSON.parse(reader.result);
+              resolve({ file, data });
+            } catch (e) {
+              console.error('Failed to parse JSON', file.name, e);
+              resolve({ file, data: null, error: e });
+            }
+          };
+          reader.onerror = () => resolve({ file, data: null, error: new Error('read error') });
+          reader.readAsText(file, 'utf-8');
+        });
+      });
+      Promise.all(readers).then(results => {
+        loadLogsBtn.disabled = false;
+        renderOverview(results);
+      });
+    });
+
+    function renderOverview(results) {
+      const valid = results.filter(r => r.data && (r.data.trials || r.data.logs));
+      if (valid.length === 0) {
+        showOverviewError('No valid log data found in selected files.');
+        return;
+      }
+
+      const allQuestionnaires = [];
+      const allTrials = [];
+
+      const summary = valid.map(r => {
+        const logs = r.data.logs || r.data;
+        const participantId = r.data.participant_id || (logs.questionnaires && logs.questionnaires[0] && logs.questionnaires[0].participant_id) || r.file.name.replace(/\.json$/i, '').replace(/_log$/, '');
+        const trials = Array.isArray(logs.trials) ? logs.trials : [];
+        const questionnaires = Array.isArray(logs.questionnaires) ? logs.questionnaires : [];
+        const pages = Array.isArray(logs.pages) ? logs.pages : [];
+        const interactions = Array.isArray(logs.interactions) ? logs.interactions : [];
+
+        questionnaires.forEach(q => { if (!q.participant_id) q.participant_id = participantId; });
+        trials.forEach(t => { if (!t.participant_id) t.participant_id = participantId; });
+
+        allQuestionnaires.push(...questionnaires);
+        allTrials.push(...trials);
+
+        const totalTrials = trials.length;
+        const trialsWithOptimal = trials.filter(t => t.chose_true_optimal === true).length;
+        const accuracy = totalTrials > 0 ? (trialsWithOptimal / totalTrials) * 100 : null;
+
+        return {
+          fileName: r.file.name,
+          participantId,
+          totalTrials,
+          totalQuestionnaires: questionnaires.length,
+          totalPages: pages.length,
+          totalInteractions: interactions.length,
+          accuracy
+        };
+      });
+
+      const wrapper = document.createElement('div');
+
+      const statsGrid = document.createElement('div');
+      statsGrid.className = 'stats-grid';
+      statsGrid.appendChild(createStatCard('Participants', summary.length));
+      statsGrid.appendChild(createStatCard('Total Trials', allTrials.length));
+      statsGrid.appendChild(createStatCard('Total Questionnaires', allQuestionnaires.length));
+      const overallAccuracy = (() => {
+        const trialsWithOptimal = allTrials.filter(t => t.chose_true_optimal === true).length;
+        return allTrials.length > 0 ? (trialsWithOptimal / allTrials.length) * 100 : null;
+      })();
+      statsGrid.appendChild(createStatCard('Overall Correct Trials', overallAccuracy !== null ? overallAccuracy.toFixed(1) + '%' : 'N/A'));
+      wrapper.appendChild(statsGrid);
+
+      const downloadsRow = document.createElement('div');
+      downloadsRow.className = 'downloads-row';
+
+      const downloadQBtn = document.createElement('button');
+      downloadQBtn.textContent = 'Download All Questionnaires CSV';
+      downloadQBtn.onclick = () => {
+        const csv = buildQuestionnairesCsvForOverview(allQuestionnaires, allTrials);
+        if (!csv) { alert('No questionnaire data to export.'); return; }
+        const bom = '\uFEFF';
+        const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'all_questionnaires_model_ordered.csv';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      };
+      downloadsRow.appendChild(downloadQBtn);
+
+      const downloadTrialsBtn = document.createElement('button');
+      downloadTrialsBtn.textContent = 'Download All Trials CSV';
+      downloadTrialsBtn.onclick = () => {
+        const csv = buildTrialsCsvForOverview(allTrials);
+        if (!csv) { alert('No trial data to export.'); return; }
+        const bom = '\uFEFF';
+        const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'all_trials_model_ordered.csv';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      };
+      downloadsRow.appendChild(downloadTrialsBtn);
+
+      wrapper.appendChild(downloadsRow);
+
+      const tableTitle = document.createElement('h2');
+      tableTitle.textContent = 'Per-participant summary';
+      wrapper.appendChild(tableTitle);
+
+      const table = document.createElement('table');
+      table.innerHTML = `
+        <thead>
+          <tr>
+            <th>File</th>
+            <th>Participant ID</th>
+            <th>Total Trials</th>
+            <th>Total Questionnaires</th>
+            <th>Total Pages</th>
+            <th>Total Interactions</th>
+            <th>Correct Trials (%)</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      `;
+      const tbody = table.querySelector('tbody');
+      summary.forEach(row => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${row.fileName}</td>
+          <td>${row.participantId}</td>
+          <td>${row.totalTrials}</td>
+          <td>${row.totalQuestionnaires}</td>
+          <td>${row.totalPages}</td>
+          <td>${row.totalInteractions}</td>
+          <td>${row.accuracy !== null ? row.accuracy.toFixed(1) + '%' : 'N/A'}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+      wrapper.appendChild(table);
+
+      overviewContent.innerHTML = '';
+      overviewContent.appendChild(wrapper);
+    }
+
+    function createStatCard(label, value) {
+      const card = document.createElement('div');
+      card.className = 'stat-card';
+      const v = document.createElement('div');
+      v.className = 'stat-value';
+      v.textContent = value;
+      const l = document.createElement('div');
+      l.className = 'stat-label';
+      l.textContent = label;
+      card.appendChild(v);
+      card.appendChild(l);
+      return card;
+    }
+
+    function buildQuestionnairesCsvForOverview(questionnaires, trials) {
+      if (!questionnaires || questionnaires.length === 0) return '';
+
+      const trialMap = {};
+      if (Array.isArray(trials)) trials.forEach(t => { if (t && t.trial_id) trialMap[t.trial_id] = t; });
+
+      const rows = [];
+      const header = ['participant_id', 'questionnaire_type', 'model_index', 'vis_index', 'trial_index', 'trial_id', 'question_group', 'question_id', 'scenario_id', 'rec_correct', 'ai_route', 'true_route', 'answer_value'];
+      rows.push(header);
+
+      questionnaires.forEach(q => {
+        const base = {
+          participant_id: q.participant_id || '',
+          questionnaire_type: q.questionnaire_type || '',
+          model_index: (q.model_index !== null && q.model_index !== undefined) ? q.model_index : '',
+          vis_index: (q.vis_index !== null && q.vis_index !== undefined) ? q.vis_index : '',
+          trial_index: (q.trial_index !== null && q.trial_index !== undefined) ? q.trial_index : '',
+          trial_id: q.trial_id || ''
+        };
+        const linkedTrial = base.trial_id && trialMap[base.trial_id] ? trialMap[base.trial_id] : null;
+        const scenarioMeta = {
+          scenario_id: linkedTrial && linkedTrial.scenario_id ? linkedTrial.scenario_id : '',
+          rec_correct: linkedTrial && linkedTrial.rec_correct !== undefined ? linkedTrial.rec_correct : '',
+          ai_route: linkedTrial && (linkedTrial.ai_route || linkedTrial.ai_recommended_route) ? (linkedTrial.ai_route || linkedTrial.ai_recommended_route) : '',
+          true_route: linkedTrial && (linkedTrial.true_route || linkedTrial.correct_route) ? (linkedTrial.true_route || linkedTrial.correct_route) : ''
+        };
+
+        if (!q.answers || typeof q.answers !== 'object') {
+          rows.push([base.participant_id, base.questionnaire_type, base.model_index, base.vis_index, base.trial_index, base.trial_id, '', '', scenarioMeta.scenario_id, scenarioMeta.rec_correct, scenarioMeta.ai_route, scenarioMeta.true_route, q.answers === 'DBG' ? 'DBG' : '']);
+          return;
+        }
+
+        if (q.questionnaire_type === 'post_scenario' && q.answers.scenario_questions && typeof q.answers.scenario_questions === 'object') {
+          Object.entries(q.answers.scenario_questions).forEach(([qid, info]) => {
+            const ansText = (info && typeof info === 'object' && 'answer_text' in info) ? info.answer_text : '';
+            rows.push([base.participant_id, base.questionnaire_type, base.model_index, base.vis_index, base.trial_index, base.trial_id, 'scenario_questions', qid, scenarioMeta.scenario_id, scenarioMeta.rec_correct, scenarioMeta.ai_route, scenarioMeta.true_route, ansText]);
+          });
+          Object.entries(q.answers).forEach(([key, value]) => {
+            if (key === 'scenario_questions') return;
+            rows.push([base.participant_id, base.questionnaire_type, base.model_index, base.vis_index, base.trial_index, base.trial_id, 'fixed', key, scenarioMeta.scenario_id, scenarioMeta.rec_correct, scenarioMeta.ai_route, scenarioMeta.true_route, value === 'DBG' || value === null ? String(value) : String(value)]);
+          });
+          return;
+        }
+
+        if (q.questionnaire_type === 'model_summary' && (q.answers.workload || q.answers.trust)) {
+          ['workload', 'trust'].forEach(group => {
+            const obj = q.answers[group];
+            if (!obj || typeof obj !== 'object') return;
+            Object.entries(obj).forEach(([qid, value]) => {
+              rows.push([base.participant_id, base.questionnaire_type, base.model_index, base.vis_index, base.trial_index, base.trial_id, group, qid, scenarioMeta.scenario_id, scenarioMeta.rec_correct, scenarioMeta.ai_route, scenarioMeta.true_route, value === 'DBG' || value === null ? String(value) : String(value)]);
+            });
+          });
+          Object.entries(q.answers).forEach(([key, value]) => {
+            if (key === 'workload' || key === 'trust') return;
+            rows.push([base.participant_id, base.questionnaire_type, base.model_index, base.vis_index, base.trial_index, base.trial_id, '', key, scenarioMeta.scenario_id, scenarioMeta.rec_correct, scenarioMeta.ai_route, scenarioMeta.true_route, value === 'DBG' || value === null ? String(value) : String(value)]);
+          });
+          return;
+        }
+
+        if (q.questionnaire_type === 'nasa_tlx') {
+          Object.entries(q.answers).forEach(([key, value]) => {
+            rows.push([base.participant_id, base.questionnaire_type, base.model_index, base.vis_index, base.trial_index, base.trial_id, 'nasa_tlx', key, scenarioMeta.scenario_id, scenarioMeta.rec_correct, scenarioMeta.ai_route, scenarioMeta.true_route, value === 'DBG' || value === null ? String(value) : String(value)]);
+          });
+          return;
+        }
+
+        Object.entries(q.answers).forEach(([key, value]) => {
+          rows.push([base.participant_id, base.questionnaire_type, base.model_index, base.vis_index, base.trial_index, base.trial_id, '', key, scenarioMeta.scenario_id, scenarioMeta.rec_correct, scenarioMeta.ai_route, scenarioMeta.true_route, value === 'DBG' || value === null ? String(value) : String(value)]);
+        });
+      });
+
+      const escapeCell = (cell) => {
+        const str = cell === undefined || cell === null ? '' : String(cell);
+        return /[",\n]/.test(str) ? '"' + str.replace(/"/g, '""') + '"' : str;
+      };
+      return rows.map(row => row.map(escapeCell).join(',')).join('\n');
+    }
+
+    function buildTrialsCsvForOverview(trials) {
+      if (!trials || trials.length === 0) return '';
+
+      const rows = [];
+      const header = ['participant_id', 'stage', 'model_index', 'vis_index', 'trial_index', 'scenario_id', 'difficulty', 'true_route', 'ai_route', 'user_route', 'followed_ai', 'chose_true_optimal', 'rec_correct', 'model_type', 'start_ts', 'end_ts'];
+      rows.push(header);
+
+      trials.forEach(t => {
+        rows.push([
+          t.participant_id || '',
+          t.stage || '',
+          (t.model_index !== null && t.model_index !== undefined) ? t.model_index : '',
+          (t.vis_index !== null && t.vis_index !== undefined) ? t.vis_index : '',
+          (t.trial_index !== null && t.trial_index !== undefined) ? t.trial_index : '',
+          t.scenario_id || '',
+          t.difficulty || '',
+          t.true_route || t.correct_route || '',
+          t.ai_route || t.ai_recommended_route || '',
+          t.user_route || '',
+          t.followed_ai !== undefined ? t.followed_ai : '',
+          t.chose_true_optimal !== undefined ? t.chose_true_optimal : '',
+          t.rec_correct !== undefined ? t.rec_correct : '',
+          t.model_type || '',
+          t.start_ts || '',
+          t.end_ts || ''
+        ]);
+      });
+
+      const escapeCell = (cell) => {
+        const str = cell === undefined || cell === null ? '' : String(cell);
+        return /[",\n]/.test(str) ? '"' + str.replace(/"/g, '""') + '"' : str;
+      };
+      return rows.map(row => row.map(escapeCell).join(',')).join('\n');
+    }
+  </script>
+</body>
+</html>

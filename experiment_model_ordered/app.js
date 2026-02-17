@@ -1,23 +1,21 @@
-// Toggle for display-only model labels:
-// - false  => show only A/B across all conditions (original behavior)
-// - true   => show A–F (per condition × model) in UI
-const USE_MODEL_LABELS_A_TO_F = false;
+// MODEL-ORDERED EXPERIMENT: Model A (Vis1, Vis2, Vis3) → Model B (Vis1, Vis2, Vis3)
+// NASA TLX after each Vis, Trust after each Model, Model selection at end.
 
-// Map (conditionIndex, modelIndex) -> display model letter (for UI only)
-function getDisplayModelLetter(conditionIndex, modelIndex) {
-  if (USE_MODEL_LABELS_A_TO_F) {
-    // 3 conditions × 2 models = 6 display names A–F
-    const labelsAF = ["A", "B", "C", "D", "E", "F"];
-    const idxAF = conditionIndex * 2 + modelIndex; // 0..5
-    return labelsAF[idxAF] || "?";
-  }
-  // Original A/B display only, regardless of condition
+// Base path for assets (Scenarios, Images, Videos) - parent folder when running from experiment_model_ordered/
+const ASSET_BASE = "../";
+
+function assetPath(p) {
+  return ASSET_BASE + p;
+}
+
+// Model A/B display (no condition index in this format)
+function getDisplayModelLetter(modelIndex) {
   const labelsAB = ["A", "B"];
   return labelsAB[modelIndex] || "?";
 }
 
-function getDisplayModelName(conditionIndex, modelIndex) {
-  return `מודל ${getDisplayModelLetter(conditionIndex, modelIndex)}`;
+function getDisplayModelName(modelIndex) {
+  return `מודל ${getDisplayModelLetter(modelIndex)}`;
 }
 // Global state
 const state = {
@@ -31,10 +29,10 @@ const state = {
   stage: "login",
   pageType: null,
 
-  // indices into schedule
+  // indices into schedule (Model-ordered: models → visualizations → trials)
   practiceIndex: 0,
-  conditionIndex: 0,
   modelIndex: 0,
+  visIndex: 0,
   trialIndex: 0,
 
   // pre-intro page tracking
@@ -86,10 +84,8 @@ const SCENARIO_FILE_MAP = {
 // where <subfolder> is either "Correct_Scenarios" or "Inaccurate_Scenarios".
 function getScenarioFilePath(scenarioId, baseFolder) {
   const mapped = SCENARIO_FILE_MAP[scenarioId];
-  if (mapped) {
-    return `${baseFolder}/${mapped}`;
-  }
-  return `${baseFolder}/${scenarioId}.html`;
+  const relPath = mapped ? `${baseFolder}/${mapped}` : `${baseFolder}/${scenarioId}.html`;
+  return assetPath(relPath);
 }
 
 // Utility functions
@@ -241,7 +237,7 @@ function getScenarioQuestions(scenarioId) {
   ].filter(q => q !== null);
 }
 
-// Get current trial object
+// Get current trial object (Model-ordered: schedule.models[].visualizations[].trials[])
 function getCurrentTrial() {
   if (state.stage === "practice") {
     if (!state.schedule.practice || state.practiceIndex >= state.schedule.practice.length) {
@@ -249,12 +245,12 @@ function getCurrentTrial() {
     }
     return state.schedule.practice[state.practiceIndex];
   } else if (state.stage === "experiment") {
-    const cond = state.schedule.conditions[state.conditionIndex];
-    if (!cond) return null;
-    const model = cond.models[state.modelIndex];
+    const model = state.schedule.models[state.modelIndex];
     if (!model) return null;
-    if (state.trialIndex >= model.trials.length) return null;
-    return model.trials[state.trialIndex];
+    const vis = model.visualizations[state.visIndex];
+    if (!vis) return null;
+    if (state.trialIndex >= vis.trials.length) return null;
+    return vis.trials[state.trialIndex];
   }
   return null;
 }
@@ -264,9 +260,7 @@ function getCurrentTrialKey() {
   if (state.stage === "practice") {
     return `${state.participantId}_practice_T${state.practiceIndex}`;
   } else {
-    const cond = state.schedule.conditions[state.conditionIndex];
-    const model = cond.models[state.modelIndex];
-    return `${state.participantId}_experiment_C${state.conditionIndex}_M${state.modelIndex}_T${state.trialIndex}`;
+    return `${state.participantId}_experiment_M${state.modelIndex}_V${state.visIndex}_T${state.trialIndex}`;
   }
 }
 
@@ -635,9 +629,9 @@ function renderInfoPage(root, pageId) {
     
     if (pageData.media.type === "image") {
       // Show actual image for specific pages (color test, system layout, system criteria), placeholder for others
-      if ((pageId === "ishihara_test" || pageId === "system_layout" || pageId === "system_criteria") && pageData.media.src) {
+        if ((pageId === "ishihara_test" || pageId === "system_layout" || pageId === "system_criteria") && pageData.media.src) {
         const img = document.createElement("img");
-        img.src = pageData.media.src;
+        img.src = assetPath(pageData.media.src);
         img.alt =
           pageId === "ishihara_test"
             ? "Ishihara Color Test"
@@ -717,7 +711,7 @@ function renderInfoPage(root, pageId) {
     video.style.display = "block";
 
     const source = document.createElement("source");
-    source.src = "Videos/Introduction.mp4";
+    source.src = assetPath("Videos/Introduction.mp4");
     source.type = "video/mp4";
     video.appendChild(source);
 
@@ -765,7 +759,7 @@ function renderInfoPage(root, pageId) {
       // Otherwise show placeholder indicating missing local file
       const placeholder = document.createElement("div");
       placeholder.className = "iframe-placeholder";
-      placeholder.textContent = "וידאו לא נמצא (Videos/Introduction.mp4)";
+      placeholder.textContent = "וידאו לא נמצא (../Videos/Introduction.mp4)";
       mediaContainer.appendChild(placeholder);
       mediaSlot.appendChild(mediaContainer);
     }
@@ -1293,17 +1287,17 @@ function renderScenarioIntroPage(root) {
     if (vizSuffix === "S") {
       vizLabel = "עמודות נערמות";
       titleText = `תרגול ${state.practiceIndex + 1} – ${vizLabel}`;
-      imageSrc = "Images/STACKED.png";
+      imageSrc = assetPath("Images/STACKED.png");
       imageAlt = "Stacked visualization";
     } else if (vizSuffix === "R") {
       vizLabel = "רדאר";
       titleText = `תרגול ${state.practiceIndex + 1} – ${vizLabel}`;
-      imageSrc = "Images/RADAR.png";
+      imageSrc = assetPath("Images/RADAR.png");
       imageAlt = "Radar visualization";
     } else if (vizSuffix === "H") {
       vizLabel = "מפת חום";
       titleText = `תרגול ${state.practiceIndex + 1} – ${vizLabel}`;
-      imageSrc = "Images/HEATֹMAP.png";
+      imageSrc = assetPath("Images/HEATֹMAP.png");
       imageAlt = "Heatmap visualization";
     } else {
       titleText = `תרגול ${state.practiceIndex + 1}`;
@@ -1402,9 +1396,9 @@ function renderScenarioIntroPage(root) {
   }
 
   // --- Default scenario intro (experiment stage) ---
-  const cond = state.schedule.conditions[state.conditionIndex];
-  const model = cond.models[state.modelIndex];
-  const displayModelName = getDisplayModelName(state.conditionIndex, state.modelIndex);
+  const model = state.schedule.models[state.modelIndex];
+  const vis = model.visualizations[state.visIndex];
+  const displayModelName = getDisplayModelName(state.modelIndex);
 
   const title = document.createElement("h1");
   title.className = "page-title";
@@ -1431,7 +1425,7 @@ function renderScenarioIntroPage(root) {
   introList.appendChild(introLiRoutes);
 
   const introLiViz = document.createElement("li");
-  introLiViz.textContent = `ויזואליזציה ${cond.visualization || ""}`;
+  introLiViz.textContent = `ויזואליזציה ${vis.visualization || ""}`;
   introList.appendChild(introLiViz);
 
   content.appendChild(introList);
@@ -1465,14 +1459,14 @@ function renderScenarioIntroPage(root) {
   // Visualization image reminder below text and above buttons
   let imageSrc = null;
   let imageAlt = null;
-  if (cond.visualization === "עמודות מוערמות") {
-    imageSrc = "Images/STACKED.png";
+  if (vis.visualization === "עמודות נערמות" || vis.visualization === "עמודות מוערמות") {
+    imageSrc = assetPath("Images/STACKED.png");
     imageAlt = "Stacked visualization";
-  } else if (cond.visualization === "רדאר") {
-    imageSrc = "Images/RADAR.png";
+  } else if (vis.visualization === "רדאר") {
+    imageSrc = assetPath("Images/RADAR.png");
     imageAlt = "Radar visualization";
-  } else if (cond.visualization === "מפת חום") {
-    imageSrc = "Images/HEATֹMAP.png";
+  } else if (vis.visualization === "מפת חום") {
+    imageSrc = assetPath("Images/HEATֹMAP.png");
     imageAlt = "Heatmap visualization";
   }
 
@@ -1485,7 +1479,7 @@ function renderScenarioIntroPage(root) {
 
     const img = document.createElement("img");
     img.src = imageSrc;
-    img.alt = imageAlt || cond.visualization;
+    img.alt = imageAlt || vis.visualization;
     img.style.maxWidth = "90%";
     img.style.height = "auto";
     img.style.borderRadius = "8px";
@@ -1516,8 +1510,9 @@ function renderTrialPage(root) {
     // No more trials, navigate to next stage
     if (state.stage === "practice") {
       state.stage = "experiment";
-      state.pageType = "info";
-      state.conditionIndex = 0;
+      state.pageType = "experiment_transition";
+      state.modelIndex = 0;
+      state.visIndex = 0;
       render();
       return;
     } else {
@@ -1552,9 +1547,9 @@ function renderTrialPage(root) {
     if (state.stage === "practice") {
       titleText = `Trial – Practice #${state.practiceIndex + 1}`;
     } else {
-      const cond = state.schedule.conditions[state.conditionIndex];
-      const model = cond.models[state.modelIndex];
-      titleText = `Trial – Condition ${state.conditionIndex + 1} (${cond.visualization}) Model ${model.tag} Trial ${state.trialIndex + 1}`;
+      const model = state.schedule.models[state.modelIndex];
+      const vis = model.visualizations[state.visIndex];
+      titleText = `Trial – Model ${state.modelIndex + 1} (${vis.visualization}) Trial ${state.trialIndex + 1}`;
     }
     
     const title = document.createElement("h1");
@@ -1579,9 +1574,10 @@ function renderTrialPage(root) {
     ];
     
     if (state.stage === "experiment") {
-      const cond = state.schedule.conditions[state.conditionIndex];
-      const model = cond.models[state.modelIndex];
-      infoItems.splice(2, 0, ["Condition", `${state.conditionIndex + 1}: ${cond.visualization}`]);
+      const model = state.schedule.models[state.modelIndex];
+      const vis = model.visualizations[state.visIndex];
+      infoItems.splice(2, 0, ["Model", `${state.modelIndex + 1} (${model.model_type})`]);
+      infoItems.splice(3, 0, ["Visualization", vis.visualization]);
       infoItems.splice(3, 0, ["Model", `${model.tag} (${model.model_type})`]);
     }
     
@@ -1696,15 +1692,15 @@ function renderTrialPage(root) {
         trial_id: trialKey,
         participant_id: state.participantId,
         stage: state.stage,
-        condition_index: (state.stage === "experiment" ? state.conditionIndex : null),
         model_index: (state.stage === "experiment" ? state.modelIndex : null),
+        vis_index: (state.stage === "experiment" ? state.visIndex : null),
         trial_index: (state.stage === "practice" ? state.practiceIndex : state.trialIndex),
         scenario_id: t.scenario_id,
         difficulty: t.difficulty,
         true_route: t.correct_route,
         ai_route: t.ai_recommended_route,
         model_type: (state.stage === "experiment"
-                     ? state.schedule.conditions[state.conditionIndex].models[state.modelIndex].model_type
+                     ? state.schedule.models[state.modelIndex].model_type
                      : null),
         user_route: userRoute,
         followed_ai: followedAi,
@@ -1768,9 +1764,9 @@ function renderTrialQuestionsPage(root) {
     const stageItem = document.createElement("div");
     stageItem.className = "info-item";
     if (state.stage === "experiment") {
-      const cond = state.schedule.conditions[state.conditionIndex];
-      const model = cond.models[state.modelIndex];
-      stageItem.innerHTML = `<span class="info-label">שלב:</span> ${state.stage} - תנאי ${state.conditionIndex + 1}, מודל ${model.tag}`;
+      const model = state.schedule.models[state.modelIndex];
+      const vis = model.visualizations[state.visIndex];
+      stageItem.innerHTML = `<span class="info-label">שלב:</span> ${state.stage} - מודל ${state.modelIndex + 1}, ויזואליזציה ${state.visIndex + 1}`;
     } else {
       stageItem.innerHTML = `<span class="info-label">שלב:</span> ${state.stage}`;
     }
@@ -2081,8 +2077,8 @@ function renderTrialQuestionsPage(root) {
       trial_id: trialKey,
       participant_id: state.participantId,
       stage: state.stage,
-      condition_index: (state.stage === "experiment" ? state.conditionIndex : null),
-      model_index: (state.stage === "experiment" ? state.modelIndex : null),
+        model_index: (state.stage === "experiment" ? state.modelIndex : null),
+        vis_index: (state.stage === "experiment" ? state.visIndex : null),
       trial_index: (state.stage === "practice" ? state.practiceIndex : state.trialIndex),
       questionnaire_type: "post_scenario",
       answers: Object.keys(answers).length > 0 ? answers : null,
@@ -2103,23 +2099,24 @@ function renderTrialQuestionsPage(root) {
       } else {
         state.stage = "experiment";
         state.pageType = "info";
-        state.conditionIndex = 0;
+        state.modelIndex = 0;
+        state.visIndex = 0;
         state.modelIndex = 0;
         state.trialIndex = 0;
         render();
       }
     } else {
       // Experiment stage
-      const cond = state.schedule.conditions[state.conditionIndex];
-      const model = cond.models[state.modelIndex];
+      const model = state.schedule.models[state.modelIndex];
+      const vis = model.visualizations[state.visIndex];
       
-      if (state.trialIndex < model.trials.length - 1) {
+      if (state.trialIndex < vis.trials.length - 1) {
         state.trialIndex++;
         state.pageType = "scenario_intro";
         render();
       } else {
-        // Finished all trials in this model, go to model summary workload page
-        state.pageType = "model_summary_workload";
+        // Finished all trials in this vis, go to NASA TLX (after each visualization)
+        state.pageType = "nasa_tlx";
         render();
       }
     }
@@ -2166,7 +2163,7 @@ function renderExperimentTransitionPage(root) {
   continueBtn.textContent = "המשך לניסוי";
   continueBtn.onclick = () => {
     logPageExit(pageName);
-    state.pageType = "info";
+    state.pageType = "model_intro";
     render();
   };
   buttonGroup.appendChild(continueBtn);
@@ -2174,20 +2171,21 @@ function renderExperimentTransitionPage(root) {
   root.appendChild(buttonGroup);
 }
 
-function renderConditionIntroPage(root) {
-  const cond = state.schedule.conditions[state.conditionIndex];
-  const pageName = `ConditionIntroPage_C${state.conditionIndex}`;
+function renderVisIntroPage(root) {
+  const model = state.schedule.models[state.modelIndex];
+  const vis = model.visualizations[state.visIndex];
+  const pageName = `VisIntroPage_M${state.modelIndex}_V${state.visIndex}`;
   logPageEntry(pageName, {
-    condition_index: state.conditionIndex,
-    visualization: cond.visualization
+    model_index: state.modelIndex,
+    vis_index: state.visIndex,
+    visualization: vis.visualization
   });
   
   root.innerHTML = "";
   
   const title = document.createElement("h1");
   title.className = "page-title";
-  // Show only the visualization name as title (e.g., עמודות מוערמות / רדאר / מפת חום)
-  title.textContent = cond.visualization || "תצוגת ויזואליזציה";
+  title.textContent = vis.visualization || "תצוגת ויזואליזציה";
   title.dir = "rtl";
   root.appendChild(title);
 
@@ -2201,20 +2199,20 @@ function renderConditionIntroPage(root) {
   let imageSrc = null;
   let imageAlt = null;
 
-  if (cond.visualization === "עמודות מוערמות") {
+  if (vis.visualization === "עמודות נערמות" || vis.visualization === "עמודות מוערמות") {
     descriptionText = "ויזואליזציית עמודות נערמות";
-    imageSrc = "Images/STACKED.png";
+    imageSrc = assetPath("Images/STACKED.png");
     imageAlt = "Stacked visualization";
-  } else if (cond.visualization === "רדאר") {
+  } else if (vis.visualization === "רדאר") {
     descriptionText = "ויזואליזציית רדאר";
-    imageSrc = "Images/RADAR.png";
+    imageSrc = assetPath("Images/RADAR.png");
     imageAlt = "Radar visualization";
-  } else if (cond.visualization === "מפת חום") {
+  } else if (vis.visualization === "מפת חום") {
     descriptionText = "ויזואליזציית מפת חום";
-    imageSrc = "Images/HEATֹMAP.png";
+    imageSrc = assetPath("Images/HEATֹMAP.png");
     imageAlt = "Heatmap visualization";
   } else {
-    descriptionText = cond.visualization || "";
+    descriptionText = vis.visualization || "";
   }
 
   content.textContent = descriptionText;
@@ -2229,7 +2227,7 @@ function renderConditionIntroPage(root) {
 
     const img = document.createElement("img");
     img.src = imageSrc;
-    img.alt = imageAlt || cond.visualization;
+    img.alt = imageAlt || vis.visualization;
     img.style.maxWidth = "90%";
     img.style.height = "auto";
     img.style.borderRadius = "8px";
@@ -2246,7 +2244,8 @@ function renderConditionIntroPage(root) {
   continueBtn.textContent = "המשך";
   continueBtn.onclick = () => {
     logPageExit(pageName);
-    state.pageType = "model_intro";
+    state.pageType = "scenario_intro";
+    state.trialIndex = 0;
     render();
   };
   buttonGroup.appendChild(continueBtn);
@@ -2255,18 +2254,16 @@ function renderConditionIntroPage(root) {
 }
 
 function renderModelIntroPage(root) {
-  const cond = state.schedule.conditions[state.conditionIndex];
-  const model = cond.models[state.modelIndex];
-  const pageName = `ModelIntroPage_C${state.conditionIndex}_M${state.modelIndex}`;
+  const model = state.schedule.models[state.modelIndex];
+  const pageName = `ModelIntroPage_M${state.modelIndex}`;
   logPageEntry(pageName, {
-    condition_index: state.conditionIndex,
-    model_tag: model.tag,
+    model_index: state.modelIndex,
     model_type: model.model_type
   });
   
   root.innerHTML = "";
   
-  const displayModelName = getDisplayModelName(state.conditionIndex, state.modelIndex); // e.g., מודל A..F
+  const displayModelName = getDisplayModelName(state.modelIndex);
   
   const title = document.createElement("h1");
   title.className = "page-title";
@@ -2291,7 +2288,8 @@ function renderModelIntroPage(root) {
   startBtn.textContent = "המשך";
   startBtn.onclick = () => {
     logPageExit(pageName);
-    state.pageType = "scenario_intro";
+    state.pageType = "vis_intro";
+    state.visIndex = 0;
     state.trialIndex = 0;
     render();
   };
@@ -2300,20 +2298,126 @@ function renderModelIntroPage(root) {
   root.appendChild(buttonGroup);
 }
 
-function renderModelSummaryWorkloadPage(root) {
-  const cond = state.schedule.conditions[state.conditionIndex];
-  const model = cond.models[state.modelIndex];
-  const pageName = `ModelSummaryWorkloadPage_C${state.conditionIndex}_M${state.modelIndex}`;
+function renderNasaTlxPage(root) {
+  const model = state.schedule.models[state.modelIndex];
+  const vis = model.visualizations[state.visIndex];
+  const pageName = `NasaTlxPage_M${state.modelIndex}_V${state.visIndex}`;
   logPageEntry(pageName, {
-    condition_index: state.conditionIndex,
-    model_tag: model.tag
+    model_index: state.modelIndex,
+    vis_index: state.visIndex,
+    visualization: vis.visualization
   });
   
   root.innerHTML = "";
   
   const title = document.createElement("h1");
   title.className = "page-title";
-  const displayModelName = getDisplayModelName(state.conditionIndex, state.modelIndex);
+  title.textContent = `שאלון – ${vis.visualization}`;
+  title.dir = "rtl";
+  root.appendChild(title);
+  
+  // Render workload questions (NASA TLX)
+  if (state.questionsConfig && state.questionsConfig.model_summary_questions) {
+    const workloadSection = document.createElement("div");
+    workloadSection.style.marginTop = "20px";
+    
+    if (state.questionsConfig.model_summary_questions.workload) {
+      state.questionsConfig.model_summary_questions.workload.forEach((question, idx) => {
+        let questionDiv;
+        if (question.type === "scale_minus10_10") {
+          questionDiv = createMinus10To10Question(question, `nasa_tlx_${question.id}`);
+        } else {
+          questionDiv = createLikertQuestion(question, `nasa_tlx_${question.id}`);
+        }
+        workloadSection.appendChild(questionDiv);
+      });
+    }
+    
+    root.appendChild(workloadSection);
+  }
+  
+  const buttonGroup = document.createElement("div");
+  buttonGroup.className = "button-group";
+  
+  const continueBtn = document.createElement("button");
+  continueBtn.textContent = "המשך";
+  continueBtn.onclick = () => {
+    if (!state.debugMode && state.questionsConfig && state.questionsConfig.model_summary_questions) {
+      if (state.questionsConfig.model_summary_questions.workload) {
+        for (const question of state.questionsConfig.model_summary_questions.workload) {
+          const hiddenInput = document.getElementById(`nasa_tlx_${question.id}_value`);
+          if (!hiddenInput) {
+            alert(`אנא ענה על השאלה: ${question.text}`);
+            return;
+          }
+          const value = parseInt(hiddenInput.value);
+          if (isNaN(value) || value < -10 || value > 10) {
+            alert(`אנא ענה על השאלה: ${question.text}`);
+            return;
+          }
+        }
+      }
+    }
+    
+    const workloadAnswers = {};
+    if (state.questionsConfig && state.questionsConfig.model_summary_questions) {
+      if (state.questionsConfig.model_summary_questions.workload) {
+        state.questionsConfig.model_summary_questions.workload.forEach(question => {
+          const hiddenInput = document.getElementById(`nasa_tlx_${question.id}_value`);
+          if (hiddenInput && hiddenInput.value !== "") {
+            workloadAnswers[question.id] = parseInt(hiddenInput.value);
+          } else {
+            const selected = document.querySelector(`input[name="nasa_tlx_${question.id}"]:checked`);
+            workloadAnswers[question.id] = selected ? parseInt(selected.value) : (state.debugMode ? "DBG" : null);
+          }
+        });
+      }
+    }
+    
+    state.logs.questionnaires.push({
+      trial_id: null,
+      participant_id: state.participantId,
+      stage: state.stage,
+      model_index: state.modelIndex,
+      vis_index: state.visIndex,
+      trial_index: null,
+      questionnaire_type: "nasa_tlx",
+      answers: workloadAnswers,
+      correct: null,
+      enter_ts: state.currentPageEnterTs,
+      exit_ts: Date.now()
+    });
+    
+    logPageExit(pageName);
+    
+    // Next: more visualizations in this model, or trust
+    if (state.visIndex < model.visualizations.length - 1) {
+      state.visIndex++;
+      state.trialIndex = 0;
+      state.pageType = "vis_intro";
+      render();
+    } else {
+      state.pageType = "model_summary_trust";
+      render();
+    }
+  };
+  buttonGroup.appendChild(continueBtn);
+  
+  root.appendChild(buttonGroup);
+}
+
+function renderModelSummaryWorkloadPage(root) {
+  const model = state.schedule.models[state.modelIndex];
+  const pageName = `ModelSummaryWorkloadPage_M${state.modelIndex}`;
+  logPageEntry(pageName, {
+    model_index: state.modelIndex
+  });
+  
+  root.innerHTML = "";
+  
+  const title = document.createElement("h1");
+  title.className = "page-title";
+  const displayModelName = getDisplayModelName(state.modelIndex);
   // Avoid repeating the word "מודל" twice in the title
   title.textContent = `שאלון מסכם ${displayModelName}`;
   title.dir = "rtl";
@@ -2400,19 +2504,17 @@ function renderModelSummaryWorkloadPage(root) {
 }
 
 function renderModelSummaryTrustPage(root) {
-  const cond = state.schedule.conditions[state.conditionIndex];
-  const model = cond.models[state.modelIndex];
-  const pageName = `ModelSummaryTrustPage_C${state.conditionIndex}_M${state.modelIndex}`;
+  const model = state.schedule.models[state.modelIndex];
+  const pageName = `ModelSummaryTrustPage_M${state.modelIndex}`;
   logPageEntry(pageName, {
-    condition_index: state.conditionIndex,
-    model_tag: model.tag
+    model_index: state.modelIndex
   });
   
   root.innerHTML = "";
   
   const title = document.createElement("h1");
   title.className = "page-title";
-  const displayModelName = getDisplayModelName(state.conditionIndex, state.modelIndex);
+  const displayModelName = getDisplayModelName(state.modelIndex);
   // Avoid repeating the word "מודל" twice in the title
   title.textContent = `שאלון מסכם ${displayModelName}`;
   title.dir = "rtl";
@@ -2589,7 +2691,7 @@ function renderModelSummaryTrustPage(root) {
       }
     }
     
-    // Combine workload and trust answers
+    // Trust answers (workload is collected per-vis in nasa_tlx)
     const answers = {
       workload: state.tempWorkloadAnswers || {},
       trust: trustAnswers
@@ -2602,8 +2704,8 @@ function renderModelSummaryTrustPage(root) {
       trial_id: null,
       participant_id: state.participantId,
       stage: state.stage,
-      condition_index: state.conditionIndex,
       model_index: state.modelIndex,
+      vis_index: null,
       trial_index: null,
       questionnaire_type: "model_summary",
       answers: answers,
@@ -2615,15 +2717,16 @@ function renderModelSummaryTrustPage(root) {
     // Clear temporary workload answers
     state.tempWorkloadAnswers = null;
     
-    // Navigate to next model or condition
-    const cond = state.schedule.conditions[state.conditionIndex];
-    if (state.modelIndex < cond.models.length - 1) {
+    // Navigate to next model or model_selection (at end)
+    if (state.modelIndex < state.schedule.models.length - 1) {
       state.modelIndex++;
+      state.visIndex = 0;
+      state.trialIndex = 0;
       state.pageType = "model_intro";
       render();
     } else {
-      // Finished both models in this condition, go to visualization condition question
-      state.pageType = "visualization_condition";
+      // Finished both models, go to model selection (A/B)
+      state.pageType = "model_selection";
       render();
     }
   };
@@ -2632,7 +2735,7 @@ function renderModelSummaryTrustPage(root) {
   root.appendChild(buttonGroup);
 }
 
-// Keep old function name for backward compatibility, redirect to workload page
+// Keep old function name for backward compatibility
 function renderModelSummaryPage(root) {
   renderModelSummaryWorkloadPage(root);
 }
@@ -2922,7 +3025,7 @@ function createMinus10To10Question(question, namePrefix) {
   leftButton.style.padding = "0";
   // Minus image
   const minusImg = new Image();
-  minusImg.src = "Images/minus.jpg";
+  minusImg.src = assetPath("Images/minus.jpg");
   minusImg.alt = "-";
   minusImg.style.width = "16px";
   minusImg.style.height = "16px";
@@ -2947,7 +3050,7 @@ function createMinus10To10Question(question, namePrefix) {
   rightButton.style.padding = "0";
   // Plus image
   const plusImg = new Image();
-  plusImg.src = "Images/plus.png";
+  plusImg.src = assetPath("Images/plus.png");
   plusImg.alt = "+";
   plusImg.style.width = "16px";
   plusImg.style.height = "16px";
@@ -3053,24 +3156,18 @@ function createMinus10To10Question(question, namePrefix) {
   return questionDiv;
 }
 
-function renderVisualizationConditionPage(root) {
-  const cond = state.schedule.conditions[state.conditionIndex];
-  const pageName = `VisualizationConditionPage_C${state.conditionIndex}`;
-  logPageEntry(pageName, {
-    condition_index: state.conditionIndex,
-    visualization: cond.visualization
-  });
+function renderModelSelectionPage(root) {
+  const pageName = "ModelSelectionPage";
+  logPageEntry(pageName);
   
   root.innerHTML = "";
   
   const title = document.createElement("h1");
   title.className = "page-title";
-  // Include actual visualization name in the title
-  title.textContent = `שאלה לאחר ויזואליזציה – ${cond.visualization}`;
+  title.textContent = "בחירת מודל";
   title.dir = "rtl";
   root.appendChild(title);
   
-  // Build question based on questionsConfig, but options depend on the two models in this condition
   let baseQuestion = null;
   if (state.questionsConfig && state.questionsConfig.visualization_condition_question) {
     baseQuestion = state.questionsConfig.visualization_condition_question;
@@ -3080,10 +3177,9 @@ function renderVisualizationConditionPage(root) {
     const questionData = {
       id: baseQuestion.id,
       text: baseQuestion.text,
-      // Options are the display names of the two models shown in this condition (e.g., מודל A / מודל B / ...).
       options: [
-        getDisplayModelName(state.conditionIndex, 0),
-        getDisplayModelName(state.conditionIndex, 1)
+        getDisplayModelName(0),
+        getDisplayModelName(1)
       ]
     };
     const questionDiv = document.createElement("div");
@@ -3112,7 +3208,7 @@ function renderVisualizationConditionPage(root) {
         
         const radio = document.createElement("input");
         radio.type = "radio";
-        radio.name = "visualization_condition_preference";
+        radio.name = "model_selection_preference";
         radio.value = option;
         radio.id = `viz_cond_opt_${idx}`;
         radio.required = true;
@@ -3141,7 +3237,7 @@ function renderVisualizationConditionPage(root) {
   const continueBtn = document.createElement("button");
   continueBtn.textContent = "המשך";
   continueBtn.onclick = () => {
-    const selected = document.querySelector('input[name="visualization_condition_preference"]:checked');
+    const selected = document.querySelector('input[name="model_selection_preference"]:checked');
     
     if (!selected && !state.debugMode) {
       alert("אנא בחר מודל מועדף");
@@ -3150,33 +3246,23 @@ function renderVisualizationConditionPage(root) {
     
     logPageExit(pageName);
     
-    // Log questionnaire
     state.logs.questionnaires.push({
       trial_id: null,
       participant_id: state.participantId,
       stage: state.stage,
-      condition_index: state.conditionIndex,
       model_index: null,
+      vis_index: null,
       trial_index: null,
-      questionnaire_type: "visualization_condition",
+      questionnaire_type: "model_selection",
       answers: selected ? { model_preference: selected.value } : (state.debugMode ? { model_preference: "DBG" } : null),
       correct: null,
       enter_ts: state.currentPageEnterTs,
       exit_ts: Date.now()
     });
     
-    // Navigate to next condition or global questions
-    if (state.conditionIndex < state.schedule.conditions.length - 1) {
-      state.conditionIndex++;
-      state.modelIndex = 0;
-      state.pageType = "info";
-      render();
-    } else {
-      // Finished all conditions, go to visualization global question
-      state.stage = "post";
-      state.pageType = "visualization_global";
-      render();
-    }
+    state.stage = "post";
+    state.pageType = "visualization_global";
+    render();
   };
   buttonGroup.appendChild(continueBtn);
   
@@ -3224,9 +3310,9 @@ function renderVisualizationGlobalPage(root) {
     imagesRow.dir = "rtl";
 
     const vizImages = [
-      { src: "Images/STACKED.png", alt: "עמודות מוערמות" },
-      { src: "Images/RADAR.png", alt: "רדאר" },
-      { src: "Images/HEATֹMAP.png", alt: "מפת חום" }
+      { src: assetPath("Images/STACKED.png"), alt: "עמודות נערמות" },
+      { src: assetPath("Images/RADAR.png"), alt: "רדאר" },
+      { src: assetPath("Images/HEATֹMAP.png"), alt: "מפת חום" }
     ];
 
     vizImages.forEach(info => {
@@ -3413,7 +3499,7 @@ function renderVisualizationGlobalPage(root) {
     layoutsImgWrapper.style.alignItems = "center";
 
     const layoutsImg = document.createElement("img");
-    layoutsImg.src = "Images/LAYOUTS.png";
+    layoutsImg.src = assetPath("Images/LAYOUTS.png");
     layoutsImg.alt = "ממשק המערכת – אזורי מסך";
     layoutsImg.style.maxWidth = "90%";
     layoutsImg.style.height = "auto";
@@ -3895,22 +3981,24 @@ function render() {
   } else if (state.stage === "experiment") {
     if (state.pageType === "experiment_transition") {
       renderExperimentTransitionPage(root);
-    } else if (state.pageType === "info") {
-      renderConditionIntroPage(root);
     } else if (state.pageType === "model_intro") {
       renderModelIntroPage(root);
+    } else if (state.pageType === "vis_intro") {
+      renderVisIntroPage(root);
     } else if (state.pageType === "scenario_intro") {
       renderScenarioIntroPage(root);
     } else if (state.pageType === "trial") {
       renderTrialPage(root);
     } else if (state.pageType === "trial_questions") {
       renderTrialQuestionsPage(root);
+    } else if (state.pageType === "nasa_tlx") {
+      renderNasaTlxPage(root);
     } else if (state.pageType === "model_summary" || state.pageType === "model_summary_workload") {
       renderModelSummaryWorkloadPage(root);
     } else if (state.pageType === "model_summary_trust") {
       renderModelSummaryTrustPage(root);
-    } else if (state.pageType === "visualization_condition") {
-      renderVisualizationConditionPage(root);
+    } else if (state.pageType === "model_selection") {
+      renderModelSelectionPage(root);
     }
   } else if (state.stage === "post") {
     if (state.pageType === "visualization_global") {
@@ -3944,15 +4032,15 @@ window.addEventListener("message", (event) => {
         trial_id: trialKey,
         participant_id: state.participantId,
         stage: state.stage,
-        condition_index: (state.stage === "experiment" ? state.conditionIndex : null),
         model_index: (state.stage === "experiment" ? state.modelIndex : null),
+        vis_index: (state.stage === "experiment" ? state.visIndex : null),
         trial_index: (state.stage === "practice" ? state.practiceIndex : state.trialIndex),
         scenario_id: t.scenario_id,
         difficulty: t.difficulty,
         true_route: t.correct_route,
         ai_route: t.ai_recommended_route,
         model_type: (state.stage === "experiment"
-                     ? state.schedule.conditions[state.conditionIndex].models[state.modelIndex].model_type
+                     ? state.schedule.models[state.modelIndex].model_type
                      : null),
         user_route: userRoute,
         followed_ai: followedAi,
@@ -4006,8 +4094,8 @@ function forceSkipToNextPage() {
         trial_id: trialKey,
         participant_id: state.participantId,
         stage: state.stage,
-        condition_index: (state.stage === "experiment" ? state.conditionIndex : null),
         model_index: (state.stage === "experiment" ? state.modelIndex : null),
+        vis_index: (state.stage === "experiment" ? state.visIndex : null),
         trial_index: (state.stage === "practice" ? state.practiceIndex : state.trialIndex),
         scenario_id: t.scenario_id,
         difficulty: t.difficulty,
@@ -4130,19 +4218,21 @@ function navigateToNextPage() {
         // Finished practice, go to experiment transition page
         state.stage = "experiment";
         state.pageType = "experiment_transition";
-        state.conditionIndex = 0;
         state.modelIndex = 0;
+        state.visIndex = 0;
         state.trialIndex = 0;
         render();
       }
     }
   } else if (state.stage === "experiment") {
-    if (state.pageType === "info") {
-      // Condition intro -> model intro
-      state.pageType = "model_intro";
+    if (state.pageType === "model_intro") {
+      // Model intro -> vis intro (first vis of model)
+      state.pageType = "vis_intro";
+      state.visIndex = 0;
+      state.trialIndex = 0;
       render();
-    } else if (state.pageType === "model_intro") {
-      // Model intro -> scenario intro
+    } else if (state.pageType === "vis_intro") {
+      // Vis intro -> scenario intro
       state.pageType = "scenario_intro";
       render();
     } else if (state.pageType === "scenario_intro") {
@@ -4154,14 +4244,14 @@ function navigateToNextPage() {
       const t = getCurrentTrial();
       if (t) {
         const trialKey = getCurrentTrialKey();
-        const cond = state.schedule.conditions[state.conditionIndex];
-        const model = cond.models[state.modelIndex];
+        const model = state.schedule.models[state.modelIndex];
+        const vis = model.visualizations[state.visIndex];
         const trialLog = {
           trial_id: trialKey,
           participant_id: state.participantId,
           stage: state.stage,
-          condition_index: state.conditionIndex,
           model_index: state.modelIndex,
+          vis_index: state.visIndex,
           trial_index: state.trialIndex,
           scenario_id: t.scenario_id,
           difficulty: t.difficulty,
@@ -4187,8 +4277,8 @@ function navigateToNextPage() {
           trial_id: trialKey,
           participant_id: state.participantId,
           stage: state.stage,
-          condition_index: state.conditionIndex,
           model_index: state.modelIndex,
+          vis_index: state.visIndex,
           trial_index: state.trialIndex,
           questionnaire_type: "post_scenario",
           answers: { debug: "DBG" },
@@ -4199,18 +4289,42 @@ function navigateToNextPage() {
       }
       
       // Trial questions -> next trial or model summary
-      const cond = state.schedule.conditions[state.conditionIndex];
-      const model = cond.models[state.modelIndex];
+      const model = state.schedule.models[state.modelIndex];
+      const vis = model.visualizations[state.visIndex];
       
-      if (state.trialIndex < model.trials.length - 1) {
-        // More trials in this model
+      if (state.trialIndex < vis.trials.length - 1) {
+        // More trials in this vis
         state.trialIndex++;
         state.pageType = "scenario_intro";
         render();
       } else {
-        // Finished all trials in this model, go to model summary workload page
-        // (After model summary trust, it will navigate to next model or condition)
-        state.pageType = "model_summary_workload";
+        // Finished all trials in this vis, go to NASA TLX
+        state.pageType = "nasa_tlx";
+        render();
+      }
+    } else if (state.pageType === "nasa_tlx") {
+      // NASA TLX -> next vis or trust (debug: skip validation)
+      state.logs.questionnaires.push({
+        trial_id: null,
+        participant_id: state.participantId,
+        stage: state.stage,
+        model_index: state.modelIndex,
+        vis_index: state.visIndex,
+        trial_index: null,
+        questionnaire_type: "nasa_tlx",
+        answers: { debug: "DBG" },
+        correct: null,
+        enter_ts: state.currentPageEnterTs,
+        exit_ts: Date.now()
+      });
+      const model = state.schedule.models[state.modelIndex];
+      if (state.visIndex < model.visualizations.length - 1) {
+        state.visIndex++;
+        state.trialIndex = 0;
+        state.pageType = "vis_intro";
+        render();
+      } else {
+        state.pageType = "model_summary_trust";
         render();
       }
     } else if (state.pageType === "model_summary_workload") {
@@ -4237,8 +4351,8 @@ function navigateToNextPage() {
         trial_id: null,
         participant_id: state.participantId,
         stage: state.stage,
-        condition_index: state.conditionIndex,
         model_index: state.modelIndex,
+        vis_index: null,
         trial_index: null,
         questionnaire_type: "model_summary",
         answers: debugAnswers,
@@ -4250,8 +4364,7 @@ function navigateToNextPage() {
       state.tempWorkloadAnswers = null;
       
       // Model summary -> next model or visualization condition
-      const cond = state.schedule.conditions[state.conditionIndex];
-      if (state.modelIndex < cond.models.length - 1) {
+      if (state.modelIndex < state.schedule.models.length - 1) {
         // More models
         state.modelIndex++;
         state.trialIndex = 0;
@@ -4259,42 +4372,33 @@ function navigateToNextPage() {
         render();
       } else {
         // Finished both models, go to visualization condition question
-        state.pageType = "visualization_condition";
+        state.pageType = "model_selection";
         render();
       }
     } else if (state.pageType === "model_summary") {
       // Legacy: redirect to workload page
       state.pageType = "model_summary_workload";
       render();
-    } else if (state.pageType === "visualization_condition") {
+    } else if (state.pageType === "model_selection") {
       // Log questionnaire for visualization condition
       state.logs.questionnaires.push({
         trial_id: null,
         participant_id: state.participantId,
         stage: state.stage,
-        condition_index: state.conditionIndex,
         model_index: null,
+        vis_index: null,
         trial_index: null,
-        questionnaire_type: "visualization_condition",
+        questionnaire_type: "model_selection",
         answers: { debug: "DBG" },
         correct: null,
         enter_ts: state.currentPageEnterTs,
         exit_ts: Date.now()
       });
       
-      // Visualization condition -> next condition or global
-      if (state.conditionIndex < state.schedule.conditions.length - 1) {
-        state.conditionIndex++;
-        state.modelIndex = 0;
-        state.trialIndex = 0;
-        state.pageType = "info";
-        render();
-      } else {
-        // Finished all conditions, go to visualization global
-        state.stage = "post";
-        state.pageType = "visualization_global";
-        render();
-      }
+      // Model selection -> visualization global
+      state.stage = "post";
+      state.pageType = "visualization_global";
+      render();
     }
   } else if (state.stage === "post") {
     if (state.pageType === "visualization_global") {
@@ -4303,8 +4407,8 @@ function navigateToNextPage() {
         trial_id: null,
         participant_id: state.participantId,
         stage: "post",
-        condition_index: null,
         model_index: null,
+        vis_index: null,
         trial_index: null,
         questionnaire_type: "visualization_global",
         answers: { debug: "DBG" },
@@ -4322,8 +4426,8 @@ function navigateToNextPage() {
         trial_id: null,
         participant_id: state.participantId,
         stage: "post",
-        condition_index: null,
         model_index: null,
+        vis_index: null,
         trial_index: null,
         questionnaire_type: "demographics",
         answers: { debug: "DBG" },

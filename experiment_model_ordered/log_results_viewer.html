@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Participant Log Results Viewer (Model-Ordered)</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 0; padding: 20px; background: #f4f4f4; }
+    .container { max-width: 1400px; margin: 0 auto; background: #ffffff; padding: 30px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    h1 { margin-top: 0; color: #1976d2; border-bottom: 3px solid #1976d2; padding-bottom: 10px; }
+    h2 { margin-top: 30px; color: #333; border-bottom: 2px solid #e0e0e0; padding-bottom: 8px; }
+    h3 { margin-top: 20px; color: #555; font-size: 18px; }
+    .input-section { background: #f5f5f5; padding: 20px; border-radius: 8px; margin-bottom: 30px; }
+    .input-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    label { font-weight: 600; font-size: 14px; color: #333; }
+    input[type="text"] { padding: 10px; font-size: 14px; border-radius: 6px; border: 1px solid #ccc; min-width: 200px; }
+    input[type="text"]:focus { outline: none; border-color: #1976d2; }
+    button { padding: 10px 20px; border-radius: 6px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; background: #1976d2; color: #fff; transition: background 0.2s; }
+    button:hover:not(:disabled) { background: #1565c0; }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    .error { color: #c62828; margin-top: 10px; padding: 10px; background: #ffebee; border-radius: 6px; display: none; }
+    .error.show { display: block; }
+    .participant-header { background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); padding: 20px; border-radius: 8px; margin-bottom: 30px; }
+    .participant-header h2 { margin-top: 0; border: none; color: #0d47a1; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 20px 0; }
+    .stat-card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; }
+    .stat-value { font-size: 36px; font-weight: 700; color: #1976d2; margin: 10px 0; }
+    .stat-label { font-size: 13px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; }
+    .stat-subtext { font-size: 12px; color: #999; margin-top: 5px; }
+    .section { margin-top: 30px; padding-top: 20px; border-top: 2px solid #e0e0e0; }
+    .performance-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin: 20px 0; }
+    .performance-card { background: #f9f9f9; padding: 20px; border-radius: 8px; border-left: 4px solid #1976d2; }
+    .performance-card h4 { margin-top: 0; color: #1976d2; }
+    .metric-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e0e0e0; }
+    .metric-row:last-child { border-bottom: none; }
+    .metric-label { font-weight: 500; color: #555; }
+    .metric-value { font-weight: 600; color: #333; }
+    .metric-value.success { color: #2e7d32; }
+    .metric-value.warning { color: #f57f17; }
+    .metric-value.error { color: #c62828; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; background: white; }
+    th { background: #f5f5f5; padding: 12px 8px; text-align: left; font-weight: 600; color: #555; border-bottom: 2px solid #ddd; position: sticky; top: 0; z-index: 10; }
+    td { padding: 10px 8px; border-bottom: 1px solid #e0e0e0; }
+    tr:hover { background: #f9f9f9; }
+    .scenario-id { font-family: "JetBrains Mono", Consolas, monospace; font-size: 12px; background: #f5f5f5; padding: 2px 6px; border-radius: 3px; }
+    .difficulty { display: inline-block; padding: 3px 8px; border-radius: 10px; font-weight: 600; font-size: 11px; }
+    .difficulty.E { background: #c8e6c9; color: #2e7d32; }
+    .difficulty.M { background: #fff9c4; color: #f57f17; }
+    .difficulty.H { background: #ffcdd2; color: #c62828; }
+    .route { font-size: 16px; font-weight: 500; }
+    .route-match { color: #2e7d32; font-weight: 600; }
+    .route-mismatch { color: #c62828; }
+    .badge { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+    .badge.success { background: #c8e6c9; color: #2e7d32; }
+    .badge.error { background: #ffcdd2; color: #c62828; }
+    .badge.info { background: #e3f2fd; color: #0d47a1; }
+    .time-duration { font-family: monospace; font-size: 12px; color: #666; }
+    .tabs { display: flex; gap: 10px; margin: 20px 0; border-bottom: 2px solid #e0e0e0; }
+    .tab { padding: 10px 20px; background: transparent; border: none; border-bottom: 3px solid transparent; cursor: pointer; font-weight: 600; color: #666; transition: all 0.2s; }
+    .tab:hover { color: #1976d2; }
+    .tab.active { color: #1976d2; border-bottom-color: #1976d2; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .model-group { background: #f9f9f9; padding: 20px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #1976d2; }
+    .vis-group { background: white; padding: 15px; border-radius: 6px; margin: 10px 0; border: 1px solid #e0e0e0; }
+    .model-header, .vis-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .model-tag, .vis-tag { font-size: 16px; font-weight: 600; color: #333; }
+    .model-type { display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
+    .model-type.OPT { background: #e3f2fd; color: #0d47a1; }
+    .model-type.SUB { background: #ffebee; color: #b71c1c; }
+    .loading { text-align: center; padding: 40px; color: #666; }
+    .no-data { text-align: center; padding: 40px; color: #999; font-style: italic; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Participant Log Results Viewer (Model-Ordered)</h1>
+    <div class="input-section">
+      <div class="input-row">
+        <label for="participantId">Participant ID:</label>
+        <input type="text" id="participantId" placeholder="P001" />
+        <button id="loadBtn">Load Log Results</button>
+      </div>
+      <div id="error" class="error"></div>
+    </div>
+    <div id="results"></div>
+  </div>
+
+  <script>
+    const loadBtn = document.getElementById('loadBtn');
+    const pidInput = document.getElementById('participantId');
+    const errorBox = document.getElementById('error');
+    const resultsBox = document.getElementById('results');
+
+    loadBtn.addEventListener('click', () => {
+      const raw = pidInput.value.trim();
+      if (!raw) { showError("Enter a participant ID."); return; }
+      const pid = normalizeId(raw);
+      loadLog(pid);
+    });
+    pidInput.addEventListener('keyup', (ev) => { if (ev.key === 'Enter') loadBtn.click(); });
+
+    function normalizeId(input) {
+      let id = input.toUpperCase().trim();
+      if (!id.startsWith("P")) id = "P" + id;
+      return id;
+    }
+    function showError(msg) { errorBox.textContent = msg || ""; errorBox.classList.add('show'); }
+    function hideError() { errorBox.classList.remove('show'); }
+
+    async function loadLog(pid) {
+      hideError();
+      resultsBox.innerHTML = '<div class="loading">Loading log data...</div>';
+      loadBtn.disabled = true;
+      try {
+        const url = `Participants_log/${pid}_log.json`;
+        const res = await fetch(url, { cache: "no-store" });
+        if (!res.ok) throw new Error(`Cannot load log file for ${pid} (HTTP ${res.status})`);
+        const data = await res.json();
+        let schedule = null;
+        try {
+          const scheduleRes = await fetch(`participants_json/${pid}.json`, { cache: "no-store" });
+          if (scheduleRes.ok) schedule = await scheduleRes.json();
+        } catch (e) { console.warn("Could not load participant schedule:", e); }
+        renderResults(data, pid, schedule);
+      } catch (e) {
+        console.error(e);
+        showError("Error loading or parsing log file. See console for details.");
+        resultsBox.innerHTML = '';
+      } finally { loadBtn.disabled = false; }
+    }
+
+    function getVisualizationName(schedule, modelIndex, visIndex) {
+      if (!schedule || !schedule.models || modelIndex == null || visIndex == null) return null;
+      const model = schedule.models[modelIndex];
+      if (!model || !model.visualizations) return null;
+      const vis = model.visualizations[visIndex];
+      return vis ? vis.visualization : null;
+    }
+
+    function renderResults(logData, participantId, schedule) {
+      const wrapper = document.createElement('div');
+      const stats = calculateStatistics(logData);
+      const questionStats = calculateQuestionStatistics(logData.questionnaires || []);
+      const consentData = extractConsentData(logData.interactions || []);
+
+      let participantDetailsHtml = `<h2>Participant: ${escapeHtml(participantId)}</h2>`;
+      if (schedule && schedule.model_order_text) {
+        participantDetailsHtml += `<p style="margin: 8px 0; color: #555;">Model order: ${escapeHtml(schedule.model_order_text)}</p>`;
+      }
+      if (consentData) {
+        participantDetailsHtml += `<div style="margin-top: 15px; padding: 15px; background: white; border-radius: 6px;"><h3 style="margin-top: 0;">Participant Details</h3><div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;"><div><strong>Name:</strong> ${escapeHtml(consentData.name || 'N/A')}</div><div><strong>ID Number:</strong> ${escapeHtml(consentData.id_number || 'N/A')}</div><div><strong>Email:</strong> ${escapeHtml(consentData.email || 'N/A')}</div></div></div>`;
+      }
+      participantDetailsHtml += `<div class="stats-grid">
+        <div class="stat-card"><div class="stat-label">Total Trials</div><div class="stat-value">${stats.totalTrials}</div><div class="stat-subtext">${stats.practiceTrials} practice, ${stats.experimentTrials} experiment</div></div>
+        <div class="stat-card"><div class="stat-label">Followed AI</div><div class="stat-value">${stats.followedAI}</div><div class="stat-subtext">${stats.followedAIPercent.toFixed(1)}%</div></div>
+        <div class="stat-card"><div class="stat-label">Chose Optimal</div><div class="stat-value">${stats.choseOptimal}</div><div class="stat-subtext">${stats.choseOptimalPercent.toFixed(1)}%</div></div>
+        <div class="stat-card"><div class="stat-label">Total Time</div><div class="stat-value">${formatDuration(stats.totalTime)}</div><div class="stat-subtext">Avg: ${formatDuration(stats.avgTrialTime)} per trial</div></div>
+      </div>`;
+
+      const header = document.createElement('div');
+      header.className = 'participant-header';
+      header.innerHTML = participantDetailsHtml;
+      wrapper.appendChild(header);
+
+      const demographicsData = extractDemographicsData(logData.questionnaires || []);
+      if (demographicsData) {
+        const demographicsSection = document.createElement('div');
+        demographicsSection.className = 'section';
+        demographicsSection.innerHTML = '<h2>Demographics</h2>';
+        const card = document.createElement('div');
+        card.className = 'performance-card';
+        card.style.marginTop = '15px';
+        const grid = document.createElement('div');
+        grid.style.display = 'grid';
+        grid.style.gridTemplateColumns = 'repeat(auto-fit, minmax(250px, 1fr))';
+        grid.style.gap = '15px';
+        Object.entries(demographicsData).forEach(([key, value]) => {
+          const item = document.createElement('div');
+          item.style.padding = '8px';
+          item.style.background = '#f9f9f9';
+          item.style.borderRadius = '4px';
+          item.innerHTML = `<strong>${key.replace(/_/g, ' ')}:</strong> ${escapeHtml(String(value || 'N/A'))}`;
+          grid.appendChild(item);
+        });
+        card.appendChild(grid);
+        demographicsSection.appendChild(card);
+        wrapper.appendChild(demographicsSection);
+      }
+
+      if (questionStats.totalScenarioQuestions > 0) {
+        const qsSection = document.createElement('div');
+        qsSection.className = 'section';
+        qsSection.innerHTML = '<h2>Scenario Question Statistics</h2>';
+        const qsGrid = document.createElement('div');
+        qsGrid.className = 'stats-grid';
+        qsGrid.innerHTML = `
+          <div class="stat-card"><div class="stat-label">Total Scenario Questions</div><div class="stat-value">${questionStats.totalScenarioQuestions}</div></div>
+          <div class="stat-card"><div class="stat-label">Correct</div><div class="stat-value" style="color: #2e7d32;">${questionStats.correctAnswers}</div><div class="stat-subtext">${questionStats.correctPercent.toFixed(1)}%</div></div>
+          <div class="stat-card"><div class="stat-label">Incorrect</div><div class="stat-value" style="color: #c62828;">${questionStats.incorrectAnswers}</div></div>
+          <div class="stat-card"><div class="stat-label">Unanswered</div><div class="stat-value" style="color: #666;">${questionStats.unanswered}</div></div>
+        `;
+        qsSection.appendChild(qsGrid);
+        wrapper.appendChild(qsSection);
+      }
+
+      const performanceSection = document.createElement('div');
+      performanceSection.className = 'section';
+      performanceSection.innerHTML = '<h2>Performance Breakdown</h2>';
+      const perfGrid = document.createElement('div');
+      perfGrid.className = 'performance-grid';
+      perfGrid.appendChild(createPerformanceCard('Practice Trials', stats.practiceStats));
+      perfGrid.appendChild(createPerformanceCard('Experiment Trials', stats.experimentStats));
+      perfGrid.appendChild(createPerformanceCard('Optimal AI (OPT)', stats.optStats));
+      perfGrid.appendChild(createPerformanceCard('Sub-optimal AI (SUB)', stats.subStats));
+      performanceSection.appendChild(perfGrid);
+      wrapper.appendChild(performanceSection);
+
+      const tabsSection = document.createElement('div');
+      tabsSection.className = 'section';
+      tabsSection.innerHTML = '<h2>Detailed Results</h2>';
+      const tabs = document.createElement('div');
+      tabs.className = 'tabs';
+      ['Practice Trials', 'Experiment Trials', 'Page Visits', 'Questionnaires'].forEach((label, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'tab' + (i === 0 ? ' active' : '');
+        btn.textContent = label;
+        btn.onclick = () => switchTab(i);
+        tabs.appendChild(btn);
+      });
+      tabsSection.appendChild(tabs);
+
+      const tabContents = document.createElement('div');
+      tabContents.id = 'tabContents';
+      const practiceTab = document.createElement('div');
+      practiceTab.className = 'tab-content active';
+      practiceTab.id = 'tab0';
+      practiceTab.appendChild(createTrialsTable(logData.trials.filter(t => t.stage === 'practice')));
+      tabContents.appendChild(practiceTab);
+      const experimentTab = document.createElement('div');
+      experimentTab.className = 'tab-content';
+      experimentTab.id = 'tab1';
+      experimentTab.appendChild(createExperimentTrialsView(logData.trials.filter(t => t.stage === 'experiment'), schedule));
+      tabContents.appendChild(experimentTab);
+      const pagesTab = document.createElement('div');
+      pagesTab.className = 'tab-content';
+      pagesTab.id = 'tab2';
+      pagesTab.appendChild(createPagesTable(logData.pages || []));
+      tabContents.appendChild(pagesTab);
+      const questionnairesTab = document.createElement('div');
+      questionnairesTab.className = 'tab-content';
+      questionnairesTab.id = 'tab3';
+      questionnairesTab.appendChild(createQuestionnairesView(logData.questionnaires || [], schedule, logData.trials || []));
+      tabContents.appendChild(questionnairesTab);
+      tabsSection.appendChild(tabContents);
+      wrapper.appendChild(tabsSection);
+
+      resultsBox.innerHTML = '';
+      resultsBox.appendChild(wrapper);
+    }
+
+    function calculateStatistics(logData) {
+      const trials = logData.trials || [];
+      const practiceTrials = trials.filter(t => t.stage === 'practice');
+      const experimentTrials = trials.filter(t => t.stage === 'experiment');
+      const followedAI = trials.filter(t => t.followed_ai === true).length;
+      const choseOptimal = trials.filter(t => t.chose_true_optimal === true).length;
+      const totalTime = trials.reduce((sum, t) => sum + (t.end_ts - t.start_ts || 0), 0);
+      const avgTrialTime = trials.length > 0 ? totalTime / trials.length : 0;
+
+      const practiceStats = { total: practiceTrials.length, followedAI: practiceTrials.filter(t => t.followed_ai === true).length, choseOptimal: practiceTrials.filter(t => t.chose_true_optimal === true).length };
+      practiceStats.followedAIPercent = practiceStats.total > 0 ? (practiceStats.followedAI / practiceStats.total) * 100 : 0;
+      practiceStats.choseOptimalPercent = practiceStats.total > 0 ? (practiceStats.choseOptimal / practiceStats.total) * 100 : 0;
+
+      const experimentStats = { total: experimentTrials.length, followedAI: experimentTrials.filter(t => t.followed_ai === true).length, choseOptimal: experimentTrials.filter(t => t.chose_true_optimal === true).length };
+      experimentStats.followedAIPercent = experimentStats.total > 0 ? (experimentStats.followedAI / experimentStats.total) * 100 : 0;
+      experimentStats.choseOptimalPercent = experimentStats.total > 0 ? (experimentStats.choseOptimal / experimentStats.total) * 100 : 0;
+
+      const optTrials = experimentTrials.filter(t => t.model_type === 'OPT');
+      const subTrials = experimentTrials.filter(t => t.model_type === 'SUB');
+      const optStats = { total: optTrials.length, followedAI: optTrials.filter(t => t.followed_ai === true).length, choseOptimal: optTrials.filter(t => t.chose_true_optimal === true).length };
+      optStats.followedAIPercent = optStats.total > 0 ? (optStats.followedAI / optStats.total) * 100 : 0;
+      optStats.choseOptimalPercent = optStats.total > 0 ? (optStats.choseOptimal / optStats.total) * 100 : 0;
+      const subStats = { total: subTrials.length, followedAI: subTrials.filter(t => t.followed_ai === true).length, choseOptimal: subTrials.filter(t => t.chose_true_optimal === true).length };
+      subStats.followedAIPercent = subStats.total > 0 ? (subStats.followedAI / subStats.total) * 100 : 0;
+      subStats.choseOptimalPercent = subStats.total > 0 ? (subStats.choseOptimal / subStats.total) * 100 : 0;
+
+      return {
+        totalTrials: trials.length,
+        practiceTrials: practiceTrials.length,
+        experimentTrials: experimentTrials.length,
+        followedAI, followedAIPercent: trials.length > 0 ? (followedAI / trials.length) * 100 : 0,
+        choseOptimal, choseOptimalPercent: trials.length > 0 ? (choseOptimal / trials.length) * 100 : 0,
+        totalTime, avgTrialTime,
+        practiceStats, experimentStats, optStats, subStats
+      };
+    }
+
+    function calculateQuestionStatistics(questionnaires) {
+      let totalScenarioQuestions = 0, correctAnswers = 0, incorrectAnswers = 0, unanswered = 0;
+      questionnaires.forEach(q => {
+        if (q.questionnaire_type === 'post_scenario' && q.answers && q.answers.scenario_questions) {
+          Object.values(q.answers.scenario_questions).forEach(qData => {
+            if (qData && typeof qData === 'object') { totalScenarioQuestions++; qData.is_correct === true ? correctAnswers++ : qData.is_correct === false ? incorrectAnswers++ : unanswered++; }
+            else if (qData === 'DBG' || qData === null) { totalScenarioQuestions++; unanswered++; }
+          });
+        }
+      });
+      return { totalScenarioQuestions, correctAnswers, incorrectAnswers, unanswered, correctPercent: totalScenarioQuestions > 0 ? (correctAnswers / totalScenarioQuestions) * 100 : 0, incorrectPercent: totalScenarioQuestions > 0 ? (incorrectAnswers / totalScenarioQuestions) * 100 : 0, unansweredPercent: totalScenarioQuestions > 0 ? (unanswered / totalScenarioQuestions) * 100 : 0 };
+    }
+
+    function createPerformanceCard(title, stats) {
+      const card = document.createElement('div');
+      card.className = 'performance-card';
+      card.innerHTML = `<h4>${title}</h4>`;
+      if (stats.total === 0) { card.innerHTML += '<div class="no-data">No data available</div>'; return card; }
+      card.innerHTML += `<div class="metric-row"><span class="metric-label">Total Trials:</span><span class="metric-value">${stats.total}</span></div><div class="metric-row"><span class="metric-label">Followed AI:</span><span class="metric-value ${stats.followedAIPercent >= 50 ? 'success' : 'warning'}">${stats.followedAI} (${stats.followedAIPercent.toFixed(1)}%)</span></div><div class="metric-row"><span class="metric-label">Chose Optimal:</span><span class="metric-value ${stats.choseOptimalPercent >= 50 ? 'success' : 'warning'}">${stats.choseOptimal} (${stats.choseOptimalPercent.toFixed(1)}%)</span></div>`;
+      return card;
+    }
+
+    function createTrialsTable(trials) {
+      if (trials.length === 0) { const noData = document.createElement('div'); noData.className = 'no-data'; noData.textContent = 'No trials found'; return noData; }
+      const table = document.createElement('table');
+      const thead = document.createElement('thead');
+      thead.innerHTML = '<tr><th>#</th><th>Scenario ID</th><th>Difficulty</th><th>True Route</th><th>AI Route</th><th>User Route</th><th>Followed AI</th><th>Chose Optimal</th><th>Time</th></tr>';
+      const tbody = document.createElement('tbody');
+      const aiRoute = (t) => t.ai_route || t.ai_recommended_route;
+      const trueRoute = (t) => t.true_route || t.correct_route;
+      trials.forEach((trial, idx) => {
+        const duration = trial.end_ts - trial.start_ts;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${idx + 1}</td><td><span class="scenario-id">${escapeHtml(trial.scenario_id || '')}</span></td><td><span class="difficulty ${trial.difficulty || ''}">${trial.difficulty || '-'}</span></td><td><span class="route">${escapeHtml(trueRoute(trial) || '-')}</span></td><td><span class="route">${escapeHtml(aiRoute(trial) || '-')}</span></td><td><span class="route ${trial.user_route === trueRoute(trial) ? 'route-match' : 'route-mismatch'}">${escapeHtml(trial.user_route || '-')}</span></td><td>${createBadge(trial.followed_ai, 'success', 'error')}</td><td>${createBadge(trial.chose_true_optimal, 'success', 'error')}</td><td><span class="time-duration">${formatDuration(duration)}</span></td>`;
+        tbody.appendChild(tr);
+      });
+      table.appendChild(thead);
+      table.appendChild(tbody);
+      return table;
+    }
+
+    function createExperimentTrialsView(trials, schedule) {
+      if (trials.length === 0) { const noData = document.createElement('div'); noData.className = 'no-data'; noData.textContent = 'No experiment trials found'; return noData; }
+      const byModel = {};
+      trials.forEach(trial => {
+        const modelIdx = trial.model_index;
+        const visIdx = trial.vis_index;
+        if (!byModel[modelIdx]) byModel[modelIdx] = { model_type: trial.model_type, visualizations: {} };
+        if (!byModel[modelIdx].visualizations[visIdx]) {
+          byModel[modelIdx].visualizations[visIdx] = {
+            visualization: getVisualizationName(schedule, modelIdx, visIdx),
+            trials: []
+          };
+        }
+        byModel[modelIdx].visualizations[visIdx].trials.push(trial);
+      });
+
+      const wrapper = document.createElement('div');
+      Object.keys(byModel).sort((a, b) => Number(a) - Number(b)).forEach(modelIdx => {
+        const modelData = byModel[modelIdx];
+        const modelGroup = document.createElement('div');
+        modelGroup.className = 'model-group';
+        const modelTitle = document.createElement('h3');
+        modelTitle.textContent = `Model ${Number(modelIdx) + 1} (${modelData.model_type})`;
+        modelGroup.appendChild(modelTitle);
+        Object.keys(modelData.visualizations).sort((a, b) => Number(a) - Number(b)).forEach(visIdx => {
+          const visData = modelData.visualizations[visIdx];
+          const visGroup = document.createElement('div');
+          visGroup.className = 'vis-group';
+          visGroup.innerHTML = `<div class="vis-header"><span class="vis-tag">${visData.visualization || `Visualization ${Number(visIdx) + 1}`}</span><span class="model-type ${modelData.model_type}">${modelData.model_type}</span><span style="margin-left: auto; color: #666;">${visData.trials.length} trials</span></div>`;
+          visGroup.appendChild(createTrialsTable(visData.trials));
+          modelGroup.appendChild(visGroup);
+        });
+        wrapper.appendChild(modelGroup);
+      });
+      return wrapper;
+    }
+
+    function createPagesTable(pages) {
+      if (!pages || pages.length === 0) { const noData = document.createElement('div'); noData.className = 'no-data'; noData.textContent = 'No page visit data found'; return noData; }
+      const table = document.createElement('table');
+      table.innerHTML = '<thead><tr><th>Page Name</th><th>Stage</th><th>Page Type</th><th>Enter Time</th><th>Exit Time</th><th>Duration</th></tr></thead><tbody></tbody>';
+      const tbody = table.querySelector('tbody');
+      pages.forEach(page => {
+        const duration = page.exit_ts && page.enter_ts ? page.exit_ts - page.enter_ts : null;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${escapeHtml(page.page_name || '')}</td><td>${escapeHtml(page.stage || '')}</td><td>${escapeHtml(page.page_type || '-')}</td><td>${page.enter_ts ? new Date(page.enter_ts).toLocaleTimeString() : ''}</td><td>${page.exit_ts ? new Date(page.exit_ts).toLocaleTimeString() : '-'}</td><td>${duration !== null ? `<span class="time-duration">${formatDuration(duration)}</span>` : '-'}</td>`;
+        tbody.appendChild(tr);
+      });
+      return table;
+    }
+
+    function createBadge(value, trueClass, falseClass) {
+      const badge = document.createElement('span');
+      badge.className = `badge ${value ? trueClass : falseClass}`;
+      badge.textContent = value ? 'Yes' : 'No';
+      return badge.outerHTML;
+    }
+    function formatDuration(ms) {
+      if (ms < 1000) return `${ms}ms`;
+      const seconds = Math.floor(ms / 1000);
+      const minutes = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      return minutes > 0 ? `${minutes}m ${secs}s` : `${seconds}s`;
+    }
+    function switchTab(index) {
+      document.querySelectorAll('.tab').forEach((tab, i) => tab.classList.toggle('active', i === index));
+      document.querySelectorAll('.tab-content').forEach((content, i) => content.classList.toggle('active', i === index));
+    }
+
+    function createQuestionnairesView(questionnaires, schedule, trials) {
+      if (questionnaires.length === 0) { const noData = document.createElement('div'); noData.className = 'no-data'; noData.textContent = 'No questionnaire data found'; return noData; }
+      const wrapper = document.createElement('div');
+      const downloadBtn = document.createElement('button');
+      downloadBtn.textContent = 'Download Questionnaires CSV';
+      downloadBtn.onclick = () => {
+        const csv = buildQuestionnairesCsv(questionnaires, schedule, trials);
+        if (!csv) { alert('No questionnaire data to export.'); return; }
+        const bom = '\uFEFF';
+        const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${(questionnaires[0] && questionnaires[0].participant_id) || 'participant'}_questionnaires.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      };
+      wrapper.appendChild(downloadBtn);
+      wrapper.style.marginBottom = '15px';
+
+      const modelSummaries = questionnaires.filter(q => q.questionnaire_type === 'model_summary');
+      const nasaTlx = questionnaires.filter(q => q.questionnaire_type === 'nasa_tlx');
+      const postScenarios = questionnaires.filter(q => q.questionnaire_type === 'post_scenario');
+      const visualizations = questionnaires.filter(q => q.questionnaire_type === 'visualization_global' || q.questionnaire_type === 'visualization_condition');
+      const modelSelection = questionnaires.filter(q => q.questionnaire_type === 'model_selection');
+
+      const subTabs = document.createElement('div');
+      subTabs.className = 'tabs';
+      const tabLabels = [
+        `Model Summary / Trust (${modelSummaries.length})`,
+        `NASA TLX (${nasaTlx.length})`,
+        `Post Scenario (${postScenarios.length})`,
+        `Model Selection (${modelSelection.length})`,
+        `Visualization (${visualizations.length})`
+      ];
+      const tabContents = [
+        createModelSummaryView(modelSummaries, schedule),
+        createNasaTlxView(nasaTlx, schedule),
+        createPostScenarioView(postScenarios, schedule, trials),
+        createModelSelectionView(modelSelection),
+        createVisualizationView(visualizations)
+      ];
+      tabLabels.forEach((label, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'tab' + (i === 0 ? ' active' : '');
+        btn.textContent = label;
+        btn.onclick = () => switchSubTab(i);
+        subTabs.appendChild(btn);
+      });
+      wrapper.appendChild(subTabs);
+      const subContents = document.createElement('div');
+      subContents.id = 'subTabContents';
+      tabContents.forEach((content, i) => {
+        const div = document.createElement('div');
+        div.className = 'tab-content' + (i === 0 ? ' active' : '');
+        div.id = 'subTab' + i;
+        div.appendChild(content);
+        subContents.appendChild(div);
+      });
+      wrapper.appendChild(subContents);
+
+      window.switchSubTab = function(index) {
+        subTabs.querySelectorAll('.tab').forEach((tab, i) => tab.classList.toggle('active', i === index));
+        subContents.querySelectorAll('.tab-content').forEach((content, i) => content.classList.toggle('active', i === index));
+      };
+      return wrapper;
+    }
+
+    function createModelSummaryView(modelSummaries, schedule) {
+      if (modelSummaries.length === 0) { const d = document.createElement('div'); d.className = 'no-data'; d.textContent = 'No model summary questionnaires'; return d; }
+      const wrapper = document.createElement('div');
+      modelSummaries.forEach(q => {
+        const card = document.createElement('div');
+        card.className = 'vis-group';
+        card.style.marginBottom = '15px';
+        const headerInfo = [];
+        if (q.model_index !== null && q.model_index !== undefined) headerInfo.push(`Model ${q.model_index + 1}`);
+        if (q.vis_index !== null && q.vis_index !== undefined) headerInfo.push(`Vis ${q.vis_index + 1}: ${getVisualizationName(schedule, q.model_index, q.vis_index) || ''}`);
+        card.innerHTML = `<div style="margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #e0e0e0;"><strong>${headerInfo.join(' | ')}</strong></div>`;
+        if (q.answers && typeof q.answers === 'object') {
+          Object.entries(q.answers).forEach(([key, value]) => {
+            const row = document.createElement('div');
+            row.style.marginBottom = '8px';
+            row.style.padding = '8px';
+            row.style.background = '#f9f9f9';
+            row.style.borderRadius = '4px';
+            if (key === 'workload' || key === 'trust') {
+              row.innerHTML = `<strong>${key}:</strong>`;
+              if (typeof value === 'object') {
+                Object.entries(value).forEach(([k, v]) => {
+                  row.innerHTML += `<div style="margin-left: 12px;">${k}: ${escapeHtml(String(v ?? ''))}</div>`;
+                });
+              }
+            } else {
+              row.innerHTML = `<strong>${escapeHtml(key)}:</strong> ${escapeHtml(String(value ?? ''))}`;
+            }
+            card.appendChild(row);
+          });
+        }
+        wrapper.appendChild(card);
+      });
+      return wrapper;
+    }
+
+    function createNasaTlxView(nasaTlx, schedule) {
+      if (nasaTlx.length === 0) { const d = document.createElement('div'); d.className = 'no-data'; d.textContent = 'No NASA TLX questionnaires'; return d; }
+      const wrapper = document.createElement('div');
+      nasaTlx.forEach(q => {
+        const card = document.createElement('div');
+        card.className = 'vis-group';
+        card.style.marginBottom = '15px';
+        const visName = getVisualizationName(schedule, q.model_index, q.vis_index);
+        card.innerHTML = `<div style="margin-bottom: 10px;"><strong>Model ${(q.model_index ?? 0) + 1} – ${visName || `Vis ${(q.vis_index ?? 0) + 1}`}</strong></div>`;
+        if (q.answers && typeof q.answers === 'object') {
+          Object.entries(q.answers).forEach(([k, v]) => {
+            card.innerHTML += `<div style="margin: 6px 0; padding: 6px; background: #f9f9f9; border-radius: 4px;"><strong>${k}:</strong> ${escapeHtml(String(v ?? ''))}</div>`;
+          });
+        }
+        wrapper.appendChild(card);
+      });
+      return wrapper;
+    }
+
+    function createPostScenarioView(postScenarios, schedule, trials) {
+      if (postScenarios.length === 0) { const d = document.createElement('div'); d.className = 'no-data'; d.textContent = 'No post-scenario questionnaires'; return d; }
+      const wrapper = document.createElement('div');
+      const trialMap = {};
+      (trials || []).forEach(t => { if (t && t.trial_id) trialMap[t.trial_id] = t; });
+      postScenarios.forEach(q => {
+        const card = document.createElement('div');
+        card.className = 'vis-group';
+        card.style.marginBottom = '15px';
+        const headerInfo = [`Trial: ${q.trial_id || '-'}`];
+        if (q.model_index != null) headerInfo.push(`Model ${q.model_index + 1}`);
+        if (q.vis_index != null) headerInfo.push(`Vis: ${getVisualizationName(schedule, q.model_index, q.vis_index) || q.vis_index + 1}`);
+        card.innerHTML = `<div style="margin-bottom: 10px; border-bottom: 1px solid #e0e0e0;"><strong>${headerInfo.join(' | ')}</strong></div>`;
+        if (q.answers && q.answers.scenario_questions) {
+          Object.entries(q.answers.scenario_questions).forEach(([qid, info]) => {
+            const isCorrect = info && typeof info === 'object' && info.is_correct === true;
+            card.innerHTML += `<div style="margin: 8px 0; padding: 8px; background: ${isCorrect ? '#e8f5e9' : '#ffebee'}; border-radius: 4px;"><strong>${qid}:</strong> ${info && info.answer_text ? escapeHtml(info.answer_text) : 'N/A'} ${info && info.is_correct !== undefined ? (info.is_correct ? '✓' : '✗') : ''}</div>`;
+          });
+        }
+        wrapper.appendChild(card);
+      });
+      return wrapper;
+    }
+
+    function createModelSelectionView(modelSelection) {
+      if (modelSelection.length === 0) { const d = document.createElement('div'); d.className = 'no-data'; d.textContent = 'No model selection data'; return d; }
+      const wrapper = document.createElement('div');
+      modelSelection.forEach(q => {
+        const card = document.createElement('div');
+        card.className = 'vis-group';
+        card.style.marginBottom = '15px';
+        card.innerHTML = `<div><strong>Model preference:</strong> ${q.answers && q.answers.model_preference ? escapeHtml(String(q.answers.model_preference)) : 'N/A'}</div>`;
+        wrapper.appendChild(card);
+      });
+      return wrapper;
+    }
+
+    function createVisualizationView(visualizations) {
+      if (visualizations.length === 0) { const d = document.createElement('div'); d.className = 'no-data'; d.textContent = 'No visualization questionnaires'; return d; }
+      const wrapper = document.createElement('div');
+      visualizations.forEach(q => {
+        const card = document.createElement('div');
+        card.className = 'vis-group';
+        card.style.marginBottom = '15px';
+        if (q.answers && typeof q.answers === 'object') {
+          Object.entries(q.answers).forEach(([k, v]) => {
+            card.innerHTML += `<div style="margin: 6px 0;"><strong>${escapeHtml(k)}:</strong> ${escapeHtml(String(v ?? ''))}</div>`;
+          });
+        }
+        wrapper.appendChild(card);
+      });
+      return wrapper;
+    }
+
+    function buildQuestionnairesCsv(questionnaires, schedule, trials) {
+      if (!questionnaires || questionnaires.length === 0) return '';
+      const trialMap = {};
+      (trials || []).forEach(t => { if (t && t.trial_id) trialMap[t.trial_id] = t; });
+      const rows = [];
+      const header = ['participant_id', 'questionnaire_type', 'model_index', 'vis_index', 'visualization', 'trial_index', 'trial_id', 'question_group', 'question_id', 'scenario_id', 'rec_correct', 'ai_route', 'true_route', 'answer_value', 'is_correct', 'enter_ts', 'exit_ts'];
+      rows.push(header);
+
+      questionnaires.forEach(q => {
+        const base = {
+          participant_id: q.participant_id || '',
+          questionnaire_type: q.questionnaire_type || '',
+          model_index: (q.model_index !== null && q.model_index !== undefined) ? q.model_index : '',
+          vis_index: (q.vis_index !== null && q.vis_index !== undefined) ? q.vis_index : '',
+          visualization: getVisualizationName(schedule, q.model_index, q.vis_index) || '',
+          trial_index: (q.trial_index !== null && q.trial_index !== undefined) ? q.trial_index : '',
+          trial_id: q.trial_id || '',
+          enter_ts: q.enter_ts || '',
+          exit_ts: q.exit_ts || ''
+        };
+        const linkedTrial = base.trial_id && trialMap[base.trial_id] ? trialMap[base.trial_id] : null;
+        const scenarioMeta = {
+          scenario_id: linkedTrial && linkedTrial.scenario_id ? linkedTrial.scenario_id : '',
+          rec_correct: linkedTrial && linkedTrial.rec_correct !== undefined ? linkedTrial.rec_correct : '',
+          ai_route: linkedTrial && (linkedTrial.ai_route || linkedTrial.ai_recommended_route) ? (linkedTrial.ai_route || linkedTrial.ai_recommended_route) : '',
+          true_route: linkedTrial && (linkedTrial.true_route || linkedTrial.correct_route) ? (linkedTrial.true_route || linkedTrial.correct_route) : ''
+        };
+
+        const pushRow = (qGroup, qId, ansVal, isCorrect) => {
+          rows.push([base.participant_id, base.questionnaire_type, base.model_index, base.vis_index, base.visualization, base.trial_index, base.trial_id, qGroup, qId, scenarioMeta.scenario_id, scenarioMeta.rec_correct, scenarioMeta.ai_route, scenarioMeta.true_route, ansVal, isCorrect, base.enter_ts, base.exit_ts]);
+        };
+
+        if (!q.answers || typeof q.answers !== 'object') {
+          pushRow('', '', q.answers === 'DBG' ? 'DBG' : '', '');
+          return;
+        }
+        if (q.questionnaire_type === 'post_scenario' && q.answers.scenario_questions) {
+          Object.entries(q.answers.scenario_questions).forEach(([qid, info]) => {
+            const ansText = (info && typeof info === 'object' && 'answer_text' in info) ? info.answer_text : '';
+            const isCorrect = (info && typeof info === 'object' && 'is_correct' in info) ? info.is_correct : '';
+            pushRow('scenario_questions', qid, ansText, isCorrect);
+          });
+          Object.entries(q.answers).forEach(([key, value]) => {
+            if (key === 'scenario_questions') return;
+            pushRow('fixed', key, value === 'DBG' || value === null ? String(value) : String(value), '');
+          });
+          return;
+        }
+        if (q.questionnaire_type === 'model_summary' && (q.answers.workload || q.answers.trust)) {
+          ['workload', 'trust'].forEach(group => {
+            const obj = q.answers[group];
+            if (!obj || typeof obj !== 'object') return;
+            Object.entries(obj).forEach(([qid, value]) => pushRow(group, qid, value === 'DBG' || value === null ? String(value) : String(value), ''));
+          });
+          Object.entries(q.answers).forEach(([key, value]) => {
+            if (key === 'workload' || key === 'trust') return;
+            pushRow('', key, value === 'DBG' || value === null ? String(value) : String(value), '');
+          });
+          return;
+        }
+        if (q.questionnaire_type === 'nasa_tlx') {
+          Object.entries(q.answers).forEach(([key, value]) => pushRow('nasa_tlx', key, value === 'DBG' || value === null ? String(value) : String(value), ''));
+          return;
+        }
+        Object.entries(q.answers).forEach(([key, value]) => pushRow('', key, value === 'DBG' || value === null ? String(value) : String(value), ''));
+      });
+
+      const escapeCell = (cell) => {
+        const str = cell === undefined || cell === null ? '' : String(cell);
+        return /[",\n]/.test(str) ? '"' + str.replace(/"/g, '""') + '"' : str;
+      };
+      return rows.map(row => row.map(escapeCell).join(',')).join('\n');
+    }
+
+    function escapeHtml(str) {
+      if (str == null) return "";
+      return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+    function extractConsentData(interactions) {
+      for (const i of interactions) {
+        if (i.interaction_type === 'consent_form_data' && i.data) return i.data;
+      }
+      return null;
+    }
+    function extractDemographicsData(questionnaires) {
+      for (const q of questionnaires) {
+        if (q.questionnaire_type === 'demographics' && q.answers && typeof q.answers === 'object') return q.answers;
+      }
+      return null;
+    }
+  </script>
+</body>
+</html>

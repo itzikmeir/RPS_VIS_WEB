@@ -1,5 +1,27 @@
 ## Experiment Data & App Pipeline
 
+---
+
+### Model-Ordered Experiment (New Format)
+
+A **separate experiment platform** uses the **Model-first** order: Model A (Vis1, Vis2, Vis3) → Model B (Vis1, Vis2, Vis3), with NASA TLX after each visualization and Trust after each model.
+
+**Practice:** 6 practices total – 2 × עמודות נערמות, 2 × רדאר, 2 × מפת חום. Before each trial, the scenario intro shows the visualization image (STACKED.png, RADAR.png, HEATֹMAP.png) and "דגשים" guidelines.
+
+- **Platform:** `experiment_model_ordered/index.html`
+- **Data:** `Model_Ordered_experiment/Models_Experiment_Order_Expanded.xlsx` (or `.csv`)
+- **Full documentation:** See `Model_Ordered_experiment/README.md`
+
+**Quick start:**
+1. `python build_model_ordered_participants.py`
+2. `python update_correct_routes_model_ordered.py`
+3. (Optional) `python update_recommendations_model_ordered.py`
+4. Open `experiment_model_ordered/index.html` in a browser
+
+---
+
+### Original Experiment (Visualization-first)
+
 ### 1. Generate participant schedules JSON
 
 - **File**: `Untitled-1.ipynb`  
