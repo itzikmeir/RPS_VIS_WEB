@@ -117,7 +117,8 @@
         const url = `Participants_log/${pid}_log.json`;
         const res = await fetch(url, { cache: "no-store" });
         if (!res.ok) throw new Error(`Cannot load log file for ${pid} (HTTP ${res.status})`);
-        const data = await res.json();
+        const raw = await res.json();
+        const data = raw.logs || raw;
         let schedule = null;
         try {
           const scheduleRes = await fetch(`participants_json/${pid}.json`, { cache: "no-store" });
@@ -410,9 +411,15 @@
     function createQuestionnairesView(questionnaires, schedule, trials) {
       if (questionnaires.length === 0) { const noData = document.createElement('div'); noData.className = 'no-data'; noData.textContent = 'No questionnaire data found'; return noData; }
       const wrapper = document.createElement('div');
-      const downloadBtn = document.createElement('button');
-      downloadBtn.textContent = 'Download Questionnaires CSV';
-      downloadBtn.onclick = () => {
+      const downloadBtns = document.createElement('div');
+      downloadBtns.style.display = 'flex';
+      downloadBtns.style.gap = '10px';
+      downloadBtns.style.marginBottom = '15px';
+      downloadBtns.style.flexWrap = 'wrap';
+
+      const downloadQBtn = document.createElement('button');
+      downloadQBtn.textContent = 'Download Questionnaires CSV';
+      downloadQBtn.onclick = () => {
         const csv = buildQuestionnairesCsv(questionnaires, schedule, trials);
         if (!csv) { alert('No questionnaire data to export.'); return; }
         const bom = '\uFEFF';
@@ -426,8 +433,27 @@
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
       };
-      wrapper.appendChild(downloadBtn);
-      wrapper.style.marginBottom = '15px';
+      downloadBtns.appendChild(downloadQBtn);
+
+      const downloadTrialsBtn = document.createElement('button');
+      downloadTrialsBtn.textContent = 'Download Trials CSV';
+      downloadTrialsBtn.onclick = () => {
+        const csv = buildTrialsCsv(trials);
+        if (!csv) { alert('No trial data to export.'); return; }
+        const bom = '\uFEFF';
+        const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${(questionnaires[0] && questionnaires[0].participant_id) || (trials[0] && trials[0].participant_id) || 'participant'}_trials.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      };
+      downloadBtns.appendChild(downloadTrialsBtn);
+
+      wrapper.appendChild(downloadBtns);
 
       const modelSummaries = questionnaires.filter(q => q.questionnaire_type === 'model_summary');
       const nasaTlx = questionnaires.filter(q => q.questionnaire_type === 'nasa_tlx');
@@ -653,6 +679,38 @@
         Object.entries(q.answers).forEach(([key, value]) => pushRow('', key, value === 'DBG' || value === null ? String(value) : String(value), ''));
       });
 
+      const escapeCell = (cell) => {
+        const str = cell === undefined || cell === null ? '' : String(cell);
+        return /[",\n]/.test(str) ? '"' + str.replace(/"/g, '""') + '"' : str;
+      };
+      return rows.map(row => row.map(escapeCell).join(',')).join('\n');
+    }
+
+    function buildTrialsCsv(trials) {
+      if (!trials || trials.length === 0) return '';
+      const rows = [];
+      const header = ['participant_id', 'stage', 'model_index', 'vis_index', 'trial_index', 'scenario_id', 'difficulty', 'true_route', 'ai_route', 'user_route', 'followed_ai', 'chose_true_optimal', 'rec_correct', 'model_type', 'start_ts', 'end_ts'];
+      rows.push(header);
+      trials.forEach(t => {
+        rows.push([
+          t.participant_id || '',
+          t.stage || '',
+          (t.model_index !== null && t.model_index !== undefined) ? t.model_index : '',
+          (t.vis_index !== null && t.vis_index !== undefined) ? t.vis_index : '',
+          (t.trial_index !== null && t.trial_index !== undefined) ? t.trial_index : '',
+          t.scenario_id || '',
+          t.difficulty || '',
+          t.true_route || t.correct_route || '',
+          t.ai_route || t.ai_recommended_route || '',
+          t.user_route || '',
+          t.followed_ai !== undefined ? t.followed_ai : '',
+          t.chose_true_optimal !== undefined ? t.chose_true_optimal : '',
+          t.rec_correct !== undefined ? t.rec_correct : '',
+          t.model_type || '',
+          t.start_ts || '',
+          t.end_ts || ''
+        ]);
+      });
       const escapeCell = (cell) => {
         const str = cell === undefined || cell === null ? '' : String(cell);
         return /[",\n]/.test(str) ? '"' + str.replace(/"/g, '""') + '"' : str;

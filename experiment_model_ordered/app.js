@@ -17,6 +17,12 @@ function getDisplayModelLetter(modelIndex) {
 function getDisplayModelName(modelIndex) {
   return `מודל ${getDisplayModelLetter(modelIndex)}`;
 }
+
+/** Returns model name wrapped in <strong> for display in HTML (e.g. "מודל A" in bold) */
+function getDisplayModelNameBold(modelIndex) {
+  const name = getDisplayModelName(modelIndex);
+  return `<strong>${name}</strong>`;
+}
 // Global state
 const state = {
   participantId: null,
@@ -1232,8 +1238,7 @@ function renderPracticeIntroPage(root) {
   if (!pageData) {
     pageData = {
       title: "התחלת תרגול",
-      text: "כעת יוצג לפניך תרחיש תרגול במערכת. בחר/י את המסלול האופטימלי ביותר לפי הבנתך, ולאחר מכן תענה/י על מספר שאלות קצרות."
-    };
+      text: " כעת יוצגו לפניך מספר תרחישים לתרגול וביניהם שאלונים."    };
   }
   
   const title = document.createElement("h1");
@@ -1398,7 +1403,6 @@ function renderScenarioIntroPage(root) {
   // --- Default scenario intro (experiment stage) ---
   const model = state.schedule.models[state.modelIndex];
   const vis = model.visualizations[state.visIndex];
-  const displayModelName = getDisplayModelName(state.modelIndex);
 
   const title = document.createElement("h1");
   title.className = "page-title";
@@ -1421,7 +1425,8 @@ function renderScenarioIntroPage(root) {
   introList.style.paddingRight = "20px";
 
   const introLiRoutes = document.createElement("li");
-  introLiRoutes.textContent = `שימוש בבינה מלאכותית מסוג \"${displayModelName}\"`;
+  introLiRoutes.innerHTML = `שימוש בבינה מלאכותית מסוג ${getDisplayModelNameBold(state.modelIndex)}`;
+  introLiRoutes.dir = "rtl";
   introList.appendChild(introLiRoutes);
 
   const introLiViz = document.createElement("li");
@@ -2150,8 +2155,8 @@ function renderExperimentTransitionPage(root) {
   content.textContent =
     "סיימת את שלב התרגול.\n" +
     "כעת נתחיל בניסוי האמיתי.\n\n" +
-    "הניסוי יכלול תרחישים בויזואליזציות שונות (עמודות נערמות, רדאר ומפת חום)\n" +
-    "ובכל ויזואליזציה יבוצע שימוש במודלי בינה מלאכותית מסוגים שונים.";
+    "הניסוי יכלול שימוש ב2 סוגי מודלי בינה מלאכותית שבתוכם יוצגו לך תרחישים בויזואליזציות שונות (עמודות נערמות, רדאר ומפת חום).";
+
   content.dir = "rtl";
   root.appendChild(content);
   
@@ -2263,11 +2268,9 @@ function renderModelIntroPage(root) {
   
   root.innerHTML = "";
   
-  const displayModelName = getDisplayModelName(state.modelIndex);
-  
   const title = document.createElement("h1");
   title.className = "page-title";
-  title.textContent = `התחלת מודל בינה מלאכותית – ${displayModelName}`;
+  title.textContent = `התחלת מודל בינה מלאכותית – ${getDisplayModelName(state.modelIndex)}`;
   title.dir = "rtl";
   root.appendChild(title);
   
@@ -2275,8 +2278,8 @@ function renderModelIntroPage(root) {
   content.className = "page-content";
   content.dir = "rtl";
   content.style.whiteSpace = "pre-wrap";
-  content.textContent =
-    `במסכים הבאים יוצגו לך מספר תרחישים בהם השתמשנו במודל בינה מסוג \"${displayModelName}\" לחישוב המסלולים ולבחירת ההמלצה.`;
+  content.innerHTML =
+    `במסכים הבאים יוצגו לך מספר תרחישים בהם השתמשנו במודל בינה מסוג ${getDisplayModelNameBold(state.modelIndex)} לחישוב המסלולים ולבחירת ההמלצה.`;
   content.dir = "rtl";
   content.style.whiteSpace = "pre-wrap";
   root.appendChild(content);
@@ -2315,6 +2318,15 @@ function renderNasaTlxPage(root) {
   title.textContent = `שאלון – ${vis.visualization}`;
   title.dir = "rtl";
   root.appendChild(title);
+
+  const subtext = document.createElement("p");
+  subtext.textContent = `השאלות מתייחסות אך ורק לתרחישים שהוצגו לך בויזואליזציית ${vis.visualization}`;
+  subtext.dir = "rtl";
+  subtext.style.marginTop = "8px";
+  subtext.style.marginBottom = "16px";
+  subtext.style.fontSize = "16px";
+  subtext.style.color = "#555";
+  root.appendChild(subtext);
   
   // Render workload questions (NASA TLX)
   if (state.questionsConfig && state.questionsConfig.model_summary_questions) {
@@ -2397,12 +2409,48 @@ function renderNasaTlxPage(root) {
       state.pageType = "vis_intro";
       render();
     } else {
-      state.pageType = "model_summary_trust";
+      state.pageType = "model_completion";
       render();
     }
   };
   buttonGroup.appendChild(continueBtn);
   
+  root.appendChild(buttonGroup);
+}
+
+function renderModelCompletionPage(root) {
+  const pageName = `ModelCompletion_M${state.modelIndex}`;
+  logPageEntry(pageName, { model_index: state.modelIndex });
+
+  root.innerHTML = "";
+  const modelLetter = getDisplayModelLetter(state.modelIndex);
+
+  const title = document.createElement("h1");
+  title.className = "page-title";
+  title.textContent = `סיום ${getDisplayModelName(state.modelIndex)}`;
+  title.dir = "rtl";
+  root.appendChild(title);
+
+  const body = document.createElement("p");
+  body.className = "page-text";
+  body.innerHTML = `סיימת את חלק הניסוי בו השתמשנו במודל בינה מלאכותית ${getDisplayModelNameBold(state.modelIndex)}`;
+  body.dir = "rtl";
+  body.style.marginTop = "20px";
+  body.style.fontSize = "18px";
+  body.style.lineHeight = "1.6";
+  root.appendChild(body);
+
+  const buttonGroup = document.createElement("div");
+  buttonGroup.className = "button-group";
+  const continueBtn = document.createElement("button");
+  continueBtn.textContent = "המשך";
+  continueBtn.onclick = () => {
+    logPageExit(pageName);
+    const hasWorkload = state.questionsConfig?.model_summary_questions?.workload?.length > 0;
+    state.pageType = hasWorkload ? "model_summary_workload" : "model_summary_trust";
+    render();
+  };
+  buttonGroup.appendChild(continueBtn);
   root.appendChild(buttonGroup);
 }
 
@@ -2417,9 +2465,8 @@ function renderModelSummaryWorkloadPage(root) {
   
   const title = document.createElement("h1");
   title.className = "page-title";
-  const displayModelName = getDisplayModelName(state.modelIndex);
   // Avoid repeating the word "מודל" twice in the title
-  title.textContent = `שאלון מסכם ${displayModelName}`;
+  title.textContent = `שאלון מסכם ${getDisplayModelName(state.modelIndex)}`;
   title.dir = "rtl";
   root.appendChild(title);
   
@@ -2514,9 +2561,8 @@ function renderModelSummaryTrustPage(root) {
   
   const title = document.createElement("h1");
   title.className = "page-title";
-  const displayModelName = getDisplayModelName(state.modelIndex);
   // Avoid repeating the word "מודל" twice in the title
-  title.textContent = `שאלון מסכם ${displayModelName}`;
+  title.textContent = `שאלון מסכם ${getDisplayModelName(state.modelIndex)}`;
   title.dir = "rtl";
   root.appendChild(title);
   
@@ -3769,6 +3815,9 @@ function renderDemographicsPage(root) {
         labelsRow.style.position = "relative";
         
         // Create cells matching radio group structure (reversed 7→1)
+        // Use per-question min_label/max_label when present (tech_skill, viz_literacy), else default (navigation_use)
+        const minLabel = question.min_label || "כמעט אף פעם";
+        const maxLabel = question.max_label || "כל יום";
         for (let i = 7; i >= 1; i--) {
           const labelCell = document.createElement("div");
           labelCell.style.flex = "0 0 auto";
@@ -3780,9 +3829,9 @@ function renderDemographicsPage(root) {
           
           // Add labels to specific columns (now reversed)
           if (i === 1) {
-            labelCell.textContent = "כמעט אף פעם";
+            labelCell.textContent = minLabel;
           } else if (i === 7) {
-            labelCell.textContent = "כל יום";
+            labelCell.textContent = maxLabel;
           }
           // Empty cells for columns 2-6
           
@@ -3993,6 +4042,8 @@ function render() {
       renderTrialQuestionsPage(root);
     } else if (state.pageType === "nasa_tlx") {
       renderNasaTlxPage(root);
+    } else if (state.pageType === "model_completion") {
+      renderModelCompletionPage(root);
     } else if (state.pageType === "model_summary" || state.pageType === "model_summary_workload") {
       renderModelSummaryWorkloadPage(root);
     } else if (state.pageType === "model_summary_trust") {
@@ -4324,9 +4375,13 @@ function navigateToNextPage() {
         state.pageType = "vis_intro";
         render();
       } else {
-        state.pageType = "model_summary_trust";
+        state.pageType = "model_completion";
         render();
       }
+    } else if (state.pageType === "model_completion") {
+      const hasWorkload = state.questionsConfig?.model_summary_questions?.workload?.length > 0;
+      state.pageType = hasWorkload ? "model_summary_workload" : "model_summary_trust";
+      render();
     } else if (state.pageType === "model_summary_workload") {
       // Workload page -> trust page
       state.pageType = "model_summary_trust";
