@@ -10,12 +10,12 @@
         "ג",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 0
+      "correct_answer_index": null
     },
     {
       "scenario_id": "SCN_001_H",
       "question_id": "sa_2",
-      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה ?",
+      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -35,12 +35,12 @@
         "ג",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 0
+      "correct_answer_index": null
     },
     {
       "scenario_id": "SCN_001_R",
       "question_id": "sa_2",
-      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה ?",
+      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -60,12 +60,12 @@
         "ג",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 0
+      "correct_answer_index": null
     },
     {
       "scenario_id": "SCN_001_S",
       "question_id": "sa_2",
-      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה ?",
+      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -78,19 +78,32 @@
     {
       "scenario_id": "SCN_002_H",
       "question_id": "sa_1",
-      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
+      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה?",
       "options": [
-        "א",
-        "ב",
-        "ג",
+        "0",
+        "1",
+        "2",
+        "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 1
+      "correct_answer_index": 2
     },
     {
       "scenario_id": "SCN_002_H",
       "question_id": "sa_2",
-      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה ?",
+      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
+      "options": [
+        "א",
+        "ב",
+        "ג",
+        "לא יודע/ת"
+      ],
+      "correct_answer_index": null
+    },
+    {
+      "scenario_id": "SCN_002_R",
+      "question_id": "sa_1",
+      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -102,7 +115,7 @@
     },
     {
       "scenario_id": "SCN_002_R",
-      "question_id": "sa_1",
+      "question_id": "sa_2",
       "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
       "options": [
         "א",
@@ -110,12 +123,12 @@
         "ג",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 1
+      "correct_answer_index": null
     },
     {
-      "scenario_id": "SCN_002_R",
-      "question_id": "sa_2",
-      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה ?",
+      "scenario_id": "SCN_002_S",
+      "question_id": "sa_1",
+      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -127,7 +140,7 @@
     },
     {
       "scenario_id": "SCN_002_S",
-      "question_id": "sa_1",
+      "question_id": "sa_2",
       "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
       "options": [
         "א",
@@ -135,12 +148,12 @@
         "ג",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 1
+      "correct_answer_index": null
     },
     {
-      "scenario_id": "SCN_002_S",
-      "question_id": "sa_2",
-      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה ?",
+      "scenario_id": "SCN_003_H",
+      "question_id": "sa_1",
+      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -152,20 +165,8 @@
     },
     {
       "scenario_id": "SCN_003_H",
-      "question_id": "sa_1",
-      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
-      "options": [
-        "א",
-        "ב",
-        "ג",
-        "לא יודע/ת"
-      ],
-      "correct_answer_index": 2
-    },
-    {
-      "scenario_id": "SCN_003_H",
       "question_id": "sa_2",
-      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה ?",
+      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -173,16 +174,17 @@
         "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 0
+      "correct_answer_index": 1
     },
     {
       "scenario_id": "SCN_003_R",
       "question_id": "sa_1",
-      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
+      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה?",
       "options": [
-        "א",
-        "ב",
-        "ג",
+        "0",
+        "1",
+        "2",
+        "3",
         "לא יודע/ת"
       ],
       "correct_answer_index": 2
@@ -190,7 +192,7 @@
     {
       "scenario_id": "SCN_003_R",
       "question_id": "sa_2",
-      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה ?",
+      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -198,16 +200,17 @@
         "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 0
+      "correct_answer_index": 1
     },
     {
       "scenario_id": "SCN_003_S",
       "question_id": "sa_1",
-      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
+      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה?",
       "options": [
-        "א",
-        "ב",
-        "ג",
+        "0",
+        "1",
+        "2",
+        "3",
         "לא יודע/ת"
       ],
       "correct_answer_index": 2
@@ -215,7 +218,7 @@
     {
       "scenario_id": "SCN_003_S",
       "question_id": "sa_2",
-      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה ?",
+      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -223,24 +226,25 @@
         "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 0
+      "correct_answer_index": 1
     },
     {
       "scenario_id": "SCN_004_H",
       "question_id": "sa_1",
-      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
+      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה?",
       "options": [
-        "א",
-        "ב",
-        "ג",
+        "0",
+        "1",
+        "2",
+        "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 0
+      "correct_answer_index": 2
     },
     {
       "scenario_id": "SCN_004_H",
       "question_id": "sa_2",
-      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה ?",
+      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -248,24 +252,25 @@
         "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 0
+      "correct_answer_index": 2
     },
     {
       "scenario_id": "SCN_004_R",
       "question_id": "sa_1",
-      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
+      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה?",
       "options": [
-        "א",
-        "ב",
-        "ג",
+        "0",
+        "1",
+        "2",
+        "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 0
+      "correct_answer_index": 2
     },
     {
       "scenario_id": "SCN_004_R",
       "question_id": "sa_2",
-      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה ?",
+      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -273,24 +278,25 @@
         "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 0
+      "correct_answer_index": 2
     },
     {
       "scenario_id": "SCN_004_S",
       "question_id": "sa_1",
-      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
+      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה?",
       "options": [
-        "א",
-        "ב",
-        "ג",
+        "0",
+        "1",
+        "2",
+        "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 0
+      "correct_answer_index": 2
     },
     {
       "scenario_id": "SCN_004_S",
       "question_id": "sa_2",
-      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה ?",
+      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -298,24 +304,25 @@
         "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 0
+      "correct_answer_index": 2
     },
     {
       "scenario_id": "SCN_005_H",
       "question_id": "sa_1",
-      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
+      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה?",
       "options": [
-        "א",
-        "ב",
-        "ג",
+        "0",
+        "1",
+        "2",
+        "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 1
+      "correct_answer_index": 3
     },
     {
       "scenario_id": "SCN_005_H",
       "question_id": "sa_2",
-      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה ?",
+      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -323,24 +330,12 @@
         "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 1
+      "correct_answer_index": 2
     },
     {
       "scenario_id": "SCN_005_R",
       "question_id": "sa_1",
-      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
-      "options": [
-        "א",
-        "ב",
-        "ג",
-        "לא יודע/ת"
-      ],
-      "correct_answer_index": 1
-    },
-    {
-      "scenario_id": "SCN_005_R",
-      "question_id": "sa_2",
-      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה ?",
+      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -348,24 +343,51 @@
         "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 1
+      "correct_answer_index": 3
+    },
+    {
+      "scenario_id": "SCN_005_R",
+      "question_id": "sa_2",
+      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה?",
+      "options": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "לא יודע/ת"
+      ],
+      "correct_answer_index": 2
     },
     {
       "scenario_id": "SCN_005_S",
       "question_id": "sa_1",
-      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
+      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה?",
       "options": [
-        "א",
-        "ב",
-        "ג",
+        "0",
+        "1",
+        "2",
+        "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 1
+      "correct_answer_index": 3
     },
     {
       "scenario_id": "SCN_005_S",
       "question_id": "sa_2",
-      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה ?",
+      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה?",
+      "options": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "לא יודע/ת"
+      ],
+      "correct_answer_index": 2
+    },
+    {
+      "scenario_id": "SCN_006_H",
+      "question_id": "sa_1",
+      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -377,7 +399,7 @@
     },
     {
       "scenario_id": "SCN_006_H",
-      "question_id": "sa_1",
+      "question_id": "sa_2",
       "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
       "options": [
         "א",
@@ -385,49 +407,24 @@
         "ג",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 2
-    },
-    {
-      "scenario_id": "SCN_006_H",
-      "question_id": "sa_2",
-      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה ?",
-      "options": [
-        "0",
-        "1",
-        "2",
-        "3",
-        "לא יודע/ת"
-      ],
-      "correct_answer_index": 2
+      "correct_answer_index": null
     },
     {
       "scenario_id": "SCN_006_R",
       "question_id": "sa_1",
-      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
+      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה?",
       "options": [
-        "א",
-        "ב",
-        "ג",
+        "0",
+        "1",
+        "2",
+        "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 2
+      "correct_answer_index": 1
     },
     {
       "scenario_id": "SCN_006_R",
       "question_id": "sa_2",
-      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה ?",
-      "options": [
-        "0",
-        "1",
-        "2",
-        "3",
-        "לא יודע/ת"
-      ],
-      "correct_answer_index": 2
-    },
-    {
-      "scenario_id": "SCN_006_S",
-      "question_id": "sa_1",
       "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
       "options": [
         "א",
@@ -435,12 +432,12 @@
         "ג",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 2
+      "correct_answer_index": null
     },
     {
       "scenario_id": "SCN_006_S",
-      "question_id": "sa_2",
-      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה ?",
+      "question_id": "sa_1",
+      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -448,7 +445,19 @@
         "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 2
+      "correct_answer_index": 1
+    },
+    {
+      "scenario_id": "SCN_006_S",
+      "question_id": "sa_2",
+      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
+      "options": [
+        "א",
+        "ב",
+        "ג",
+        "לא יודע/ת"
+      ],
+      "correct_answer_index": null
     },
     {
       "scenario_id": "SCN_007_H",
@@ -460,12 +469,12 @@
         "ג",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 0
+      "correct_answer_index": null
     },
     {
       "scenario_id": "SCN_007_H",
       "question_id": "sa_2",
-      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה ?",
+      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -473,7 +482,7 @@
         "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 1
+      "correct_answer_index": 3
     },
     {
       "scenario_id": "SCN_007_R",
@@ -485,12 +494,12 @@
         "ג",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 0
+      "correct_answer_index": null
     },
     {
       "scenario_id": "SCN_007_R",
       "question_id": "sa_2",
-      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה ?",
+      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -498,7 +507,7 @@
         "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 1
+      "correct_answer_index": 3
     },
     {
       "scenario_id": "SCN_007_S",
@@ -510,12 +519,25 @@
         "ג",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 0
+      "correct_answer_index": null
     },
     {
       "scenario_id": "SCN_007_S",
       "question_id": "sa_2",
-      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה ?",
+      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה?",
+      "options": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "לא יודע/ת"
+      ],
+      "correct_answer_index": 3
+    },
+    {
+      "scenario_id": "SCN_008_H",
+      "question_id": "sa_1",
+      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -527,7 +549,7 @@
     },
     {
       "scenario_id": "SCN_008_H",
-      "question_id": "sa_1",
+      "question_id": "sa_2",
       "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
       "options": [
         "א",
@@ -535,29 +557,17 @@
         "ג",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 1
+      "correct_answer_index": null
     },
     {
-      "scenario_id": "SCN_008_H",
-      "question_id": "sa_2",
-      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה ?",
+      "scenario_id": "SCN_008_R",
+      "question_id": "sa_1",
+      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה?",
       "options": [
         "0",
         "1",
         "2",
         "3",
-        "לא יודע/ת"
-      ],
-      "correct_answer_index": 0
-    },
-    {
-      "scenario_id": "SCN_008_R",
-      "question_id": "sa_1",
-      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
-      "options": [
-        "א",
-        "ב",
-        "ג",
         "לא יודע/ת"
       ],
       "correct_answer_index": 1
@@ -565,24 +575,24 @@
     {
       "scenario_id": "SCN_008_R",
       "question_id": "sa_2",
-      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה ?",
-      "options": [
-        "0",
-        "1",
-        "2",
-        "3",
-        "לא יודע/ת"
-      ],
-      "correct_answer_index": 0
-    },
-    {
-      "scenario_id": "SCN_008_S",
-      "question_id": "sa_1",
       "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
       "options": [
         "א",
         "ב",
         "ג",
+        "לא יודע/ת"
+      ],
+      "correct_answer_index": null
+    },
+    {
+      "scenario_id": "SCN_008_S",
+      "question_id": "sa_1",
+      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה?",
+      "options": [
+        "0",
+        "1",
+        "2",
+        "3",
         "לא יודע/ת"
       ],
       "correct_answer_index": 1
@@ -590,24 +600,24 @@
     {
       "scenario_id": "SCN_008_S",
       "question_id": "sa_2",
-      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה ?",
-      "options": [
-        "0",
-        "1",
-        "2",
-        "3",
-        "לא יודע/ת"
-      ],
-      "correct_answer_index": 0
-    },
-    {
-      "scenario_id": "SCN_009_H",
-      "question_id": "sa_1",
       "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
       "options": [
         "א",
         "ב",
         "ג",
+        "לא יודע/ת"
+      ],
+      "correct_answer_index": null
+    },
+    {
+      "scenario_id": "SCN_009_H",
+      "question_id": "sa_1",
+      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה?",
+      "options": [
+        "0",
+        "1",
+        "2",
+        "3",
         "לא יודע/ת"
       ],
       "correct_answer_index": 2
@@ -615,32 +625,20 @@
     {
       "scenario_id": "SCN_009_H",
       "question_id": "sa_2",
-      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה ?",
+      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה?",
       "options": [
         "0",
         "1",
         "2",
         "3",
-        "לא יודע/ת"
-      ],
-      "correct_answer_index": 0
-    },
-    {
-      "scenario_id": "SCN_009_R",
-      "question_id": "sa_1",
-      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
-      "options": [
-        "א",
-        "ב",
-        "ג",
         "לא יודע/ת"
       ],
       "correct_answer_index": 2
     },
     {
       "scenario_id": "SCN_009_R",
-      "question_id": "sa_2",
-      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה ?",
+      "question_id": "sa_1",
+      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -648,16 +646,30 @@
         "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 0
+      "correct_answer_index": 2
+    },
+    {
+      "scenario_id": "SCN_009_R",
+      "question_id": "sa_2",
+      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה?",
+      "options": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "לא יודע/ת"
+      ],
+      "correct_answer_index": 2
     },
     {
       "scenario_id": "SCN_009_S",
       "question_id": "sa_1",
-      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
+      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה?",
       "options": [
-        "א",
-        "ב",
-        "ג",
+        "0",
+        "1",
+        "2",
+        "3",
         "לא יודע/ת"
       ],
       "correct_answer_index": 2
@@ -665,7 +677,7 @@
     {
       "scenario_id": "SCN_009_S",
       "question_id": "sa_2",
-      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה ?",
+      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -673,24 +685,38 @@
         "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 0
+      "correct_answer_index": 2
     },
     {
       "scenario_id": "SCN_010_H",
       "question_id": "sa_1",
-      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
+      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה?",
       "options": [
-        "א",
-        "ב",
-        "ג",
+        "0",
+        "1",
+        "2",
+        "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 0
+      "correct_answer_index": 2
     },
     {
       "scenario_id": "SCN_010_H",
       "question_id": "sa_2",
-      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה ?",
+      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה?",
+      "options": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "לא יודע/ת"
+      ],
+      "correct_answer_index": 1
+    },
+    {
+      "scenario_id": "SCN_010_R",
+      "question_id": "sa_1",
+      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -702,20 +728,21 @@
     },
     {
       "scenario_id": "SCN_010_R",
-      "question_id": "sa_1",
-      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
+      "question_id": "sa_2",
+      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה?",
       "options": [
-        "א",
-        "ב",
-        "ג",
+        "0",
+        "1",
+        "2",
+        "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 0
+      "correct_answer_index": 1
     },
     {
-      "scenario_id": "SCN_010_R",
-      "question_id": "sa_2",
-      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה ?",
+      "scenario_id": "SCN_010_S",
+      "question_id": "sa_1",
+      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -727,20 +754,21 @@
     },
     {
       "scenario_id": "SCN_010_S",
-      "question_id": "sa_1",
-      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
+      "question_id": "sa_2",
+      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה?",
       "options": [
-        "א",
-        "ב",
-        "ג",
+        "0",
+        "1",
+        "2",
+        "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 0
+      "correct_answer_index": 1
     },
     {
-      "scenario_id": "SCN_010_S",
-      "question_id": "sa_2",
-      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה ?",
+      "scenario_id": "SCN_011_H",
+      "question_id": "sa_1",
+      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -752,20 +780,8 @@
     },
     {
       "scenario_id": "SCN_011_H",
-      "question_id": "sa_1",
-      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
-      "options": [
-        "א",
-        "ב",
-        "ג",
-        "לא יודע/ת"
-      ],
-      "correct_answer_index": 1
-    },
-    {
-      "scenario_id": "SCN_011_H",
       "question_id": "sa_2",
-      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה ?",
+      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -773,24 +789,25 @@
         "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 3
+      "correct_answer_index": 2
     },
     {
       "scenario_id": "SCN_011_R",
       "question_id": "sa_1",
-      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
+      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה?",
       "options": [
-        "א",
-        "ב",
-        "ג",
+        "0",
+        "1",
+        "2",
+        "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 1
+      "correct_answer_index": 2
     },
     {
       "scenario_id": "SCN_011_R",
       "question_id": "sa_2",
-      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה ?",
+      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -798,24 +815,12 @@
         "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 3
+      "correct_answer_index": 2
     },
     {
       "scenario_id": "SCN_011_S",
       "question_id": "sa_1",
-      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
-      "options": [
-        "א",
-        "ב",
-        "ג",
-        "לא יודע/ת"
-      ],
-      "correct_answer_index": 1
-    },
-    {
-      "scenario_id": "SCN_011_S",
-      "question_id": "sa_2",
-      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה ?",
+      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -823,16 +828,30 @@
         "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 3
+      "correct_answer_index": 2
+    },
+    {
+      "scenario_id": "SCN_011_S",
+      "question_id": "sa_2",
+      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה?",
+      "options": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "לא יודע/ת"
+      ],
+      "correct_answer_index": 2
     },
     {
       "scenario_id": "SCN_012_H",
       "question_id": "sa_1",
-      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
+      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה?",
       "options": [
-        "א",
-        "ב",
-        "ג",
+        "0",
+        "1",
+        "2",
+        "3",
         "לא יודע/ת"
       ],
       "correct_answer_index": 2
@@ -840,19 +859,6 @@
     {
       "scenario_id": "SCN_012_H",
       "question_id": "sa_2",
-      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה ?",
-      "options": [
-        "0",
-        "1",
-        "2",
-        "3",
-        "לא יודע/ת"
-      ],
-      "correct_answer_index": 0
-    },
-    {
-      "scenario_id": "SCN_012_R",
-      "question_id": "sa_1",
       "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
       "options": [
         "א",
@@ -860,12 +866,12 @@
         "ג",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 2
+      "correct_answer_index": null
     },
     {
       "scenario_id": "SCN_012_R",
-      "question_id": "sa_2",
-      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה ?",
+      "question_id": "sa_1",
+      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -873,11 +879,11 @@
         "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 0
+      "correct_answer_index": 2
     },
     {
-      "scenario_id": "SCN_012_S",
-      "question_id": "sa_1",
+      "scenario_id": "SCN_012_R",
+      "question_id": "sa_2",
       "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
       "options": [
         "א",
@@ -885,12 +891,12 @@
         "ג",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 2
+      "correct_answer_index": null
     },
     {
       "scenario_id": "SCN_012_S",
-      "question_id": "sa_2",
-      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה ?",
+      "question_id": "sa_1",
+      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -898,7 +904,19 @@
         "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 0
+      "correct_answer_index": 2
+    },
+    {
+      "scenario_id": "SCN_012_S",
+      "question_id": "sa_2",
+      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
+      "options": [
+        "א",
+        "ב",
+        "ג",
+        "לא יודע/ת"
+      ],
+      "correct_answer_index": null
     },
     {
       "scenario_id": "SCN_013_H",
@@ -910,12 +928,12 @@
         "ג",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 0
+      "correct_answer_index": null
     },
     {
       "scenario_id": "SCN_013_H",
       "question_id": "sa_2",
-      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה ?",
+      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -923,7 +941,7 @@
         "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 1
+      "correct_answer_index": 2
     },
     {
       "scenario_id": "SCN_013_R",
@@ -935,12 +953,12 @@
         "ג",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 0
+      "correct_answer_index": null
     },
     {
       "scenario_id": "SCN_013_R",
       "question_id": "sa_2",
-      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה ?",
+      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -948,7 +966,7 @@
         "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 1
+      "correct_answer_index": 2
     },
     {
       "scenario_id": "SCN_013_S",
@@ -960,37 +978,12 @@
         "ג",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 0
+      "correct_answer_index": null
     },
     {
       "scenario_id": "SCN_013_S",
       "question_id": "sa_2",
-      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה ?",
-      "options": [
-        "0",
-        "1",
-        "2",
-        "3",
-        "לא יודע/ת"
-      ],
-      "correct_answer_index": 1
-    },
-    {
-      "scenario_id": "SCN_014_H",
-      "question_id": "sa_1",
-      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
-      "options": [
-        "א",
-        "ב",
-        "ג",
-        "לא יודע/ת"
-      ],
-      "correct_answer_index": 1
-    },
-    {
-      "scenario_id": "SCN_014_H",
-      "question_id": "sa_2",
-      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה ?",
+      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -1001,21 +994,9 @@
       "correct_answer_index": 2
     },
     {
-      "scenario_id": "SCN_014_R",
+      "scenario_id": "SCN_014_H",
       "question_id": "sa_1",
-      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
-      "options": [
-        "א",
-        "ב",
-        "ג",
-        "לא יודע/ת"
-      ],
-      "correct_answer_index": 1
-    },
-    {
-      "scenario_id": "SCN_014_R",
-      "question_id": "sa_2",
-      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה ?",
+      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -1023,11 +1004,11 @@
         "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 2
+      "correct_answer_index": 3
     },
     {
-      "scenario_id": "SCN_014_S",
-      "question_id": "sa_1",
+      "scenario_id": "SCN_014_H",
+      "question_id": "sa_2",
       "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
       "options": [
         "א",
@@ -1035,12 +1016,62 @@
         "ג",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 1
+      "correct_answer_index": null
+    },
+    {
+      "scenario_id": "SCN_014_R",
+      "question_id": "sa_1",
+      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה?",
+      "options": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "לא יודע/ת"
+      ],
+      "correct_answer_index": 3
+    },
+    {
+      "scenario_id": "SCN_014_R",
+      "question_id": "sa_2",
+      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
+      "options": [
+        "א",
+        "ב",
+        "ג",
+        "לא יודע/ת"
+      ],
+      "correct_answer_index": null
+    },
+    {
+      "scenario_id": "SCN_014_S",
+      "question_id": "sa_1",
+      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה?",
+      "options": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "לא יודע/ת"
+      ],
+      "correct_answer_index": 3
     },
     {
       "scenario_id": "SCN_014_S",
       "question_id": "sa_2",
-      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה ?",
+      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
+      "options": [
+        "א",
+        "ב",
+        "ג",
+        "לא יודע/ת"
+      ],
+      "correct_answer_index": null
+    },
+    {
+      "scenario_id": "SCN_015_H",
+      "question_id": "sa_1",
+      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -1052,20 +1083,8 @@
     },
     {
       "scenario_id": "SCN_015_H",
-      "question_id": "sa_1",
-      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
-      "options": [
-        "א",
-        "ב",
-        "ג",
-        "לא יודע/ת"
-      ],
-      "correct_answer_index": 2
-    },
-    {
-      "scenario_id": "SCN_015_H",
       "question_id": "sa_2",
-      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה ?",
+      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -1073,16 +1092,17 @@
         "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 0
+      "correct_answer_index": 1
     },
     {
       "scenario_id": "SCN_015_R",
       "question_id": "sa_1",
-      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
+      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה?",
       "options": [
-        "א",
-        "ב",
-        "ג",
+        "0",
+        "1",
+        "2",
+        "3",
         "לא יודע/ת"
       ],
       "correct_answer_index": 2
@@ -1090,7 +1110,7 @@
     {
       "scenario_id": "SCN_015_R",
       "question_id": "sa_2",
-      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה ?",
+      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -1098,16 +1118,17 @@
         "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 0
+      "correct_answer_index": 1
     },
     {
       "scenario_id": "SCN_015_S",
       "question_id": "sa_1",
-      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
+      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה?",
       "options": [
-        "א",
-        "ב",
-        "ג",
+        "0",
+        "1",
+        "2",
+        "3",
         "לא יודע/ת"
       ],
       "correct_answer_index": 2
@@ -1115,7 +1136,7 @@
     {
       "scenario_id": "SCN_015_S",
       "question_id": "sa_2",
-      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה ?",
+      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -1123,24 +1144,25 @@
         "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 0
+      "correct_answer_index": 1
     },
     {
       "scenario_id": "SCN_016_H",
       "question_id": "sa_1",
-      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
+      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה?",
       "options": [
-        "א",
-        "ב",
-        "ג",
+        "0",
+        "1",
+        "2",
+        "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 0
+      "correct_answer_index": 2
     },
     {
       "scenario_id": "SCN_016_H",
       "question_id": "sa_2",
-      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה ?",
+      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -1148,24 +1170,25 @@
         "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 0
+      "correct_answer_index": 2
     },
     {
       "scenario_id": "SCN_016_R",
       "question_id": "sa_1",
-      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
+      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה?",
       "options": [
-        "א",
-        "ב",
-        "ג",
+        "0",
+        "1",
+        "2",
+        "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 0
+      "correct_answer_index": 2
     },
     {
       "scenario_id": "SCN_016_R",
       "question_id": "sa_2",
-      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה ?",
+      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -1173,24 +1196,25 @@
         "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 0
+      "correct_answer_index": 2
     },
     {
       "scenario_id": "SCN_016_S",
       "question_id": "sa_1",
-      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
+      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה?",
       "options": [
-        "א",
-        "ב",
-        "ג",
+        "0",
+        "1",
+        "2",
+        "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 0
+      "correct_answer_index": 2
     },
     {
       "scenario_id": "SCN_016_S",
       "question_id": "sa_2",
-      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה ?",
+      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -1198,24 +1222,25 @@
         "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 0
+      "correct_answer_index": 2
     },
     {
       "scenario_id": "SCN_017_H",
       "question_id": "sa_1",
-      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
+      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה?",
       "options": [
-        "א",
-        "ב",
-        "ג",
+        "0",
+        "1",
+        "2",
+        "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 1
+      "correct_answer_index": 2
     },
     {
       "scenario_id": "SCN_017_H",
       "question_id": "sa_2",
-      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה ?",
+      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -1223,24 +1248,25 @@
         "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 1
+      "correct_answer_index": 3
     },
     {
       "scenario_id": "SCN_017_R",
       "question_id": "sa_1",
-      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
+      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה?",
       "options": [
-        "א",
-        "ב",
-        "ג",
+        "0",
+        "1",
+        "2",
+        "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 1
+      "correct_answer_index": 2
     },
     {
       "scenario_id": "SCN_017_R",
       "question_id": "sa_2",
-      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה ?",
+      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -1248,24 +1274,12 @@
         "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 1
+      "correct_answer_index": 3
     },
     {
       "scenario_id": "SCN_017_S",
       "question_id": "sa_1",
-      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
-      "options": [
-        "א",
-        "ב",
-        "ג",
-        "לא יודע/ת"
-      ],
-      "correct_answer_index": 1
-    },
-    {
-      "scenario_id": "SCN_017_S",
-      "question_id": "sa_2",
-      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה ?",
+      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -1273,16 +1287,30 @@
         "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 1
+      "correct_answer_index": 2
+    },
+    {
+      "scenario_id": "SCN_017_S",
+      "question_id": "sa_2",
+      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה?",
+      "options": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "לא יודע/ת"
+      ],
+      "correct_answer_index": 3
     },
     {
       "scenario_id": "SCN_018_H",
       "question_id": "sa_1",
-      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
+      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה?",
       "options": [
-        "א",
-        "ב",
-        "ג",
+        "0",
+        "1",
+        "2",
+        "3",
         "לא יודע/ת"
       ],
       "correct_answer_index": 2
@@ -1290,7 +1318,19 @@
     {
       "scenario_id": "SCN_018_H",
       "question_id": "sa_2",
-      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה ?",
+      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
+      "options": [
+        "א",
+        "ב",
+        "ג",
+        "לא יודע/ת"
+      ],
+      "correct_answer_index": null
+    },
+    {
+      "scenario_id": "SCN_018_R",
+      "question_id": "sa_1",
+      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -1302,7 +1342,7 @@
     },
     {
       "scenario_id": "SCN_018_R",
-      "question_id": "sa_1",
+      "question_id": "sa_2",
       "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
       "options": [
         "א",
@@ -1310,12 +1350,12 @@
         "ג",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 2
+      "correct_answer_index": null
     },
     {
-      "scenario_id": "SCN_018_R",
-      "question_id": "sa_2",
-      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה ?",
+      "scenario_id": "SCN_018_S",
+      "question_id": "sa_1",
+      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -1327,7 +1367,7 @@
     },
     {
       "scenario_id": "SCN_018_S",
-      "question_id": "sa_1",
+      "question_id": "sa_2",
       "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
       "options": [
         "א",
@@ -1335,20 +1375,7 @@
         "ג",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 2
-    },
-    {
-      "scenario_id": "SCN_018_S",
-      "question_id": "sa_2",
-      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה ?",
-      "options": [
-        "0",
-        "1",
-        "2",
-        "3",
-        "לא יודע/ת"
-      ],
-      "correct_answer_index": 2
+      "correct_answer_index": null
     },
     {
       "scenario_id": "SCN_019_H",
@@ -1360,12 +1387,12 @@
         "ג",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 0
+      "correct_answer_index": null
     },
     {
       "scenario_id": "SCN_019_H",
       "question_id": "sa_2",
-      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה ?",
+      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -1373,7 +1400,7 @@
         "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 1
+      "correct_answer_index": 0
     },
     {
       "scenario_id": "SCN_019_R",
@@ -1385,12 +1412,12 @@
         "ג",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 0
+      "correct_answer_index": null
     },
     {
       "scenario_id": "SCN_019_R",
       "question_id": "sa_2",
-      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה ?",
+      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -1398,7 +1425,7 @@
         "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 1
+      "correct_answer_index": 0
     },
     {
       "scenario_id": "SCN_019_S",
@@ -1410,12 +1437,12 @@
         "ג",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 0
+      "correct_answer_index": null
     },
     {
       "scenario_id": "SCN_019_S",
       "question_id": "sa_2",
-      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה ?",
+      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -1423,24 +1450,37 @@
         "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 1
+      "correct_answer_index": 0
     },
     {
       "scenario_id": "SCN_020_H",
       "question_id": "sa_1",
-      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
+      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה?",
       "options": [
-        "א",
-        "ב",
-        "ג",
+        "0",
+        "1",
+        "2",
+        "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 1
+      "correct_answer_index": 2
     },
     {
       "scenario_id": "SCN_020_H",
       "question_id": "sa_2",
-      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה ?",
+      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
+      "options": [
+        "א",
+        "ב",
+        "ג",
+        "לא יודע/ת"
+      ],
+      "correct_answer_index": null
+    },
+    {
+      "scenario_id": "SCN_020_R",
+      "question_id": "sa_1",
+      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -1448,24 +1488,62 @@
         "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 0
+      "correct_answer_index": 2
     },
     {
       "scenario_id": "SCN_020_R",
-      "question_id": "sa_1",
+      "question_id": "sa_2",
       "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
       "options": [
         "א",
         "ב",
         "ג",
+        "לא יודע/ת"
+      ],
+      "correct_answer_index": null
+    },
+    {
+      "scenario_id": "SCN_020_S",
+      "question_id": "sa_1",
+      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה?",
+      "options": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "לא יודע/ת"
+      ],
+      "correct_answer_index": 2
+    },
+    {
+      "scenario_id": "SCN_020_S",
+      "question_id": "sa_2",
+      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
+      "options": [
+        "א",
+        "ב",
+        "ג",
+        "לא יודע/ת"
+      ],
+      "correct_answer_index": null
+    },
+    {
+      "scenario_id": "SCN_021_H",
+      "question_id": "sa_1",
+      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה?",
+      "options": [
+        "0",
+        "1",
+        "2",
+        "3",
         "לא יודע/ת"
       ],
       "correct_answer_index": 1
     },
     {
-      "scenario_id": "SCN_020_R",
+      "scenario_id": "SCN_021_H",
       "question_id": "sa_2",
-      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה ?",
+      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -1473,74 +1551,25 @@
         "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 0
+      "correct_answer_index": 3
     },
     {
-      "scenario_id": "SCN_020_S",
+      "scenario_id": "SCN_021_R",
       "question_id": "sa_1",
-      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
+      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה?",
       "options": [
-        "א",
-        "ב",
-        "ג",
+        "0",
+        "1",
+        "2",
+        "3",
         "לא יודע/ת"
       ],
       "correct_answer_index": 1
     },
     {
-      "scenario_id": "SCN_020_S",
-      "question_id": "sa_2",
-      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה ?",
-      "options": [
-        "0",
-        "1",
-        "2",
-        "3",
-        "לא יודע/ת"
-      ],
-      "correct_answer_index": 0
-    },
-    {
-      "scenario_id": "SCN_021_H",
-      "question_id": "sa_1",
-      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
-      "options": [
-        "א",
-        "ב",
-        "ג",
-        "לא יודע/ת"
-      ],
-      "correct_answer_index": 2
-    },
-    {
-      "scenario_id": "SCN_021_H",
-      "question_id": "sa_2",
-      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה ?",
-      "options": [
-        "0",
-        "1",
-        "2",
-        "3",
-        "לא יודע/ת"
-      ],
-      "correct_answer_index": 0
-    },
-    {
-      "scenario_id": "SCN_021_R",
-      "question_id": "sa_1",
-      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
-      "options": [
-        "א",
-        "ב",
-        "ג",
-        "לא יודע/ת"
-      ],
-      "correct_answer_index": 2
-    },
-    {
       "scenario_id": "SCN_021_R",
       "question_id": "sa_2",
-      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה ?",
+      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -1548,24 +1577,12 @@
         "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 0
+      "correct_answer_index": 3
     },
     {
       "scenario_id": "SCN_021_S",
       "question_id": "sa_1",
-      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
-      "options": [
-        "א",
-        "ב",
-        "ג",
-        "לא יודע/ת"
-      ],
-      "correct_answer_index": 2
-    },
-    {
-      "scenario_id": "SCN_021_S",
-      "question_id": "sa_2",
-      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה ?",
+      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -1573,24 +1590,51 @@
         "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 0
+      "correct_answer_index": 1
+    },
+    {
+      "scenario_id": "SCN_021_S",
+      "question_id": "sa_2",
+      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה?",
+      "options": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "לא יודע/ת"
+      ],
+      "correct_answer_index": 3
     },
     {
       "scenario_id": "SCN_022_H",
       "question_id": "sa_1",
-      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
+      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה?",
       "options": [
-        "א",
-        "ב",
-        "ג",
+        "0",
+        "1",
+        "2",
+        "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 0
+      "correct_answer_index": 2
     },
     {
       "scenario_id": "SCN_022_H",
       "question_id": "sa_2",
-      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה ?",
+      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה?",
+      "options": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "לא יודע/ת"
+      ],
+      "correct_answer_index": 1
+    },
+    {
+      "scenario_id": "SCN_022_R",
+      "question_id": "sa_1",
+      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -1602,20 +1646,21 @@
     },
     {
       "scenario_id": "SCN_022_R",
-      "question_id": "sa_1",
-      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
+      "question_id": "sa_2",
+      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה?",
       "options": [
-        "א",
-        "ב",
-        "ג",
+        "0",
+        "1",
+        "2",
+        "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 0
+      "correct_answer_index": 1
     },
     {
-      "scenario_id": "SCN_022_R",
-      "question_id": "sa_2",
-      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה ?",
+      "scenario_id": "SCN_022_S",
+      "question_id": "sa_1",
+      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -1627,20 +1672,21 @@
     },
     {
       "scenario_id": "SCN_022_S",
-      "question_id": "sa_1",
-      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
+      "question_id": "sa_2",
+      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה?",
       "options": [
-        "א",
-        "ב",
-        "ג",
+        "0",
+        "1",
+        "2",
+        "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 0
+      "correct_answer_index": 1
     },
     {
-      "scenario_id": "SCN_022_S",
-      "question_id": "sa_2",
-      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה ?",
+      "scenario_id": "SCN_023_H",
+      "question_id": "sa_1",
+      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -1652,95 +1698,98 @@
     },
     {
       "scenario_id": "SCN_023_H",
-      "question_id": "sa_1",
-      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
-      "options": [
-        "א",
-        "ב",
-        "ג",
-        "לא יודע/ת"
-      ],
-      "correct_answer_index": 1
-    },
-    {
-      "scenario_id": "SCN_023_H",
       "question_id": "sa_2",
-      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה ?",
+      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה?",
       "options": [
         "0",
         "1",
         "2",
         "3",
-        "לא יודע/ת"
-      ],
-      "correct_answer_index": 3
-    },
-    {
-      "scenario_id": "SCN_023_R",
-      "question_id": "sa_1",
-      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
-      "options": [
-        "א",
-        "ב",
-        "ג",
         "לא יודע/ת"
       ],
       "correct_answer_index": 1
     },
     {
       "scenario_id": "SCN_023_R",
-      "question_id": "sa_2",
-      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה ?",
+      "question_id": "sa_1",
+      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה?",
       "options": [
         "0",
         "1",
         "2",
         "3",
-        "לא יודע/ת"
-      ],
-      "correct_answer_index": 3
-    },
-    {
-      "scenario_id": "SCN_023_S",
-      "question_id": "sa_1",
-      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
-      "options": [
-        "א",
-        "ב",
-        "ג",
-        "לא יודע/ת"
-      ],
-      "correct_answer_index": 1
-    },
-    {
-      "scenario_id": "SCN_023_S",
-      "question_id": "sa_2",
-      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה ?",
-      "options": [
-        "0",
-        "1",
-        "2",
-        "3",
-        "לא יודע/ת"
-      ],
-      "correct_answer_index": 3
-    },
-    {
-      "scenario_id": "SCN_024_H",
-      "question_id": "sa_1",
-      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
-      "options": [
-        "א",
-        "ב",
-        "ג",
         "לא יודע/ת"
       ],
       "correct_answer_index": 2
     },
     {
+      "scenario_id": "SCN_023_R",
+      "question_id": "sa_2",
+      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה?",
+      "options": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "לא יודע/ת"
+      ],
+      "correct_answer_index": 1
+    },
+    {
+      "scenario_id": "SCN_023_S",
+      "question_id": "sa_1",
+      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה?",
+      "options": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "לא יודע/ת"
+      ],
+      "correct_answer_index": 2
+    },
+    {
+      "scenario_id": "SCN_023_S",
+      "question_id": "sa_2",
+      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה?",
+      "options": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "לא יודע/ת"
+      ],
+      "correct_answer_index": 1
+    },
+    {
+      "scenario_id": "SCN_024_H",
+      "question_id": "sa_1",
+      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה?",
+      "options": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "לא יודע/ת"
+      ],
+      "correct_answer_index": 0
+    },
+    {
       "scenario_id": "SCN_024_H",
       "question_id": "sa_2",
-      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה ?",
+      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
+      "options": [
+        "א",
+        "ב",
+        "ג",
+        "לא יודע/ת"
+      ],
+      "correct_answer_index": null
+    },
+    {
+      "scenario_id": "SCN_024_R",
+      "question_id": "sa_1",
+      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -1752,7 +1801,7 @@
     },
     {
       "scenario_id": "SCN_024_R",
-      "question_id": "sa_1",
+      "question_id": "sa_2",
       "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
       "options": [
         "א",
@@ -1760,12 +1809,12 @@
         "ג",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 2
+      "correct_answer_index": null
     },
     {
-      "scenario_id": "SCN_024_R",
-      "question_id": "sa_2",
-      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה ?",
+      "scenario_id": "SCN_024_S",
+      "question_id": "sa_1",
+      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -1777,7 +1826,7 @@
     },
     {
       "scenario_id": "SCN_024_S",
-      "question_id": "sa_1",
+      "question_id": "sa_2",
       "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
       "options": [
         "א",
@@ -1785,20 +1834,7 @@
         "ג",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 2
-    },
-    {
-      "scenario_id": "SCN_024_S",
-      "question_id": "sa_2",
-      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה ?",
-      "options": [
-        "0",
-        "1",
-        "2",
-        "3",
-        "לא יודע/ת"
-      ],
-      "correct_answer_index": 0
+      "correct_answer_index": null
     },
     {
       "scenario_id": "SCN_025_H",
@@ -1810,12 +1846,12 @@
         "ג",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 0
+      "correct_answer_index": null
     },
     {
       "scenario_id": "SCN_025_H",
       "question_id": "sa_2",
-      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה ?",
+      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -1823,7 +1859,7 @@
         "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 1
+      "correct_answer_index": 2
     },
     {
       "scenario_id": "SCN_025_R",
@@ -1835,12 +1871,12 @@
         "ג",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 0
+      "correct_answer_index": null
     },
     {
       "scenario_id": "SCN_025_R",
       "question_id": "sa_2",
-      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה ?",
+      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -1848,7 +1884,7 @@
         "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 1
+      "correct_answer_index": 2
     },
     {
       "scenario_id": "SCN_025_S",
@@ -1860,12 +1896,12 @@
         "ג",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 0
+      "correct_answer_index": null
     },
     {
       "scenario_id": "SCN_025_S",
       "question_id": "sa_2",
-      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה ?",
+      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -1873,11 +1909,24 @@
         "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 1
+      "correct_answer_index": 2
     },
     {
       "scenario_id": "SCN_026_H",
       "question_id": "sa_1",
+      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה?",
+      "options": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "לא יודע/ת"
+      ],
+      "correct_answer_index": 2
+    },
+    {
+      "scenario_id": "SCN_026_H",
+      "question_id": "sa_2",
       "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
       "options": [
         "א",
@@ -1885,12 +1934,12 @@
         "ג",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 1
+      "correct_answer_index": null
     },
     {
-      "scenario_id": "SCN_026_H",
-      "question_id": "sa_2",
-      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה ?",
+      "scenario_id": "SCN_026_R",
+      "question_id": "sa_1",
+      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -1902,7 +1951,7 @@
     },
     {
       "scenario_id": "SCN_026_R",
-      "question_id": "sa_1",
+      "question_id": "sa_2",
       "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
       "options": [
         "א",
@@ -1910,12 +1959,12 @@
         "ג",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 1
+      "correct_answer_index": null
     },
     {
-      "scenario_id": "SCN_026_R",
-      "question_id": "sa_2",
-      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה ?",
+      "scenario_id": "SCN_026_S",
+      "question_id": "sa_1",
+      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -1927,20 +1976,33 @@
     },
     {
       "scenario_id": "SCN_026_S",
-      "question_id": "sa_1",
+      "question_id": "sa_2",
       "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
       "options": [
         "א",
         "ב",
         "ג",
+        "לא יודע/ת"
+      ],
+      "correct_answer_index": null
+    },
+    {
+      "scenario_id": "SCN_027_H",
+      "question_id": "sa_1",
+      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה?",
+      "options": [
+        "0",
+        "1",
+        "2",
+        "3",
         "לא יודע/ת"
       ],
       "correct_answer_index": 1
     },
     {
-      "scenario_id": "SCN_026_S",
+      "scenario_id": "SCN_027_H",
       "question_id": "sa_2",
-      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה ?",
+      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -1948,49 +2010,25 @@
         "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 2
-    },
-    {
-      "scenario_id": "SCN_027_H",
-      "question_id": "sa_1",
-      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
-      "options": [
-        "א",
-        "ב",
-        "ג",
-        "לא יודע/ת"
-      ],
-      "correct_answer_index": 2
-    },
-    {
-      "scenario_id": "SCN_027_H",
-      "question_id": "sa_2",
-      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה ?",
-      "options": [
-        "0",
-        "1",
-        "2",
-        "3",
-        "לא יודע/ת"
-      ],
-      "correct_answer_index": 0
+      "correct_answer_index": 3
     },
     {
       "scenario_id": "SCN_027_R",
       "question_id": "sa_1",
-      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
+      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה?",
       "options": [
-        "א",
-        "ב",
-        "ג",
+        "0",
+        "1",
+        "2",
+        "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 2
+      "correct_answer_index": 1
     },
     {
       "scenario_id": "SCN_027_R",
       "question_id": "sa_2",
-      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה ?",
+      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -1998,24 +2036,51 @@
         "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 0
+      "correct_answer_index": 3
     },
     {
       "scenario_id": "SCN_027_S",
       "question_id": "sa_1",
-      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
+      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה?",
       "options": [
-        "א",
-        "ב",
-        "ג",
+        "0",
+        "1",
+        "2",
+        "3",
+        "לא יודע/ת"
+      ],
+      "correct_answer_index": 1
+    },
+    {
+      "scenario_id": "SCN_027_S",
+      "question_id": "sa_2",
+      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה?",
+      "options": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "לא יודע/ת"
+      ],
+      "correct_answer_index": 3
+    },
+    {
+      "scenario_id": "SCN_028_H",
+      "question_id": "sa_1",
+      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה?",
+      "options": [
+        "0",
+        "1",
+        "2",
+        "3",
         "לא יודע/ת"
       ],
       "correct_answer_index": 2
     },
     {
-      "scenario_id": "SCN_027_S",
+      "scenario_id": "SCN_028_H",
       "question_id": "sa_2",
-      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה ?",
+      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -2023,49 +2088,25 @@
         "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 0
-    },
-    {
-      "scenario_id": "SCN_028_H",
-      "question_id": "sa_1",
-      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
-      "options": [
-        "א",
-        "ב",
-        "ג",
-        "לא יודע/ת"
-      ],
-      "correct_answer_index": 0
-    },
-    {
-      "scenario_id": "SCN_028_H",
-      "question_id": "sa_2",
-      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה ?",
-      "options": [
-        "0",
-        "1",
-        "2",
-        "3",
-        "לא יודע/ת"
-      ],
-      "correct_answer_index": 0
+      "correct_answer_index": 1
     },
     {
       "scenario_id": "SCN_028_R",
       "question_id": "sa_1",
-      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
+      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה?",
       "options": [
-        "א",
-        "ב",
-        "ג",
+        "0",
+        "1",
+        "2",
+        "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 0
+      "correct_answer_index": 2
     },
     {
       "scenario_id": "SCN_028_R",
       "question_id": "sa_2",
-      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה ?",
+      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -2073,24 +2114,12 @@
         "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 0
+      "correct_answer_index": 1
     },
     {
       "scenario_id": "SCN_028_S",
       "question_id": "sa_1",
-      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
-      "options": [
-        "א",
-        "ב",
-        "ג",
-        "לא יודע/ת"
-      ],
-      "correct_answer_index": 0
-    },
-    {
-      "scenario_id": "SCN_028_S",
-      "question_id": "sa_2",
-      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה ?",
+      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -2098,16 +2127,30 @@
         "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 0
+      "correct_answer_index": 2
+    },
+    {
+      "scenario_id": "SCN_028_S",
+      "question_id": "sa_2",
+      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה?",
+      "options": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "לא יודע/ת"
+      ],
+      "correct_answer_index": 1
     },
     {
       "scenario_id": "SCN_029_H",
       "question_id": "sa_1",
-      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
+      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה?",
       "options": [
-        "א",
-        "ב",
-        "ג",
+        "0",
+        "1",
+        "2",
+        "3",
         "לא יודע/ת"
       ],
       "correct_answer_index": 1
@@ -2115,7 +2158,20 @@
     {
       "scenario_id": "SCN_029_H",
       "question_id": "sa_2",
-      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה ?",
+      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה?",
+      "options": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "לא יודע/ת"
+      ],
+      "correct_answer_index": 2
+    },
+    {
+      "scenario_id": "SCN_029_R",
+      "question_id": "sa_1",
+      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -2127,20 +2183,21 @@
     },
     {
       "scenario_id": "SCN_029_R",
-      "question_id": "sa_1",
-      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
+      "question_id": "sa_2",
+      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה?",
       "options": [
-        "א",
-        "ב",
-        "ג",
+        "0",
+        "1",
+        "2",
+        "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 1
+      "correct_answer_index": 2
     },
     {
-      "scenario_id": "SCN_029_R",
-      "question_id": "sa_2",
-      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה ?",
+      "scenario_id": "SCN_029_S",
+      "question_id": "sa_1",
+      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -2152,45 +2209,21 @@
     },
     {
       "scenario_id": "SCN_029_S",
-      "question_id": "sa_1",
-      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
-      "options": [
-        "א",
-        "ב",
-        "ג",
-        "לא יודע/ת"
-      ],
-      "correct_answer_index": 1
-    },
-    {
-      "scenario_id": "SCN_029_S",
       "question_id": "sa_2",
-      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה ?",
+      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה?",
       "options": [
         "0",
         "1",
         "2",
         "3",
-        "לא יודע/ת"
-      ],
-      "correct_answer_index": 1
-    },
-    {
-      "scenario_id": "SCN_030_H",
-      "question_id": "sa_1",
-      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
-      "options": [
-        "א",
-        "ב",
-        "ג",
         "לא יודע/ת"
       ],
       "correct_answer_index": 2
     },
     {
       "scenario_id": "SCN_030_H",
-      "question_id": "sa_2",
-      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה ?",
+      "question_id": "sa_1",
+      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -2198,11 +2231,11 @@
         "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 2
+      "correct_answer_index": 3
     },
     {
-      "scenario_id": "SCN_030_R",
-      "question_id": "sa_1",
+      "scenario_id": "SCN_030_H",
+      "question_id": "sa_2",
       "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
       "options": [
         "א",
@@ -2210,12 +2243,12 @@
         "ג",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 2
+      "correct_answer_index": null
     },
     {
       "scenario_id": "SCN_030_R",
-      "question_id": "sa_2",
-      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה ?",
+      "question_id": "sa_1",
+      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -2223,11 +2256,11 @@
         "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 2
+      "correct_answer_index": 3
     },
     {
-      "scenario_id": "SCN_030_S",
-      "question_id": "sa_1",
+      "scenario_id": "SCN_030_R",
+      "question_id": "sa_2",
       "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
       "options": [
         "א",
@@ -2235,12 +2268,12 @@
         "ג",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 2
+      "correct_answer_index": null
     },
     {
       "scenario_id": "SCN_030_S",
-      "question_id": "sa_2",
-      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה ?",
+      "question_id": "sa_1",
+      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -2248,7 +2281,19 @@
         "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 2
+      "correct_answer_index": 3
+    },
+    {
+      "scenario_id": "SCN_030_S",
+      "question_id": "sa_2",
+      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
+      "options": [
+        "א",
+        "ב",
+        "ג",
+        "לא יודע/ת"
+      ],
+      "correct_answer_index": null
     },
     {
       "scenario_id": "SCN_031_H",
@@ -2260,12 +2305,12 @@
         "ג",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 0
+      "correct_answer_index": null
     },
     {
       "scenario_id": "SCN_031_H",
       "question_id": "sa_2",
-      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה ?",
+      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -2285,12 +2330,12 @@
         "ג",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 0
+      "correct_answer_index": null
     },
     {
       "scenario_id": "SCN_031_R",
       "question_id": "sa_2",
-      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה ?",
+      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -2310,12 +2355,12 @@
         "ג",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 0
+      "correct_answer_index": null
     },
     {
       "scenario_id": "SCN_031_S",
       "question_id": "sa_2",
-      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה ?",
+      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -2328,19 +2373,32 @@
     {
       "scenario_id": "SCN_032_H",
       "question_id": "sa_1",
-      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
+      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה?",
       "options": [
-        "א",
-        "ב",
-        "ג",
+        "0",
+        "1",
+        "2",
+        "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 1
+      "correct_answer_index": 2
     },
     {
       "scenario_id": "SCN_032_H",
       "question_id": "sa_2",
-      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה ?",
+      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
+      "options": [
+        "א",
+        "ב",
+        "ג",
+        "לא יודע/ת"
+      ],
+      "correct_answer_index": null
+    },
+    {
+      "scenario_id": "SCN_032_R",
+      "question_id": "sa_1",
+      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -2352,7 +2410,7 @@
     },
     {
       "scenario_id": "SCN_032_R",
-      "question_id": "sa_1",
+      "question_id": "sa_2",
       "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
       "options": [
         "א",
@@ -2360,12 +2418,12 @@
         "ג",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 1
+      "correct_answer_index": null
     },
     {
-      "scenario_id": "SCN_032_R",
-      "question_id": "sa_2",
-      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה ?",
+      "scenario_id": "SCN_032_S",
+      "question_id": "sa_1",
+      "question_text": "כמה קטעי עומס (קטע = קו אדום מקווקוו בודד) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -2377,62 +2435,51 @@
     },
     {
       "scenario_id": "SCN_032_S",
-      "question_id": "sa_1",
+      "question_id": "sa_2",
       "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
       "options": [
         "א",
         "ב",
         "ג",
+        "לא יודע/ת"
+      ],
+      "correct_answer_index": null
+    },
+    {
+      "scenario_id": "SCN_033_H",
+      "question_id": "sa_1",
+      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה?",
+      "options": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "לא יודע/ת"
+      ],
+      "correct_answer_index": 2
+    },
+    {
+      "scenario_id": "SCN_033_H",
+      "question_id": "sa_2",
+      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה?",
+      "options": [
+        "0",
+        "1",
+        "2",
+        "3",
         "לא יודע/ת"
       ],
       "correct_answer_index": 1
     },
     {
-      "scenario_id": "SCN_032_S",
-      "question_id": "sa_2",
-      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה ?",
-      "options": [
-        "0",
-        "1",
-        "2",
-        "3",
-        "לא יודע/ת"
-      ],
-      "correct_answer_index": 2
-    },
-    {
-      "scenario_id": "SCN_033_H",
-      "question_id": "sa_1",
-      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
-      "options": [
-        "א",
-        "ב",
-        "ג",
-        "לא יודע/ת"
-      ],
-      "correct_answer_index": 2
-    },
-    {
-      "scenario_id": "SCN_033_H",
-      "question_id": "sa_2",
-      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה ?",
-      "options": [
-        "0",
-        "1",
-        "2",
-        "3",
-        "לא יודע/ת"
-      ],
-      "correct_answer_index": 0
-    },
-    {
       "scenario_id": "SCN_033_R",
       "question_id": "sa_1",
-      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
+      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה?",
       "options": [
-        "א",
-        "ב",
-        "ג",
+        "0",
+        "1",
+        "2",
+        "3",
         "לא יודע/ת"
       ],
       "correct_answer_index": 2
@@ -2440,7 +2487,7 @@
     {
       "scenario_id": "SCN_033_R",
       "question_id": "sa_2",
-      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה ?",
+      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -2448,16 +2495,17 @@
         "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 0
+      "correct_answer_index": 1
     },
     {
       "scenario_id": "SCN_033_S",
       "question_id": "sa_1",
-      "question_text": "מה היה המסלול בעל זמן הנסיעה הכולל הקצר מביניהם בתרחיש?",
+      "question_text": "כמה קטעי כביש אגרה (קטע = סימון צהוב בודד על כביש) הוצגו על המפה?",
       "options": [
-        "א",
-        "ב",
-        "ג",
+        "0",
+        "1",
+        "2",
+        "3",
         "לא יודע/ת"
       ],
       "correct_answer_index": 2
@@ -2465,7 +2513,7 @@
     {
       "scenario_id": "SCN_033_S",
       "question_id": "sa_2",
-      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה ?",
+      "question_text": "כמה אזורי תקשורת (עיגולים סגולים) הוצגו על המפה?",
       "options": [
         "0",
         "1",
@@ -2473,7 +2521,7 @@
         "3",
         "לא יודע/ת"
       ],
-      "correct_answer_index": 0
+      "correct_answer_index": 1
     }
   ]
 }
