@@ -162,6 +162,7 @@ python update_recommendations_model_ordered.py
 - `app.js` – Experiment logic (Model→Vis order, NASA TLX per vis, Trust per model)
 - `log_results_viewer.html` – Single-participant log viewer
 - `logs_overview.html` – Multi-participant log overview and CSV export
+- `admin_storage.html` – View/export/clear localStorage-backed session data
 - `style.css` – Styling (from parent)
 - `questions/questions.json` – Includes Interface focus area question
 - `participants_json/` – Per-participant schedules
@@ -189,6 +190,30 @@ python update_recommendations_model_ordered.py
 - Use `experiment_model_ordered/logs_overview.html` (select multiple log JSON files, view summary, export CSVs)
 
 Place downloaded log files in `experiment_model_ordered/Participants_log/` to view them with the single-participant viewer.
+
+---
+
+## Real-time Data Persistence and Recovery
+
+The experiment app saves data to **localStorage** in real time to prevent loss from refresh, accidental exit, or browser close.
+
+**How it works:**
+- After every trial, questionnaire, page visit, and interaction, data is written to `localStorage` under key `experiment_model_ordered_log_<ParticipantID>`
+- On login, if stored data exists for that participant, a modal offers: **Resume from last point** or **Start fresh**
+- Logs are **kept in storage** after experiment completion (not cleared on download)
+- A `beforeunload` warning prompts the user when closing or refreshing during an active session
+- If storage is full when saving, the app removes the **oldest** participant's data (by `savedAt` timestamp) and retries until the save succeeds
+
+**Admin page:** `experiment_model_ordered/admin_storage.html`
+- Lists all stored sessions (participant ID, saved-at timestamp, trial count, questionnaire count)
+- **Download JSON** – export a participant's stored log
+- **Clear** – remove one participant's stored data
+- **Clear All** – remove all stored sessions
+
+**Limitations:**
+- Data is per-origin, per-browser (does not sync across devices)
+- Clearing browser data removes stored logs
+- Private/incognito mode may clear data when the session ends
 
 ---
 

@@ -1,5 +1,10 @@
 ## Experiment Data & App Pipeline
 
+This repository contains two experiment platforms:
+
+1. **Model‑Ordered Experiment** – New format (Model A → Model B), with NASA TLX per visualization and Trust per model. Platform: `experiment_model_ordered/`.
+2. **Original Experiment** – Visualization‑first format. Platform: root `index.html` and `app.js`.
+
 ---
 
 ### Model-Ordered Experiment (New Format)
@@ -18,9 +23,13 @@ A **separate experiment platform** uses the **Model-first** order: Model A (Vis1
 3. (Optional) `python update_recommendations_model_ordered.py`
 4. Open `experiment_model_ordered/index.html` in a browser
 
+**Persistence:** Progress is saved to localStorage after each trial and questionnaire. On re-login, participants can resume from the last point. If storage is full, the oldest participant's data is evicted. Logs are not cleared on completion. See `Model_Ordered_experiment/README.md` for details.
+
 ---
 
 ### Original Experiment (Visualization-first)
+
+**Platform:** Root `index.html`, `app.js`, `style.css`. **Architecture:** See `system_readme.md`.
 
 ### 1. Generate participant schedules JSON
 

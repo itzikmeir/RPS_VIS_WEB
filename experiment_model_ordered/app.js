@@ -146,6 +146,7 @@ function logPageEntry(pageName, metadata = {}) {
     enter_ts: state.currentPageEnterTs,
     exit_ts: null
   });
+  persistToStorage();
 }
 
 function logPageExit(pageName, exitTs = null) {
@@ -153,6 +154,69 @@ function logPageExit(pageName, exitTs = null) {
   const pageLog = state.logs.pages.find(p => p.page_name === pageName && p.exit_ts === null);
   if (pageLog) {
     pageLog.exit_ts = ts;
+  }
+  persistToStorage();
+}
+
+const STORAGE_KEY_PREFIX = "experiment_model_ordered_log_";
+
+function persistToStorage() {
+  if (!state.participantId) return;
+  const key = STORAGE_KEY_PREFIX + state.participantId;
+  const snapshot = {
+    participantId: state.participantId,
+    stage: state.stage,
+    pageType: state.pageType,
+    preIntroPageIndex: state.preIntroPageIndex,
+    practiceIndex: state.practiceIndex,
+    modelIndex: state.modelIndex,
+    visIndex: state.visIndex,
+    trialIndex: state.trialIndex,
+    logs: state.logs,
+    tempWorkloadAnswers: state.tempWorkloadAnswers,
+    savedAt: Date.now()
+  };
+  const dataStr = JSON.stringify(snapshot);
+
+  function trySave() {
+    try {
+      localStorage.setItem(key, dataStr);
+      return true;
+    } catch (e) {
+      const isQuotaExceeded = e.name === "QuotaExceededError" || e.code === 22;
+      if (isQuotaExceeded) {
+        const candidates = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && k.startsWith(STORAGE_KEY_PREFIX) && k !== key) {
+            try {
+              const parsed = JSON.parse(localStorage.getItem(k));
+              const savedAt = (parsed && parsed.savedAt) || 0;
+              candidates.push({ key: k, savedAt });
+            } catch (_) {}
+          }
+        }
+        candidates.sort((a, b) => a.savedAt - b.savedAt);
+        if (candidates.length === 0) {
+          console.warn("Storage full and no other participant entries to remove");
+          return false;
+        }
+        localStorage.removeItem(candidates[0].key);
+        return trySave();
+      }
+      console.warn("Failed to persist logs:", e);
+      return false;
+    }
+  }
+  trySave();
+}
+
+function clearStorageForParticipant(participantId) {
+  if (!participantId) return;
+  try {
+    localStorage.removeItem(STORAGE_KEY_PREFIX + participantId);
+  } catch (e) {
+    console.warn("Failed to clear storage:", e);
   }
 }
 
@@ -166,6 +230,7 @@ function downloadLogs() {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+  // Do not clear storage on completion - keep logs for resume/admin
 }
 
 // Data loading
@@ -425,12 +490,92 @@ function renderLoginPage(root) {
         // non-fatal — proceed without modifying schedule
         console.warn('Could not append extra practice scenarios', err);
       }
-      
-      logPageExit("LoginPage");
-      state.stage = "pre";
-      state.pageType = "info";
-      state.preIntroPageIndex = 0;
-      render();
+
+      // CRITICAL: Check for saved data BEFORE logPageExit, which calls persistToStorage
+      // and would overwrite the previous session's data.
+      const key = STORAGE_KEY_PREFIX + id;
+      const savedRaw = localStorage.getItem(key);
+      let snapshot = null;
+      let hasResumableData = false;
+      if (savedRaw) {
+        try {
+          snapshot = JSON.parse(savedRaw);
+          const logs = snapshot.logs || {};
+          const trials = logs.trials || [];
+          const questionnaires = logs.questionnaires || [];
+          const pages = logs.pages || [];
+          // Show modal if there are trials/questionnaires OR meaningful page progress
+          const hasTrialsOrQuestionnaires = trials.length > 0 || questionnaires.length > 0;
+          const hasPageProgress = pages.length > 1 || (snapshot.preIntroPageIndex > 0) ||
+            (snapshot.practiceIndex > 0) || (snapshot.modelIndex > 0) || (snapshot.visIndex > 0) || (snapshot.trialIndex > 0);
+          hasResumableData = hasTrialsOrQuestionnaires || hasPageProgress;
+        } catch (parseErr) {
+          console.warn("Failed to parse saved data:", parseErr);
+        }
+      }
+
+      if (hasResumableData && snapshot) {
+        const modal = document.createElement("div");
+        modal.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999;";
+        modal.dir = "rtl";
+        const box = document.createElement("div");
+        box.style.cssText = "background:white;padding:24px;border-radius:8px;max-width:400px;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,0.2);";
+        box.innerHTML = "<p style='margin-bottom:16px;font-size:18px;'>נמצאה התחלה קודמת. האם להמשיך מהנקודה האחרונה?</p>";
+        const btnContainer = document.createElement("div");
+        btnContainer.style.cssText = "display:flex;gap:12px;justify-content:center;flex-wrap:wrap;";
+        const resumeBtn = document.createElement("button");
+        resumeBtn.textContent = "המשך מהנקודה האחרונה";
+        resumeBtn.style.cssText = "padding:10px 20px; border-radius:6px; border:none; background:#1976d2; color:white; font-weight:600; cursor:pointer;";
+        const freshBtn = document.createElement("button");
+        freshBtn.textContent = "התחל מחדש";
+        freshBtn.style.cssText = "padding:10px 20px; border-radius:6px; border:none; background:#6b7280; color:white; font-weight:600; cursor:pointer;";
+        resumeBtn.onclick = () => {
+          document.body.removeChild(modal);
+          state.stage = snapshot.stage;
+          state.pageType = snapshot.pageType;
+          state.preIntroPageIndex = snapshot.preIntroPageIndex ?? 0;
+          state.practiceIndex = snapshot.practiceIndex ?? 0;
+          state.modelIndex = snapshot.modelIndex ?? 0;
+          state.visIndex = snapshot.visIndex ?? 0;
+          state.trialIndex = snapshot.trialIndex ?? 0;
+          const logs = snapshot.logs || {};
+          state.logs = {
+            pages: logs.pages || [],
+            trials: logs.trials || [],
+            questionnaires: logs.questionnaires || [],
+            interactions: logs.interactions || []
+          };
+          state.tempWorkloadAnswers = snapshot.tempWorkloadAnswers || null;
+          state.currentPageEnterTs = Date.now();
+          persistToStorage(); // Persist restored state immediately
+          render();
+        };
+        freshBtn.onclick = () => {
+          document.body.removeChild(modal);
+          clearStorageForParticipant(id);
+          state.stage = "pre";
+          state.pageType = "info";
+          state.preIntroPageIndex = 0;
+          state.practiceIndex = 0;
+          state.modelIndex = 0;
+          state.visIndex = 0;
+          state.trialIndex = 0;
+          state.logs = { pages: [], trials: [], questionnaires: [], interactions: [] };
+          state.tempWorkloadAnswers = null;
+          render();
+        };
+        btnContainer.appendChild(resumeBtn);
+        btnContainer.appendChild(freshBtn);
+        box.appendChild(btnContainer);
+        modal.appendChild(box);
+        document.body.appendChild(modal);
+      } else {
+        logPageExit("LoginPage");
+        state.stage = "pre";
+        state.pageType = "info";
+        state.preIntroPageIndex = 0;
+        render();
+      }
     } catch (e) {
       errorDiv.textContent = e.message || "Error loading participant data. Please check the ID and try again.";
       errorDiv.style.display = "block";
@@ -1179,6 +1324,7 @@ function renderInfoPage(root, pageId) {
         data: consentData,
         timestamp: Date.now()
       });
+      persistToStorage();
     } else if (pageId === "system_layout" && pageData.input_type === "checkbox_list") {
       // Log which items were checked
       const checkedItems = [];
@@ -1198,6 +1344,7 @@ function renderInfoPage(root, pageId) {
         },
         timestamp: Date.now()
       });
+      persistToStorage();
     }
     
     logPageExit(pageName);
@@ -1715,6 +1862,7 @@ function renderTrialPage(root) {
       };
       
       state.logs.trials.push(trialLog);
+      persistToStorage();
       logPageExit("TrialPage");
       
       // Reset selected route for next trial
@@ -2093,6 +2241,7 @@ function renderTrialQuestionsPage(root) {
     };
     
     state.logs.questionnaires.push(questionnaireLog);
+    persistToStorage();
     logPageExit("TrialQuestionsPage");
     
     // Navigate to next page
@@ -2399,6 +2548,7 @@ function renderNasaTlxPage(root) {
       enter_ts: state.currentPageEnterTs,
       exit_ts: Date.now()
     });
+    persistToStorage();
     
     logPageExit(pageName);
     
@@ -2759,6 +2909,7 @@ function renderModelSummaryTrustPage(root) {
       enter_ts: state.currentPageEnterTs,
       exit_ts: Date.now()
     });
+    persistToStorage();
     
     // Clear temporary workload answers
     state.tempWorkloadAnswers = null;
@@ -3305,6 +3456,7 @@ function renderModelSelectionPage(root) {
       enter_ts: state.currentPageEnterTs,
       exit_ts: Date.now()
     });
+    persistToStorage();
     
     state.stage = "post";
     state.pageType = "visualization_global";
@@ -3653,6 +3805,7 @@ function renderVisualizationGlobalPage(root) {
       enter_ts: state.currentPageEnterTs,
       exit_ts: Date.now()
     });
+    persistToStorage();
     
     state.pageType = "demographics";
     render();
@@ -3955,6 +4108,7 @@ function renderDemographicsPage(root) {
       enter_ts: state.currentPageEnterTs,
       exit_ts: Date.now()
     });
+    persistToStorage();
     
     state.stage = "end";
     state.pageType = "end";
@@ -4101,6 +4255,7 @@ window.addEventListener("message", (event) => {
       };
       
       state.logs.trials.push(trialLog);
+      persistToStorage();
       logPageExit("TrialPage");
       
       // Remove fullscreen container
@@ -4159,6 +4314,7 @@ function forceSkipToNextPage() {
         exit_ts: Date.now()
       };
       state.logs.trials.push(trialLog);
+      persistToStorage();
       state.currentTrialSelectedRoute = null;
       state.currentTrialIframeContainer = null;
     }
@@ -4236,6 +4392,7 @@ function navigateToNextPage() {
           end_ts: Date.now()
         };
         state.logs.trials.push(trialLog);
+        persistToStorage();
       }
       state.pageType = "trial_questions";
       render();
@@ -4257,6 +4414,7 @@ function navigateToNextPage() {
           enter_ts: state.currentPageEnterTs,
           exit_ts: Date.now()
         });
+        persistToStorage();
       }
       
       // Trial questions -> next trial or experiment
@@ -4316,6 +4474,7 @@ function navigateToNextPage() {
           end_ts: Date.now()
         };
         state.logs.trials.push(trialLog);
+        persistToStorage();
       }
       state.pageType = "trial_questions";
       render();
@@ -4337,6 +4496,7 @@ function navigateToNextPage() {
           enter_ts: state.currentPageEnterTs,
           exit_ts: Date.now()
         });
+        persistToStorage();
       }
       
       // Trial questions -> next trial or model summary
@@ -4368,6 +4528,7 @@ function navigateToNextPage() {
         enter_ts: state.currentPageEnterTs,
         exit_ts: Date.now()
       });
+      persistToStorage();
       const model = state.schedule.models[state.modelIndex];
       if (state.visIndex < model.visualizations.length - 1) {
         state.visIndex++;
@@ -4415,6 +4576,7 @@ function navigateToNextPage() {
         enter_ts: state.currentPageEnterTs,
         exit_ts: Date.now()
       });
+      persistToStorage();
       
       state.tempWorkloadAnswers = null;
       
@@ -4449,6 +4611,7 @@ function navigateToNextPage() {
         enter_ts: state.currentPageEnterTs,
         exit_ts: Date.now()
       });
+      persistToStorage();
       
       // Model selection -> visualization global
       state.stage = "post";
@@ -4471,6 +4634,7 @@ function navigateToNextPage() {
         enter_ts: state.currentPageEnterTs,
         exit_ts: Date.now()
       });
+      persistToStorage();
       
       // Visualization global -> demographics
       state.pageType = "demographics";
@@ -4490,6 +4654,7 @@ function navigateToNextPage() {
         enter_ts: state.currentPageEnterTs,
         exit_ts: Date.now()
       });
+      persistToStorage();
       
       // Demographics -> end
       state.stage = "end";
@@ -4553,6 +4718,14 @@ window.addEventListener("keydown", (event) => {
   
   // Navigate to next page
   navigateToNextPage();
+});
+
+window.addEventListener("beforeunload", (e) => {
+  if (state.participantId && state.stage !== "login" && state.stage !== "end") {
+    persistToStorage(); // Save current state before leaving
+    e.preventDefault();
+    e.returnValue = "";
+  }
 });
 
 // Initialize

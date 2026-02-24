@@ -1,8 +1,10 @@
 ## System Architecture Overview
 
-This project implements a browser‑based experiment for evaluating route‑planning visualizations and AI recommendation behavior. The system is entirely static (HTML/JS/CSS + JSON + images) and can be run from a simple HTTP server.
+This document describes the **original experiment** (visualization‑first format) in the project root: `index.html`, `app.js`, `style.css`. For the **model‑ordered experiment** (Model A → Model B), see `Model_Ordered_experiment/README.md`.
 
-High‑level components:
+The system is a browser‑based experiment for evaluating route‑planning visualizations and AI recommendation behavior. It is entirely static (HTML/JS/CSS + JSON + images) and can be run from a simple HTTP server.
+
+**High‑level components (original experiment):**
 
 - `index.html` – Shell HTML page that loads the app.
 - `app.js` – Single‑page application implementing all UI, flow control, and logging.
