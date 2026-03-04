@@ -66,7 +66,7 @@ Before each practice trial, the scenario intro shows the visualization image (ST
 
 ### Step 1: Generate Participant JSON Files
 
-**File:** `build_model_ordered_participants.py` (in project root)
+**File:** `python_scripts/build_model_ordered_participants.py`
 
 **Input:** `Model_Ordered_experiment/Models_Experiment_Order_Expanded.xlsx`
 
@@ -83,14 +83,14 @@ Before each practice trial, the scenario intro shows the visualization image (ST
 
 **How to run:**
 ```bash
-python build_model_ordered_participants.py
+python python_scripts/build_model_ordered_participants.py
 ```
 
 ---
 
 ### Step 2: Build Scenario Questions
 
-**File:** `build_scenario_questions_model_ordered.py` (in project root)
+**File:** `python_scripts/build_scenario_questions_model_ordered.py`
 
 **Input:** `Model_Ordered_experiment/models_SCN_Questions_catalog.xlsx` (sheet "קטלוג תרחישים")
 
@@ -100,14 +100,14 @@ python build_model_ordered_participants.py
 
 **How to run:**
 ```bash
-python build_scenario_questions_model_ordered.py
+python python_scripts/build_scenario_questions_model_ordered.py
 ```
 
 ---
 
 ### Step 3: Fill Correct Answers (Q1, Q2, Q3)
 
-**File:** `update_correct_answers_model_ordered.py` (in project root)
+**File:** `python_scripts/update_correct_answers_model_ordered.py`
 
 **Input:** `experiment_model_ordered/questions/scenario_questions.json`, `participants_json/*.json`
 
@@ -115,7 +115,7 @@ python build_scenario_questions_model_ordered.py
 
 **How to run:**
 ```bash
-python update_correct_answers_model_ordered.py
+python python_scripts/update_correct_answers_model_ordered.py
 ```
 (Run after Step 2)
 
@@ -123,7 +123,7 @@ python update_correct_answers_model_ordered.py
 
 ### Step 4: Fill Correct Routes
 
-**File:** `update_correct_routes_model_ordered.py` (in project root)
+**File:** `python_scripts/update_correct_routes_model_ordered.py`
 
 **Input:** `Model_Ordered_experiment/models_SCN_Questions_catalog.xlsx` (sheet "קטלוג תרחישים"), `participants_json/*.json`
 
@@ -131,14 +131,14 @@ python update_correct_answers_model_ordered.py
 
 **How to run:**
 ```bash
-python update_correct_routes_model_ordered.py
+python python_scripts/update_correct_routes_model_ordered.py
 ```
 
 ---
 
 ### Step 5: Update AI Recommendations (optional)
 
-**File:** `update_recommendations_model_ordered.py` (in project root)
+**File:** `python_scripts/update_recommendations_model_ordered.py`
 
 **Input:** `Model_Ordered_experiment/models_rec_long.xlsx` (sheet `Schedule_Long`)
 
@@ -148,7 +148,7 @@ python update_correct_routes_model_ordered.py
 
 **How to run:**
 ```bash
-python update_recommendations_model_ordered.py
+python python_scripts/update_recommendations_model_ordered.py
 ```
 
 ---
@@ -271,10 +271,10 @@ The experiment app saves data to **localStorage** in real time to prevent loss f
 
 ## Recommended Update Order
 
-1. Update `Models_Experiment_Order_Expanded.xlsx` → run `build_model_ordered_participants.py`
-2. Update scenario questions in `models_SCN_Questions_catalog.xlsx` (sheet "קטלוג תרחישים") → run `build_scenario_questions_model_ordered.py`
-3. Run `update_correct_answers_model_ordered.py`
-4. Run `update_correct_routes_model_ordered.py`
-5. (Optional) Update `models_rec_long.xlsx` → run `update_recommendations_model_ordered.py`
+1. Update `Models_Experiment_Order_Expanded.xlsx` → run `python_scripts/build_model_ordered_participants.py`
+2. Update scenario questions in `models_SCN_Questions_catalog.xlsx` (sheet "קטלוג תרחישים") → run `python_scripts/build_scenario_questions_model_ordered.py`
+3. Run `python_scripts/update_correct_answers_model_ordered.py`
+4. Run `python_scripts/update_correct_routes_model_ordered.py`
+5. (Optional) Update `models_rec_long.xlsx` → run `python_scripts/update_recommendations_model_ordered.py`
 6. Test with `experiment_model_ordered/index.html` (e.g. P001)
 7. Run automated tests: `python run_tests.py -v` (from project root)

@@ -45,7 +45,7 @@ What it does:
 
 ### 2. Build scenario question catalog
 
-- **File**: `build_scenario_questions.py`
+- **File**: `python_scripts/build_scenario_questions_old.py` (run from project root)
 - **Input**: `SCN_Questions_catalog.xlsx`
 - **Output**: `questions/scenario_questions.json`
 
@@ -59,7 +59,7 @@ What it does:
 
 ### 3. Fill `correct_route` per trial
 
-- **File**: `update_correct_routes.py`
+- **File**: `python_scripts/update_correct_routes_old.py` (run from project root)
 - **Input**:
   - `SCN_Questions_catalog.xlsx` (`CORRECT_ROUTE`)
   - `participants_json/*.json`
@@ -77,7 +77,7 @@ What it does:
 
 ### 4. Fill `correct_answers` for scenario questions
 
-- **File**: `update_correct_answers.py`
+- **File**: `python_scripts/update_correct_answers_old.py` (run from project root)
 - **Input**:
   - `questions/scenario_questions.json`
   - `participants_json/*.json`
@@ -94,7 +94,7 @@ What it does:
 
 ### 5. Apply AI recommendation plan per participant/scenario
 
-- **File**: `update_recommendations.py`
+- **File**: `python_scripts/update_recommendations_old.py` (run from project root)
 - **Input**:
   - `rec_long.xlsx` (sheet `Schedule_Long` – one row per `(Participant_ID, Scenario_ID)` with columns `Rec_Correct`, `Correct_Answer`, `System_Recommendation`)
   - `participants_json/*.json`
@@ -115,7 +115,7 @@ What it does:
 
 ### 6. Wire scenario HTML files to the parent app
 
-- **File**: `wire_scenario_postmessage.py`
+- **File**: `python_scripts/wire_scenario_postmessage.py` (run from project root)
 - **Input**:
   - `Scenarios/SCN_*.html` (legacy, optional)
   - `Scenarios/Correct_Scenarios/SCN_*.html`
@@ -328,19 +328,19 @@ You can build separate analysis tools (e.g. `results_viewer.html`, `log_results_
    - Run to create `participants_json/` and `participants_all.json`.
 
 3. Generate scenario question JSON:
-   - Run `python build_scenario_questions.py`.
+   - Run `python python_scripts/build_scenario_questions_old.py`.
 
 4. Fill `correct_route`:
-   - Run `python update_correct_routes.py`.
+   - Run `python python_scripts/update_correct_routes_old.py`.
 
 5. Fill per‑trial correct answers:
-   - Run `python update_correct_answers.py`.
+   - Run `python python_scripts/update_correct_answers_old.py`.
 
 6. Apply AI recommendation settings:
-   - Run `python update_recommendations.py`.
+   - Run `python python_scripts/update_recommendations_old.py`.
 
 7. Wire scenario HTMLs to the app:
-   - Run `python wire_scenario_postmessage.py`.
+   - Run `python python_scripts/wire_scenario_postmessage.py`.
 
 8. Start a static server:
    - `python -m http.server 8000` from the project root.

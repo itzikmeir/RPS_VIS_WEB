@@ -2,8 +2,8 @@
 
 This repository contains two experiment platforms:
 
-1. **Model‑Ordered Experiment** – New format (Model A → Model B), with NASA TLX per visualization and Trust per model. Platform: `experiment_model_ordered/`.
-2. **Original Experiment** – Visualization‑first format. Platform: root `index.html` and `app.js`.
+1. **Model‑Ordered Experiment** – Current format (Model A → Model B), with NASA TLX per visualization and Trust per model. Platform: `experiment_model_ordered/`. **Entry point:** `index.html` (redirects) or `experiment_model_ordered/index.html`.
+2. **Original Experiment** – Visualization‑first format, archived in `old_experiment_order_files_by_vis_type/`.
 
 ---
 
@@ -18,26 +18,26 @@ A **separate experiment platform** uses the **Model-first** order: Model A (Vis1
 - **Full documentation:** See `Model_Ordered_experiment/README.md`
 
 **Quick start:**
-1. `python build_model_ordered_participants.py`
-2. `python update_correct_routes_model_ordered.py`
-3. (Optional) `python update_recommendations_model_ordered.py`
+1. `python python_scripts/build_model_ordered_participants.py`
+2. `python python_scripts/update_correct_routes_model_ordered.py`
+3. (Optional) `python python_scripts/update_recommendations_model_ordered.py`
 4. Open `experiment_model_ordered/index.html` in a browser
 
 **Persistence:** Progress is saved to localStorage after each trial and questionnaire. On re-login, participants can resume from the last point. If storage is full, the oldest participant's data is evicted. Logs are not cleared on completion. See `Model_Ordered_experiment/README.md` for details.
 
 ---
 
-### Original Experiment (Visualization-first)
+### Original Experiment (Visualization-first) – Archived
 
-**Platform:** Root `index.html`, `app.js`, `style.css`. **Architecture:** See `system_readme.md`.
+**Platform:** `old_experiment_order_files_by_vis_type/`. **Architecture:** See `old_experiment_order_files_by_vis_type/system_readme.md`.
 
 ### 1. Generate participant schedules JSON
 
-- **File**: `Untitled-1.ipynb`  
-- **Input**: `Experiment_Order_Expanded.xlsx`  
+- **File**: `old_experiment_order_files_by_vis_type/Untitled-1.ipynb`  
+- **Input**: `old_experiment_order_files_by_vis_type/Experiment_Order_Expanded.xlsx`  
 - **Output**:  
-  - `participants_json/PXXX.json` – per‑participant schedule and trial list.  
-  - `participants_all.json` – combined list of all participants.  
+  - `old_experiment_order_files_by_vis_type/participants_json/PXXX.json` – per‑participant schedule and trial list.  
+  - `old_experiment_order_files_by_vis_type/participants_all.json` – combined list of all participants.  
 - **What it does**:  
   - Reads the experiment design Excel (practice + 3 conditions, models, repetitions).  
   - For each participant, builds:  
@@ -55,8 +55,8 @@ A **separate experiment platform** uses the **Model-first** order: Model A (Vis1
 
 ### 2. Build scenario‑specific question catalog
 
-- **File**: `build_scenario_questions.py`  
-- **Input**: `SCN_Questions_catalog.xlsx`  
+- **File**: `python_scripts/build_scenario_questions_old.py` (for old experiment in `old_experiment_order_files_by_vis_type/`)  
+- **Input**: `old_experiment_order_files_by_vis_type/SCN_Questions_catalog.xlsx`  
 - **Output**: `questions/scenario_questions.json`  
 - **What it does**:  
   - Reads one row per scenario from `SCN_Questions_catalog.xlsx`.  
@@ -67,15 +67,15 @@ A **separate experiment platform** uses the **Model-first** order: Model A (Vis1
   - Produces `scenario_questions.json` with entries like:  
     - `{"scenario_id": "SCN_001_H", "question_id": "sa_1", "question_text": "...", "options": [...], "correct_answer_index": 0}`  
 - **How to run** (from project root):  
-  - `python build_scenario_questions.py`  
+  - `python python_scripts/build_scenario_questions_old.py`  
   - Expect a message like:  
-    - `Wrote NNN scenario-question entries for 30 rows to 'questions\scenario_questions.json'`
+    - `Wrote NNN scenario-question entries for 30 rows to 'old_experiment_order_files_by_vis_type/questions/scenario_questions.json'`
 
 ---
 
 ### 3. Fill `correct_route` for all participants
 
-- **File**: `update_correct_routes.py`  
+- **File**: `python_scripts/update_correct_routes_old.py`  
 - **Input**:  
   - `SCN_Questions_catalog.xlsx` (column `CORRECT_ROUTE`)  
   - `participants_json/*.json`  
@@ -89,7 +89,7 @@ A **separate experiment platform** uses the **Model-first** order: Model A (Vis1
     - `conditions[*].models[*].trials[*].correct_route`  
   - Regenerates `participants_all.json` from the updated per‑participant files.  
 - **How to run** (from project root):  
-  - `python update_correct_routes.py`  
+  - `python python_scripts/update_correct_routes_old.py`  
   - Expect output like:  
     - `Loaded XXX scenario -> correct_route mappings from 'SCN_Questions_catalog.xlsx'`  
     - `Processed P001.json ...`  
@@ -99,7 +99,7 @@ A **separate experiment platform** uses the **Model-first** order: Model A (Vis1
 
 ### 4. Wire scenarios to the parent app (only if scenario HTMLs change)
 
-- **File**: `wire_scenario_postmessage.py`  
+- **File**: `python_scripts/wire_scenario_postmessage.py`  
 - **Input**:  
   - `Scenarios/Correct_Scenarios/SCN_*.html`  
   - `Scenarios/Inaccurate_Scenarios/SCN_*.html`  
@@ -109,13 +109,13 @@ A **separate experiment platform** uses the **Model-first** order: Model A (Vis1
     - `{ type: "scenario_route_selected", route: picked, scenarioName: ... }`  
   - This lets `app.js` receive the route choice and advance from the map to the questions page.  
 - **How to run** (from project root, usually only once after regenerating scenarios):  
-  - `python wire_scenario_postmessage.py`
+  - `python python_scripts/wire_scenario_postmessage.py`
 
 ---
 
 ### 5. (Optional) Update per-participant AI recommendations
 
-- **File**: `update_recommendations.py`  
+- **File**: `python_scripts/update_recommendations_old.py`  
 - **Input**: `rec_long.xlsx` with columns (per row):  
   - `participant_id` – e.g. `P001` (or `001`, which will be normalized to `P001`)  
   - `Scenario_ID` – e.g. `SCN_004_H`  
@@ -134,8 +134,8 @@ A **separate experiment platform** uses the **Model-first** order: Model A (Vis1
     - Looks up each `practice` and `conditions[*].models[*].trials[*]` by `(participant_id, scenario_id)`.  
     - Writes `rec_correct`, `correct_route`, and `ai_recommended_route` according to the Excel.  
 - **How to run** (from project root):  
-  - Make sure `rec_long.xlsx` has the columns above (exact English names).  
-  - `python update_recommendations.py`  
+  - Make sure `old_experiment_order_files_by_vis_type/rec_long.xlsx` has the columns above (exact English names).  
+  - `python python_scripts/update_recommendations_old.py`  
   - You should see something like:  
     - `Loaded N participant-scenario recommendation entries from 'rec_long.xlsx'`  
     - `Processed P001.json ...`  
@@ -201,9 +201,9 @@ A **separate experiment platform** uses the **Model-first** order: Model A (Vis1
 ### Recommended order when updating data
 
 1. **Update experiment design** in `Experiment_Order_Expanded.xlsx` → run `Untitled-1.ipynb`.  
-2. **Update scenario questions / options / correct answers** in `SCN_Questions_catalog.xlsx` → run `build_scenario_questions.py`.  
-3. **Update correct routes** (same Excel) → run `update_correct_routes.py`.  
-4. **(Optional) Update per-participant AI recommendations** in `rec_long.xlsx` → run `update_recommendations.py`.  
-5. **If you regenerated scenario HTMLs** from another tool → run `wire_scenario_postmessage.py`.  
+2. **Update scenario questions / options / correct answers** in `SCN_Questions_catalog.xlsx` → run `python_scripts/build_scenario_questions_old.py`.  
+3. **Update correct routes** (same Excel) → run `python_scripts/update_correct_routes_old.py`.  
+4. **(Optional) Update per-participant AI recommendations** in `rec_long.xlsx` → run `python_scripts/update_recommendations_old.py`.  
+5. **If you regenerated scenario HTMLs** from another tool → run `python_scripts/wire_scenario_postmessage.py`.  
 6. Open `index.html` and test a full run for a participant (e.g. `P001`).
 

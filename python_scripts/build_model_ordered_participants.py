@@ -10,18 +10,17 @@ Structure: models[] -> visualizations[] -> trials[]
 """
 import json
 import math
-import os
 from pathlib import Path
 
 import pandas as pd
 
 # -------------------------
-# CONFIG
+# CONFIG: scripts live in python_scripts/; project root is parent
 # -------------------------
-BASE_DIR = Path(__file__).resolve().parent
-INPUT_PATH = BASE_DIR / "Model_Ordered_experiment" / "Models_Experiment_Order_Expanded.xlsx"
-OUTPUT_DIR = BASE_DIR / "experiment_model_ordered" / "participants_json"
-COMBINED_JSON = BASE_DIR / "experiment_model_ordered" / "participants_all.json"
+ROOT_DIR = Path(__file__).resolve().parent.parent
+INPUT_PATH = ROOT_DIR / "Model_Ordered_experiment" / "Models_Experiment_Order_Expanded.xlsx"
+OUTPUT_DIR = ROOT_DIR / "experiment_model_ordered" / "participants_json"
+COMBINED_JSON = ROOT_DIR / "experiment_model_ordered" / "participants_all.json"
 
 
 def clean(value):

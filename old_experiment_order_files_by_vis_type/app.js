@@ -1,3 +1,8 @@
+// Old experiment (visualization-first) - runs from old_experiment_order_files_by_vis_type/
+// Shared assets (Scenarios, Images, Videos) are in parent folder
+const ASSET_BASE = "../";
+function assetPath(p) { return ASSET_BASE + p; }
+
 // Toggle for display-only model labels:
 // - false  => show only A/B across all conditions (original behavior)
 // - true   => show A–F (per condition × model) in UI
@@ -717,7 +722,7 @@ function renderInfoPage(root, pageId) {
     video.style.display = "block";
 
     const source = document.createElement("source");
-    source.src = "Videos/Introduction.mp4";
+    source.src = assetPath("Videos/Introduction.mp4");
     source.type = "video/mp4";
     video.appendChild(source);
 
@@ -765,7 +770,7 @@ function renderInfoPage(root, pageId) {
       // Otherwise show placeholder indicating missing local file
       const placeholder = document.createElement("div");
       placeholder.className = "iframe-placeholder";
-      placeholder.textContent = "וידאו לא נמצא (Videos/Introduction.mp4)";
+      placeholder.textContent = "וידאו לא נמצא (" + assetPath("Videos/Introduction.mp4") + ")";
       mediaContainer.appendChild(placeholder);
       mediaSlot.appendChild(mediaContainer);
     }
@@ -1293,17 +1298,17 @@ function renderScenarioIntroPage(root) {
     if (vizSuffix === "S") {
       vizLabel = "עמודות נערמות";
       titleText = `תרגול ${state.practiceIndex + 1} – ${vizLabel}`;
-      imageSrc = "Images/STACKED.png";
+      imageSrc = assetPath("Images/STACKED.png");
       imageAlt = "Stacked visualization";
     } else if (vizSuffix === "R") {
       vizLabel = "רדאר";
       titleText = `תרגול ${state.practiceIndex + 1} – ${vizLabel}`;
-      imageSrc = "Images/RADAR.png";
+      imageSrc = assetPath("Images/RADAR.png");
       imageAlt = "Radar visualization";
     } else if (vizSuffix === "H") {
       vizLabel = "מפת חום";
       titleText = `תרגול ${state.practiceIndex + 1} – ${vizLabel}`;
-      imageSrc = "Images/HEATֹMAP.png";
+      imageSrc = assetPath("Images/HEATֹMAP.png");
       imageAlt = "Heatmap visualization";
     } else {
       titleText = `תרגול ${state.practiceIndex + 1}`;
@@ -1466,13 +1471,13 @@ function renderScenarioIntroPage(root) {
   let imageSrc = null;
   let imageAlt = null;
   if (cond.visualization === "עמודות מוערמות") {
-    imageSrc = "Images/STACKED.png";
+    imageSrc = assetPath("Images/STACKED.png");
     imageAlt = "Stacked visualization";
   } else if (cond.visualization === "רדאר") {
-    imageSrc = "Images/RADAR.png";
+    imageSrc = assetPath("Images/RADAR.png");
     imageAlt = "Radar visualization";
   } else if (cond.visualization === "מפת חום") {
-    imageSrc = "Images/HEATֹMAP.png";
+    imageSrc = assetPath("Images/HEATֹMAP.png");
     imageAlt = "Heatmap visualization";
   }
 
@@ -1636,8 +1641,8 @@ function renderTrialPage(root) {
   // If rec_correct === "לא" → use Inaccurate_Scenarios, otherwise use Correct_Scenarios.
   const scenarioFolder =
     t.rec_correct === "לא"
-      ? "Scenarios/Inaccurate_Scenarios"
-      : "Scenarios/Correct_Scenarios";
+      ? assetPath("Scenarios/Inaccurate_Scenarios")
+      : assetPath("Scenarios/Correct_Scenarios");
 
   // Check if we have a scenario HTML file for this scenario in the chosen folder
   const scenarioFilePath = getScenarioFilePath(t.scenario_id, scenarioFolder);
@@ -2203,15 +2208,15 @@ function renderConditionIntroPage(root) {
 
   if (cond.visualization === "עמודות מוערמות") {
     descriptionText = "ויזואליזציית עמודות נערמות";
-    imageSrc = "Images/STACKED.png";
+    imageSrc = assetPath("Images/STACKED.png");
     imageAlt = "Stacked visualization";
   } else if (cond.visualization === "רדאר") {
     descriptionText = "ויזואליזציית רדאר";
-    imageSrc = "Images/RADAR.png";
+    imageSrc = assetPath("Images/RADAR.png");
     imageAlt = "Radar visualization";
   } else if (cond.visualization === "מפת חום") {
     descriptionText = "ויזואליזציית מפת חום";
-    imageSrc = "Images/HEATֹMAP.png";
+    imageSrc = assetPath("Images/HEATֹMAP.png");
     imageAlt = "Heatmap visualization";
   } else {
     descriptionText = cond.visualization || "";
@@ -2922,7 +2927,7 @@ function createMinus10To10Question(question, namePrefix) {
   leftButton.style.padding = "0";
   // Minus image
   const minusImg = new Image();
-  minusImg.src = "Images/minus.jpg";
+  minusImg.src = assetPath("Images/minus.jpg");
   minusImg.alt = "-";
   minusImg.style.width = "16px";
   minusImg.style.height = "16px";
@@ -2947,7 +2952,7 @@ function createMinus10To10Question(question, namePrefix) {
   rightButton.style.padding = "0";
   // Plus image
   const plusImg = new Image();
-  plusImg.src = "Images/plus.png";
+  plusImg.src = assetPath("Images/plus.png");
   plusImg.alt = "+";
   plusImg.style.width = "16px";
   plusImg.style.height = "16px";
@@ -3224,9 +3229,9 @@ function renderVisualizationGlobalPage(root) {
     imagesRow.dir = "rtl";
 
     const vizImages = [
-      { src: "Images/STACKED.png", alt: "עמודות מוערמות" },
-      { src: "Images/RADAR.png", alt: "רדאר" },
-      { src: "Images/HEATֹMAP.png", alt: "מפת חום" }
+      { src: assetPath("Images/STACKED.png"), alt: "עמודות מוערמות" },
+      { src: assetPath("Images/RADAR.png"), alt: "רדאר" },
+      { src: assetPath("Images/HEATֹMAP.png"), alt: "מפת חום" }
     ];
 
     vizImages.forEach(info => {
@@ -3413,7 +3418,7 @@ function renderVisualizationGlobalPage(root) {
     layoutsImgWrapper.style.alignItems = "center";
 
     const layoutsImg = document.createElement("img");
-    layoutsImg.src = "Images/LAYOUTS.png";
+    layoutsImg.src = assetPath("Images/LAYOUTS.png");
     layoutsImg.alt = "ממשק המערכת – אזורי מסך";
     layoutsImg.style.maxWidth = "90%";
     layoutsImg.style.height = "auto";

@@ -1,25 +1,23 @@
 """
-Build scenario_questions.json for the model-ordered experiment.
-
-Input:  Model_Ordered_experiment/models_SCN_Questions_catalog.xlsx
-Output: experiment_model_ordered/questions/scenario_questions.json
-
-Same logic as build_scenario_questions.py but uses the model-ordered catalog
-and outputs to the model-ordered questions folder.
+Build scenario_questions.json for the OLD experiment (order by vis type).
+Uses old_experiment_order_files_by_vis_type/ folder.
 """
 import json
-import math
 from pathlib import Path
 from typing import List, Optional
 
+import math
 import pandas as pd
 
-ROOT_DIR = Path(__file__).resolve().parent
-INPUT_PATH = ROOT_DIR / "Model_Ordered_experiment" / "models_SCN_Questions_catalog.xlsx"
-OUTPUT_PATH = ROOT_DIR / "experiment_model_ordered" / "questions" / "scenario_questions.json"
+# Scripts live in python_scripts/; project root is parent; old experiment in subfolder
+ROOT_DIR = Path(__file__).resolve().parent.parent
+OLD_EXP_DIR = ROOT_DIR / "old_experiment_order_files_by_vis_type"
+INPUT_PATH = OLD_EXP_DIR / "SCN_Questions_catalog.xlsx"
+OUTPUT_PATH = OLD_EXP_DIR / "questions" / "scenario_questions.json"
 
 
 def is_nan(value) -> bool:
+    """Return True if value is a NaN (float) or pandas NA."""
     if value is None:
         return False
     if isinstance(value, float) and math.isnan(value):
@@ -31,7 +29,6 @@ def is_nan(value) -> bool:
 
 
 def parse_options(raw) -> List[str]:
-    """Parse the options cell (O1/O2/O3) - multi-line text to list."""
     if is_nan(raw):
         return []
     text = str(raw).replace("\r\n", "\n").replace("\r", "\n")
@@ -39,9 +36,10 @@ def parse_options(raw) -> List[str]:
     return [p for p in parts if p]
 
 
-def _match_single_answer_to_index(ans: str, options: List[str]) -> Optional[int]:
-    """Match a single answer string to an option index. Returns 0-based index or None."""
-    ans = ans.strip()
+def find_correct_index(answer_raw, options: List[str]) -> Optional[int]:
+    if is_nan(answer_raw) or not options:
+        return None
+    ans = str(answer_raw).strip()
     for idx, opt in enumerate(options):
         if opt.strip() == ans:
             return idx
@@ -58,59 +56,26 @@ def _match_single_answer_to_index(ans: str, options: List[str]) -> Optional[int]
         idx = heb_letters.index(ans)
         if 0 <= idx < len(options):
             return idx
+    print(f"[WARN] Could not match answer '{ans}' to options {options}")
     return None
 
 
-def find_correct_indices(answer_raw, options: List[str]) -> List[int]:
-    """
-    Infer 0-based correct option indices from A1/A2/A3 and options.
-    Supports comma-separated answers (e.g. "מסלול א, מסלול ב") for multiple correct answers.
-    Returns a list of indices (may be empty, or have 1+ elements).
-    """
-    if is_nan(answer_raw) or not options:
-        return []
-    raw = str(answer_raw).strip()
-    # Split by comma for multiple correct answers
-    parts = [p.strip() for p in raw.split(",") if p.strip()]
-    indices = []
-    seen = set()
-    for ans in parts:
-        idx = _match_single_answer_to_index(ans, options)
-        if idx is not None and idx not in seen:
-            indices.append(idx)
-            seen.add(idx)
-        elif idx is None and ans:
-            pass  # Unmatched part in comma-separated answer; skip silently
-    return indices
-
-
 def build_scenario_questions():
-    if not INPUT_PATH.exists():
-        raise SystemExit(f"Input not found: {INPUT_PATH}")
-
-    # Sheet index 1 = "קטלוג תרחישים" (scenario catalog) with Q1/O1/A1 etc.
-    try:
-        df = pd.read_excel(INPUT_PATH, sheet_name=1)
-    except Exception:
-        df = pd.read_excel(INPUT_PATH)
-
-    # SCN_ID or Scenario_ID for base scenario
-    id_col = "SCN_ID" if "SCN_ID" in df.columns else "Scenario_ID"
+    df = pd.read_excel(INPUT_PATH)
     required_cols = [
-        id_col, "Scenario_ID_H", "Scenario_ID_R", "Scenario_ID_S",
+        "Scenario_ID", "Scenario_ID_H", "Scenario_ID_R", "Scenario_ID_S",
         "Q1", "O1", "A1", "Q2", "O2", "A2", "Q3", "O3", "A3",
     ]
     missing = [c for c in required_cols if c not in df.columns]
     if missing:
-        raise ValueError(f"Missing columns in {INPUT_PATH}: {missing}")
+        raise ValueError(f"Missing expected columns in {INPUT_PATH}: {missing}")
 
     scenario_questions = []
 
     for _, row in df.iterrows():
-        base_scn_raw = row.get(id_col)
+        base_scn_raw = row.get("Scenario_ID")
         if is_nan(base_scn_raw):
             continue
-
         base_scn = str(base_scn_raw).strip()
         scenario_ids: List[str] = []
         for variant_col in ["Scenario_ID_H", "Scenario_ID_R", "Scenario_ID_S"]:
@@ -130,14 +95,12 @@ def build_scenario_questions():
             if is_nan(q_text_raw):
                 continue
             options = parse_options(o_raw)
-            correct_indices = find_correct_indices(a_raw, options)
-            # Store correct_answer_indices (array); keep correct_answer_index for backward compat (first element)
+            correct_index = find_correct_index(a_raw, options)
             per_scenario_questions.append({
                 "question_id": f"sa_{i}",
                 "question_text": str(q_text_raw).strip(),
                 "options": options,
-                "correct_answer_indices": correct_indices,
-                "correct_answer_index": correct_indices[0] if len(correct_indices) == 1 else (correct_indices[0] if correct_indices else None),
+                "correct_answer_index": correct_index,
             })
 
         if not per_scenario_questions:
@@ -150,7 +113,6 @@ def build_scenario_questions():
                     "question_id": q["question_id"],
                     "question_text": q["question_text"],
                     "options": q["options"],
-                    "correct_answer_indices": q["correct_answer_indices"],
                     "correct_answer_index": q["correct_answer_index"],
                 })
 

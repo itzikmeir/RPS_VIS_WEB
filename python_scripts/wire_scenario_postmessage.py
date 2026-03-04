@@ -1,9 +1,9 @@
 import glob
-import os
+from pathlib import Path
 
-
-ROOT = os.path.dirname(__file__)
-SCENARIOS_DIR = os.path.join(ROOT, "Scenarios")
+# Scripts live in python_scripts/; project root is parent
+ROOT_DIR = Path(__file__).resolve().parent.parent
+SCENARIOS_DIR = ROOT_DIR / "Scenarios"
 
 OLD_SNIPPET = (
     "document.getElementById('doConfirm').onclick = () => { alert('הבחירה נשמרה!'); "
@@ -34,9 +34,9 @@ NEW_SNIPPET = """document.getElementById('doConfirm').onclick = () => {
 def main():
     # Wire all scenario HTML files in both Correct_Scenarios and Inaccurate_Scenarios.
     patterns = [
-        os.path.join(SCENARIOS_DIR, "SCN_*.html"),
-        os.path.join(SCENARIOS_DIR, "Correct_Scenarios", "SCN_*.html"),
-        os.path.join(SCENARIOS_DIR, "Inaccurate_Scenarios", "SCN_*.html"),
+        str(SCENARIOS_DIR / "SCN_*.html"),
+        str(SCENARIOS_DIR / "Correct_Scenarios" / "SCN_*.html"),
+        str(SCENARIOS_DIR / "Inaccurate_Scenarios" / "SCN_*.html"),
     ]
 
     files = []
@@ -57,11 +57,10 @@ def main():
             with open(path, "w", encoding="utf-8") as f:
                 f.write(new_text)
             changed += 1
-            print(f"Updated: {path.replace(SCENARIOS_DIR + os.sep, '')}")
+            print(f"Updated: {Path(path).relative_to(SCENARIOS_DIR)}")
 
     print(f"Done. Updated {changed} scenario files.")
 
 
 if __name__ == "__main__":
     main()
-

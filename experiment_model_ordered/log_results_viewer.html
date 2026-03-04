@@ -201,6 +201,7 @@
           <div class="stat-card"><div class="stat-label">Correct</div><div class="stat-value" style="color: #2e7d32;">${questionStats.correctAnswers}</div><div class="stat-subtext">${questionStats.correctPercent.toFixed(1)}%</div></div>
           <div class="stat-card"><div class="stat-label">Incorrect</div><div class="stat-value" style="color: #c62828;">${questionStats.incorrectAnswers}</div></div>
           <div class="stat-card"><div class="stat-label">Unanswered</div><div class="stat-value" style="color: #666;">${questionStats.unanswered}</div></div>
+          <div class="stat-card"><div class="stat-label">Multi-correct (2+ answers)</div><div class="stat-value">${questionStats.multiCorrectTotal}</div><div class="stat-subtext">${questionStats.multiCorrectCorrect} correct</div></div>
         `;
         qsSection.appendChild(qsGrid);
         wrapper.appendChild(qsSection);
@@ -299,16 +300,25 @@
     }
 
     function calculateQuestionStatistics(questionnaires) {
-      let totalScenarioQuestions = 0, correctAnswers = 0, incorrectAnswers = 0, unanswered = 0;
+      let totalScenarioQuestions = 0, correctAnswers = 0, incorrectAnswers = 0, unanswered = 0, multiCorrectTotal = 0, multiCorrectCorrect = 0;
       questionnaires.forEach(q => {
         if (q.questionnaire_type === 'post_scenario' && q.answers && q.answers.scenario_questions) {
-          Object.values(q.answers.scenario_questions).forEach(qData => {
-            if (qData && typeof qData === 'object') { totalScenarioQuestions++; qData.is_correct === true ? correctAnswers++ : qData.is_correct === false ? incorrectAnswers++ : unanswered++; }
-            else if (qData === 'DBG' || qData === null) { totalScenarioQuestions++; unanswered++; }
+          const correctAnswersMap = (q.correct && typeof q.correct === 'object') ? q.correct : {};
+          Object.entries(q.answers.scenario_questions).forEach(([qid, qData]) => {
+            const qKey = qid.replace('sa_', 'Q');
+            const expectedVal = correctAnswersMap[qKey];
+            const isMultiCorrect = expectedVal && String(expectedVal).includes(',');
+            if (qData && typeof qData === 'object') {
+              totalScenarioQuestions++;
+              if (isMultiCorrect) multiCorrectTotal++;
+              if (qData.is_correct === true) { correctAnswers++; if (isMultiCorrect) multiCorrectCorrect++; }
+              else if (qData.is_correct === false) incorrectAnswers++;
+              else unanswered++;
+            } else if (qData === 'DBG' || qData === null) { totalScenarioQuestions++; if (isMultiCorrect) multiCorrectTotal++; unanswered++; }
           });
         }
       });
-      return { totalScenarioQuestions, correctAnswers, incorrectAnswers, unanswered, correctPercent: totalScenarioQuestions > 0 ? (correctAnswers / totalScenarioQuestions) * 100 : 0, incorrectPercent: totalScenarioQuestions > 0 ? (incorrectAnswers / totalScenarioQuestions) * 100 : 0, unansweredPercent: totalScenarioQuestions > 0 ? (unanswered / totalScenarioQuestions) * 100 : 0 };
+      return { totalScenarioQuestions, correctAnswers, incorrectAnswers, unanswered, multiCorrectTotal, multiCorrectCorrect, correctPercent: totalScenarioQuestions > 0 ? (correctAnswers / totalScenarioQuestions) * 100 : 0, incorrectPercent: totalScenarioQuestions > 0 ? (incorrectAnswers / totalScenarioQuestions) * 100 : 0, unansweredPercent: totalScenarioQuestions > 0 ? (unanswered / totalScenarioQuestions) * 100 : 0 };
     }
 
     function createPerformanceCard(title, stats) {
@@ -572,9 +582,17 @@
         if (q.vis_index != null) headerInfo.push(`Vis: ${getVisualizationName(schedule, q.model_index, q.vis_index) || q.vis_index + 1}`);
         card.innerHTML = `<div style="margin-bottom: 10px; border-bottom: 1px solid #e0e0e0;"><strong>${headerInfo.join(' | ')}</strong></div>`;
         if (q.answers && q.answers.scenario_questions) {
+          const trial = (q.trial_id && trialMap[q.trial_id]) ? trialMap[q.trial_id] : null;
+          const correctAnswers = (trial && trial.correct_answers) ? trial.correct_answers : (q.correct || {});
           Object.entries(q.answers.scenario_questions).forEach(([qid, info]) => {
             const isCorrect = info && typeof info === 'object' && info.is_correct === true;
-            card.innerHTML += `<div style="margin: 8px 0; padding: 8px; background: ${isCorrect ? '#e8f5e9' : '#ffebee'}; border-radius: 4px;"><strong>${qid}:</strong> ${info && info.answer_text ? escapeHtml(info.answer_text) : 'N/A'} ${info && info.is_correct !== undefined ? (info.is_correct ? '✓' : '✗') : ''}</div>`;
+            const qKey = qid.replace('sa_', 'Q');
+            const expectedText = correctAnswers[qKey];
+            const hasMultiCorrect = expectedText && expectedText.includes(',');
+            let html = `<div style="margin: 8px 0; padding: 8px; background: ${isCorrect ? '#e8f5e9' : '#ffebee'}; border-radius: 4px;"><strong>${qid}:</strong> ${info && info.answer_text ? escapeHtml(info.answer_text) : 'N/A'} ${info && info.is_correct !== undefined ? (info.is_correct ? '✓' : '✗') : ''}`;
+            if (expectedText) html += ` <span style="font-size: 12px; color: #666;">${hasMultiCorrect ? '(תשובות נכונות: ' : '(תשובה נכונה: '}${escapeHtml(expectedText)})</span>`;
+            html += '</div>';
+            card.innerHTML += html;
           });
         }
         wrapper.appendChild(card);
@@ -617,7 +635,7 @@
       const trialMap = {};
       (trials || []).forEach(t => { if (t && t.trial_id) trialMap[t.trial_id] = t; });
       const rows = [];
-      const header = ['participant_id', 'questionnaire_type', 'model_index', 'vis_index', 'visualization', 'trial_index', 'trial_id', 'question_group', 'question_id', 'scenario_id', 'rec_correct', 'ai_route', 'true_route', 'answer_value', 'is_correct', 'enter_ts', 'exit_ts'];
+      const header = ['participant_id', 'questionnaire_type', 'model_index', 'vis_index', 'visualization', 'trial_index', 'trial_id', 'question_group', 'question_id', 'scenario_id', 'rec_correct', 'ai_route', 'true_route', 'correct_answer', 'answer_value', 'is_correct', 'enter_ts', 'exit_ts'];
       rows.push(header);
 
       questionnaires.forEach(q => {
@@ -640,23 +658,26 @@
           true_route: linkedTrial && (linkedTrial.true_route || linkedTrial.correct_route) ? (linkedTrial.true_route || linkedTrial.correct_route) : ''
         };
 
-        const pushRow = (qGroup, qId, ansVal, isCorrect) => {
-          rows.push([base.participant_id, base.questionnaire_type, base.model_index, base.vis_index, base.visualization, base.trial_index, base.trial_id, qGroup, qId, scenarioMeta.scenario_id, scenarioMeta.rec_correct, scenarioMeta.ai_route, scenarioMeta.true_route, ansVal, isCorrect, base.enter_ts, base.exit_ts]);
+        const pushRow = (qGroup, qId, ansVal, isCorrect, correctAnswer) => {
+          rows.push([base.participant_id, base.questionnaire_type, base.model_index, base.vis_index, base.visualization, base.trial_index, base.trial_id, qGroup, qId, scenarioMeta.scenario_id, scenarioMeta.rec_correct, scenarioMeta.ai_route, scenarioMeta.true_route, correctAnswer || '', ansVal, isCorrect, base.enter_ts, base.exit_ts]);
         };
 
+        const correctAnswers = (linkedTrial && linkedTrial.correct_answers) ? linkedTrial.correct_answers : (q.correct || {});
         if (!q.answers || typeof q.answers !== 'object') {
-          pushRow('', '', q.answers === 'DBG' ? 'DBG' : '', '');
+          pushRow('', '', q.answers === 'DBG' ? 'DBG' : '', '', '');
           return;
         }
         if (q.questionnaire_type === 'post_scenario' && q.answers.scenario_questions) {
           Object.entries(q.answers.scenario_questions).forEach(([qid, info]) => {
             const ansText = (info && typeof info === 'object' && 'answer_text' in info) ? info.answer_text : '';
             const isCorrect = (info && typeof info === 'object' && 'is_correct' in info) ? info.is_correct : '';
-            pushRow('scenario_questions', qid, ansText, isCorrect);
+            const qKey = qid.replace('sa_', 'Q');
+            const correctAnswer = correctAnswers[qKey] || '';
+            pushRow('scenario_questions', qid, ansText, isCorrect, correctAnswer);
           });
           Object.entries(q.answers).forEach(([key, value]) => {
             if (key === 'scenario_questions') return;
-            pushRow('fixed', key, value === 'DBG' || value === null ? String(value) : String(value), '');
+            pushRow('fixed', key, value === 'DBG' || value === null ? String(value) : String(value), '', '');
           });
           return;
         }
@@ -664,19 +685,19 @@
           ['workload', 'trust'].forEach(group => {
             const obj = q.answers[group];
             if (!obj || typeof obj !== 'object') return;
-            Object.entries(obj).forEach(([qid, value]) => pushRow(group, qid, value === 'DBG' || value === null ? String(value) : String(value), ''));
+            Object.entries(obj).forEach(([qid, value]) => pushRow(group, qid, value === 'DBG' || value === null ? String(value) : String(value), '', ''));
           });
           Object.entries(q.answers).forEach(([key, value]) => {
             if (key === 'workload' || key === 'trust') return;
-            pushRow('', key, value === 'DBG' || value === null ? String(value) : String(value), '');
+            pushRow('', key, value === 'DBG' || value === null ? String(value) : String(value), '', '');
           });
           return;
         }
         if (q.questionnaire_type === 'nasa_tlx') {
-          Object.entries(q.answers).forEach(([key, value]) => pushRow('nasa_tlx', key, value === 'DBG' || value === null ? String(value) : String(value), ''));
+          Object.entries(q.answers).forEach(([key, value]) => pushRow('nasa_tlx', key, value === 'DBG' || value === null ? String(value) : String(value), '', ''));
           return;
         }
-        Object.entries(q.answers).forEach(([key, value]) => pushRow('', key, value === 'DBG' || value === null ? String(value) : String(value), ''));
+        Object.entries(q.answers).forEach(([key, value]) => pushRow('', key, value === 'DBG' || value === null ? String(value) : String(value), '', ''));
       });
 
       const escapeCell = (cell) => {

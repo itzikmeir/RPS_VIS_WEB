@@ -238,11 +238,11 @@
       if (Array.isArray(trials)) trials.forEach(t => { if (t && t.trial_id) trialMap[t.trial_id] = t; });
 
       const rows = [];
-      const header = ['participant_id', 'questionnaire_type', 'model_index', 'vis_index', 'visualization', 'trial_index', 'trial_id', 'question_group', 'question_id', 'scenario_id', 'rec_correct', 'ai_route', 'true_route', 'answer_value', 'is_correct', 'enter_ts', 'exit_ts'];
+      const header = ['participant_id', 'questionnaire_type', 'model_index', 'vis_index', 'visualization', 'trial_index', 'trial_id', 'question_group', 'question_id', 'scenario_id', 'rec_correct', 'ai_route', 'true_route', 'correct_answer', 'answer_value', 'is_correct', 'enter_ts', 'exit_ts'];
       rows.push(header);
 
-      const pushRow = (base, scenarioMeta, qGroup, qId, ansVal, isCorrect) => {
-        rows.push([base.participant_id, base.questionnaire_type, base.model_index, base.vis_index, '', base.trial_index, base.trial_id, qGroup, qId, scenarioMeta.scenario_id, scenarioMeta.rec_correct, scenarioMeta.ai_route, scenarioMeta.true_route, ansVal, isCorrect, base.enter_ts, base.exit_ts]);
+      const pushRow = (base, scenarioMeta, qGroup, qId, ansVal, isCorrect, correctAnswer) => {
+        rows.push([base.participant_id, base.questionnaire_type, base.model_index, base.vis_index, '', base.trial_index, base.trial_id, qGroup, qId, scenarioMeta.scenario_id, scenarioMeta.rec_correct, scenarioMeta.ai_route, scenarioMeta.true_route, correctAnswer || '', ansVal, isCorrect, base.enter_ts, base.exit_ts]);
       };
 
       questionnaires.forEach(q => {
@@ -263,21 +263,24 @@
           ai_route: linkedTrial && (linkedTrial.ai_route || linkedTrial.ai_recommended_route) ? (linkedTrial.ai_route || linkedTrial.ai_recommended_route) : '',
           true_route: linkedTrial && (linkedTrial.true_route || linkedTrial.correct_route) ? (linkedTrial.true_route || linkedTrial.correct_route) : ''
         };
+        const correctAnswersMap = (linkedTrial && linkedTrial.correct_answers) ? linkedTrial.correct_answers : (q.correct && typeof q.correct === 'object' ? q.correct : {});
 
         if (!q.answers || typeof q.answers !== 'object') {
-          pushRow(base, scenarioMeta, '', '', q.answers === 'DBG' ? 'DBG' : '', '');
+          pushRow(base, scenarioMeta, '', '', q.answers === 'DBG' ? 'DBG' : '', '', '');
           return;
         }
 
         if (q.questionnaire_type === 'post_scenario' && q.answers.scenario_questions && typeof q.answers.scenario_questions === 'object') {
           Object.entries(q.answers.scenario_questions).forEach(([qid, info]) => {
+            const qKey = qid.replace('sa_', 'Q');
+            const correctAnswer = correctAnswersMap[qKey] || '';
             const ansText = (info && typeof info === 'object' && 'answer_text' in info) ? info.answer_text : '';
             const isCorrect = (info && typeof info === 'object' && 'is_correct' in info) ? info.is_correct : '';
-            pushRow(base, scenarioMeta, 'scenario_questions', qid, ansText, isCorrect);
+            pushRow(base, scenarioMeta, 'scenario_questions', qid, ansText, isCorrect, correctAnswer);
           });
           Object.entries(q.answers).forEach(([key, value]) => {
             if (key === 'scenario_questions') return;
-            pushRow(base, scenarioMeta, 'fixed', key, value === 'DBG' || value === null ? String(value) : String(value), '');
+            pushRow(base, scenarioMeta, 'fixed', key, value === 'DBG' || value === null ? String(value) : String(value), '', '');
           });
           return;
         }
@@ -287,25 +290,25 @@
             const obj = q.answers[group];
             if (!obj || typeof obj !== 'object') return;
             Object.entries(obj).forEach(([qid, value]) => {
-              pushRow(base, scenarioMeta, group, qid, value === 'DBG' || value === null ? String(value) : String(value), '');
+              pushRow(base, scenarioMeta, group, qid, value === 'DBG' || value === null ? String(value) : String(value), '', '');
             });
           });
           Object.entries(q.answers).forEach(([key, value]) => {
             if (key === 'workload' || key === 'trust') return;
-            pushRow(base, scenarioMeta, '', key, value === 'DBG' || value === null ? String(value) : String(value), '');
+            pushRow(base, scenarioMeta, '', key, value === 'DBG' || value === null ? String(value) : String(value), '', '');
           });
           return;
         }
 
         if (q.questionnaire_type === 'nasa_tlx') {
           Object.entries(q.answers).forEach(([key, value]) => {
-            pushRow(base, scenarioMeta, 'nasa_tlx', key, value === 'DBG' || value === null ? String(value) : String(value), '');
+            pushRow(base, scenarioMeta, 'nasa_tlx', key, value === 'DBG' || value === null ? String(value) : String(value), '', '');
           });
           return;
         }
 
         Object.entries(q.answers).forEach(([key, value]) => {
-          pushRow(base, scenarioMeta, '', key, value === 'DBG' || value === null ? String(value) : String(value), '');
+          pushRow(base, scenarioMeta, '', key, value === 'DBG' || value === null ? String(value) : String(value), '', '');
         });
       });
 

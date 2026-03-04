@@ -14,7 +14,7 @@ sys.path.insert(0, str(ROOT))
 
 def run_script(script_name: str, cwd: Path = ROOT):
     """Run a Python script and return (success, output)."""
-    script_path = ROOT / script_name
+    script_path = ROOT / "python_scripts" / script_name
     if not script_path.exists():
         return False, f"Script not found: {script_path}"
     try:

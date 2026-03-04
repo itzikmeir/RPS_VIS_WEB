@@ -12,7 +12,8 @@ from typing import Dict, Tuple
 
 import pandas as pd
 
-ROOT_DIR = Path(__file__).resolve().parent
+# Scripts live in python_scripts/; project root is parent
+ROOT_DIR = Path(__file__).resolve().parent.parent
 INPUT_EXCEL = ROOT_DIR / "Model_Ordered_experiment" / "models_rec_long.xlsx"
 FALLBACK_EXCEL = ROOT_DIR / "rec_long.xlsx"
 PARTICIPANTS_DIR = ROOT_DIR / "experiment_model_ordered" / "participants_json"

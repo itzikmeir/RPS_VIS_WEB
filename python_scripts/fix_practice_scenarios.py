@@ -50,7 +50,7 @@ def fix_practice_scenarios(participants_dir: Path) -> None:
 
 
 if __name__ == "__main__":
-    base_dir = Path(__file__).resolve().parent
-    participants_dir = base_dir / "participants_json"
+    # Scripts live in python_scripts/; project root is parent
+    ROOT_DIR = Path(__file__).resolve().parent.parent
+    participants_dir = ROOT_DIR / "experiment_model_ordered" / "participants_json"
     fix_practice_scenarios(participants_dir)
-
