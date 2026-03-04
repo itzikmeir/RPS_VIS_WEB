@@ -32,7 +32,11 @@ def build_correct_answers_map() -> Dict[str, Dict[str, str]]:
         scenario_id = entry.get("scenario_id")
         question_id = entry.get("question_id")  # "sa_1", "sa_2", "sa_3"
         options = entry.get("options", [])
-        correct_index = entry.get("correct_answer_index")
+        # Support both correct_answer_indices (array) and correct_answer_index (single)
+        correct_indices = entry.get("correct_answer_indices")
+        if correct_indices is None:
+            correct_index = entry.get("correct_answer_index")
+            correct_indices = [correct_index] if correct_index is not None and isinstance(correct_index, int) else []
 
         if not scenario_id or not question_id:
             continue
@@ -43,14 +47,11 @@ def build_correct_answers_map() -> Dict[str, Dict[str, str]]:
         # Map sa_1 -> Q1, sa_2 -> Q2, sa_3 -> Q3
         q_key = question_id.replace("sa_", "Q")
 
-        # Get the actual answer text from options using correct_answer_index
-        if (
-            correct_index is not None
-            and isinstance(correct_index, int)
-            and 0 <= correct_index < len(options)
-        ):
-            answer_text = options[correct_index]
-            mapping[scenario_id][q_key] = answer_text
+        # Get answer text: for multiple correct, join with ", "; for single, use that option
+        valid_indices = [i for i in correct_indices if isinstance(i, int) and 0 <= i < len(options)]
+        if valid_indices:
+            answer_texts = [options[i] for i in valid_indices]
+            mapping[scenario_id][q_key] = ", ".join(answer_texts)
         else:
             mapping[scenario_id][q_key] = None
 

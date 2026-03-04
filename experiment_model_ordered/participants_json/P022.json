@@ -10,7 +10,8 @@
       "correct_route": "א׳",
       "ai_recommended_route": "א׳",
       "correct_answers": {
-        "Q2": "1"
+        "Q1": "מסלול ג",
+        "Q2": "מסלול א"
       },
       "rec_correct": "כן"
     },
@@ -21,7 +22,8 @@
       "correct_route": "א׳",
       "ai_recommended_route": "א׳",
       "correct_answers": {
-        "Q2": "1"
+        "Q1": "מסלול א, מסלול ב",
+        "Q2": "מסלול ב"
       },
       "rec_correct": "כן"
     },
@@ -29,10 +31,11 @@
       "slot": 3,
       "scenario_id": "SCN_002_R",
       "difficulty": "E",
-      "correct_route": "ב׳",
-      "ai_recommended_route": "ב׳",
+      "correct_route": "א׳",
+      "ai_recommended_route": "א׳",
       "correct_answers": {
-        "Q1": "2"
+        "Q1": "מסלול ג",
+        "Q2": "מסלול ב"
       },
       "rec_correct": "כן"
     },
@@ -43,7 +46,8 @@
       "correct_route": "ב׳",
       "ai_recommended_route": "ב׳",
       "correct_answers": {
-        "Q1": "2"
+        "Q1": "מסלול א",
+        "Q2": "מסלול ג"
       },
       "rec_correct": "כן"
     },
@@ -51,11 +55,11 @@
       "slot": 5,
       "scenario_id": "SCN_003_H",
       "difficulty": "E",
-      "correct_route": "ג׳",
-      "ai_recommended_route": "ג׳",
+      "correct_route": "ב׳",
+      "ai_recommended_route": "ב׳",
       "correct_answers": {
-        "Q1": "2",
-        "Q2": "1"
+        "Q1": "מסלול ב",
+        "Q2": "מסלול א"
       },
       "rec_correct": "כן"
     },
@@ -66,8 +70,8 @@
       "correct_route": "ג׳",
       "ai_recommended_route": "ג׳",
       "correct_answers": {
-        "Q1": "2",
-        "Q2": "1"
+        "Q1": "מסלול ב",
+        "Q2": "מסלול א"
       },
       "rec_correct": "כן"
     }
@@ -86,11 +90,11 @@
               "slot": 1,
               "scenario_id": "SCN_005_R",
               "difficulty": "E",
-              "correct_route": "ב׳",
-              "ai_recommended_route": "ב׳",
+              "correct_route": "ג׳",
+              "ai_recommended_route": "ג׳",
               "correct_answers": {
-                "Q1": "3",
-                "Q2": "2"
+                "Q1": "מסלול א",
+                "Q2": "מסלול ב"
               },
               "rec_correct": "כן"
             },
@@ -98,10 +102,11 @@
               "slot": 2,
               "scenario_id": "SCN_013_R",
               "difficulty": "H",
-              "correct_route": "א׳",
-              "ai_recommended_route": "א׳",
+              "correct_route": "ב׳",
+              "ai_recommended_route": "ב׳",
               "correct_answers": {
-                "Q2": "2"
+                "Q1": "מסלול ב",
+                "Q2": "מסלול ב, מסלול ג"
               },
               "rec_correct": "כן"
             },
@@ -112,8 +117,8 @@
               "correct_route": "ב׳",
               "ai_recommended_route": "א׳",
               "correct_answers": {
-                "Q1": "2",
-                "Q2": "2"
+                "Q1": "מסלול א",
+                "Q2": "מסלול ב"
               },
               "rec_correct": "לא"
             },
@@ -121,11 +126,11 @@
               "slot": 4,
               "scenario_id": "SCN_010_R",
               "difficulty": "H",
-              "correct_route": "א׳",
+              "correct_route": "ג׳",
               "ai_recommended_route": "ב׳",
               "correct_answers": {
-                "Q1": "2",
-                "Q2": "1"
+                "Q1": "מסלול ב",
+                "Q2": "מסלול א, מסלול ב"
               },
               "rec_correct": "לא"
             }
@@ -142,8 +147,8 @@
               "correct_route": "ג׳",
               "ai_recommended_route": "ב׳",
               "correct_answers": {
-                "Q1": "1",
-                "Q2": "3"
+                "Q1": "מסלול ב",
+                "Q2": "מסלול א"
               },
               "rec_correct": "לא"
             },
@@ -154,8 +159,8 @@
               "correct_route": "ב׳",
               "ai_recommended_route": "א׳",
               "correct_answers": {
-                "Q1": "1",
-                "Q2": "2"
+                "Q1": "מסלול א, מסלול ג",
+                "Q2": "מסלול ג"
               },
               "rec_correct": "לא"
             },
@@ -166,8 +171,8 @@
               "correct_route": "ב׳",
               "ai_recommended_route": "ב׳",
               "correct_answers": {
-                "Q1": "2",
-                "Q2": "1"
+                "Q1": "מסלול ב",
+                "Q2": "מסלול ג"
               },
               "rec_correct": "כן"
             },
@@ -178,8 +183,8 @@
               "correct_route": "א׳",
               "ai_recommended_route": "א׳",
               "correct_answers": {
-                "Q1": "2",
-                "Q2": "1"
+                "Q1": "מסלול א",
+                "Q2": "מסלול א"
               },
               "rec_correct": "כן"
             }
@@ -196,8 +201,8 @@
               "correct_route": "ג׳",
               "ai_recommended_route": "ג׳",
               "correct_answers": {
-                "Q1": "2",
-                "Q2": "1"
+                "Q1": "מסלול ב",
+                "Q2": "מסלול ב"
               },
               "rec_correct": "כן"
             },
@@ -208,7 +213,8 @@
               "correct_route": "ב׳",
               "ai_recommended_route": "ג׳",
               "correct_answers": {
-                "Q1": "2"
+                "Q1": "מסלול ג",
+                "Q2": "מסלול ג"
               },
               "rec_correct": "לא"
             },
@@ -219,7 +225,8 @@
               "correct_route": "א׳",
               "ai_recommended_route": "ג׳",
               "correct_answers": {
-                "Q2": "0"
+                "Q1": "מסלול ג",
+                "Q2": "מסלול ב, מסלול ג"
               },
               "rec_correct": "לא"
             },
@@ -230,7 +237,8 @@
               "correct_route": "ג׳",
               "ai_recommended_route": "ג׳",
               "correct_answers": {
-                "Q1": "2"
+                "Q1": "מסלול ג",
+                "Q2": "מסלול ב"
               },
               "rec_correct": "כן"
             }
@@ -254,8 +262,8 @@
               "correct_route": "ב׳",
               "ai_recommended_route": "ב׳",
               "correct_answers": {
-                "Q1": "2",
-                "Q2": "3"
+                "Q1": "מסלול א",
+                "Q2": "מסלול א, מסלול ב"
               },
               "rec_correct": "כן"
             },
@@ -263,10 +271,11 @@
               "slot": 2,
               "scenario_id": "SCN_012_S",
               "difficulty": "H",
-              "correct_route": "ג׳",
-              "ai_recommended_route": "ג׳",
+              "correct_route": "ב׳",
+              "ai_recommended_route": "ב׳",
               "correct_answers": {
-                "Q1": "2"
+                "Q1": "מסלול א, מסלול ב",
+                "Q2": "מסלול א"
               },
               "rec_correct": "כן"
             },
@@ -277,7 +286,8 @@
               "correct_route": "א׳",
               "ai_recommended_route": "א׳",
               "correct_answers": {
-                "Q2": "2"
+                "Q1": "מסלול ג",
+                "Q2": "מסלול ג"
               },
               "rec_correct": "כן"
             },
@@ -285,11 +295,11 @@
               "slot": 4,
               "scenario_id": "SCN_016_S",
               "difficulty": "H",
-              "correct_route": "א׳",
-              "ai_recommended_route": "ב׳",
+              "correct_route": "ב׳",
+              "ai_recommended_route": "ג׳",
               "correct_answers": {
-                "Q1": "2",
-                "Q2": "2"
+                "Q1": "מסלול ב, מסלול ג",
+                "Q2": "מסלול א"
               },
               "rec_correct": "לא"
             },
@@ -297,10 +307,11 @@
               "slot": 5,
               "scenario_id": "SCN_014_S",
               "difficulty": "E",
-              "correct_route": "ב׳",
-              "ai_recommended_route": "ב׳",
+              "correct_route": "א׳",
+              "ai_recommended_route": "א׳",
               "correct_answers": {
-                "Q1": "3"
+                "Q1": "מסלול ב",
+                "Q2": "מסלול א"
               },
               "rec_correct": "כן"
             }
@@ -314,10 +325,11 @@
               "slot": 1,
               "scenario_id": "SCN_007_R",
               "difficulty": "E",
-              "correct_route": "א׳",
-              "ai_recommended_route": "א׳",
+              "correct_route": "ב׳",
+              "ai_recommended_route": "ב׳",
               "correct_answers": {
-                "Q2": "3"
+                "Q1": "מסלול ג",
+                "Q2": "מסלול ב, מסלול ג"
               },
               "rec_correct": "כן"
             },
@@ -325,10 +337,11 @@
               "slot": 2,
               "scenario_id": "SCN_008_R",
               "difficulty": "H",
-              "correct_route": "ב׳",
-              "ai_recommended_route": "ב׳",
+              "correct_route": "א׳",
+              "ai_recommended_route": "א׳",
               "correct_answers": {
-                "Q1": "1"
+                "Q1": "מסלול א",
+                "Q2": "מסלול ג"
               },
               "rec_correct": "כן"
             },
@@ -339,8 +352,8 @@
               "correct_route": "ג׳",
               "ai_recommended_route": "ג׳",
               "correct_answers": {
-                "Q1": "2",
-                "Q2": "2"
+                "Q1": "מסלול ג",
+                "Q2": "מסלול א"
               },
               "rec_correct": "כן"
             },
@@ -351,7 +364,8 @@
               "correct_route": "ג׳",
               "ai_recommended_route": "א׳",
               "correct_answers": {
-                "Q1": "1"
+                "Q1": "מסלול א, מסלול ג",
+                "Q2": "מסלול א, מסלול ב"
               },
               "rec_correct": "לא"
             },
@@ -359,11 +373,11 @@
               "slot": 5,
               "scenario_id": "SCN_004_R",
               "difficulty": "E",
-              "correct_route": "א׳",
-              "ai_recommended_route": "א׳",
+              "correct_route": "ג׳",
+              "ai_recommended_route": "ג׳",
               "correct_answers": {
-                "Q1": "2",
-                "Q2": "2"
+                "Q1": "מסלול א, מסלול ב",
+                "Q2": "מסלול א"
               },
               "rec_correct": "כן"
             }
@@ -380,8 +394,8 @@
               "correct_route": "א׳",
               "ai_recommended_route": "ב׳",
               "correct_answers": {
-                "Q1": "2",
-                "Q2": "1"
+                "Q1": "מסלול א, מסלול ג",
+                "Q2": "מסלול א"
               },
               "rec_correct": "לא"
             },
@@ -392,7 +406,8 @@
               "correct_route": "ג׳",
               "ai_recommended_route": "ג׳",
               "correct_answers": {
-                "Q1": "3"
+                "Q1": "מסלול ב, מסלול ג",
+                "Q2": "מסלול ב, מסלול ג"
               },
               "rec_correct": "כן"
             },
@@ -403,7 +418,8 @@
               "correct_route": "ב׳",
               "ai_recommended_route": "ב׳",
               "correct_answers": {
-                "Q1": "2"
+                "Q1": "מסלול ב",
+                "Q2": "מסלול ג"
               },
               "rec_correct": "כן"
             },
@@ -414,8 +430,8 @@
               "correct_route": "ג׳",
               "ai_recommended_route": "ג׳",
               "correct_answers": {
-                "Q1": "1",
-                "Q2": "3"
+                "Q1": "מסלול ג",
+                "Q2": "מסלול ב"
               },
               "rec_correct": "כן"
             },
@@ -426,7 +442,8 @@
               "correct_route": "ג׳",
               "ai_recommended_route": "ג׳",
               "correct_answers": {
-                "Q1": "0"
+                "Q1": "מסלול ב",
+                "Q2": "מסלול א, מסלול ב"
               },
               "rec_correct": "כן"
             }

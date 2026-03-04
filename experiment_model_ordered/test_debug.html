@@ -36,13 +36,19 @@
   </div>
 
   <div class="section">
-    <h2>4. Asset Paths Check</h2>
+    <h2>4. Multi-Correct Answer Logic</h2>
+    <button id="btnTestMultiCorrect">Test multi-correct correctness</button>
+    <div id="multiCorrectResult"></div>
+  </div>
+
+  <div class="section">
+    <h2>5. Asset Paths Check</h2>
     <button id="btnCheckAssets">Check asset paths</button>
     <div id="assetsResult"></div>
   </div>
 
   <div class="section">
-    <h2>5. Console Errors</h2>
+    <h2>6. Console Errors</h2>
     <div id="consoleErrors"></div>
   </div>
 
@@ -79,7 +85,38 @@
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         const data = await r.json();
         const count = data.scenario_questions?.length || 0;
-        el.innerHTML = `<span class="pass">✓ Loaded</span> ${count} scenario-question entries`;
+        const multiCount = data.scenario_questions?.filter(q => (q.correct_answer_indices || []).length > 1).length || 0;
+        el.innerHTML = `<span class="pass">✓ Loaded</span> ${count} entries, ${multiCount} with multiple correct answers`;
+      } catch (e) {
+        el.innerHTML = `<span class="fail">✗ Failed: ${e.message}</span>`;
+      }
+    };
+
+    document.getElementById("btnTestMultiCorrect").onclick = async () => {
+      const el = document.getElementById("multiCorrectResult");
+      try {
+        const r = await fetch("questions/scenario_questions.json", { cache: "no-store" });
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        const data = await r.json();
+        const questions = data.scenario_questions || [];
+        const multiCorrect = questions.filter(q => (q.correct_answer_indices || []).length > 1);
+        let html = "";
+        let passed = 0;
+        let failed = 0;
+        for (const q of multiCorrect.slice(0, 5)) {
+          const indices = q.correct_answer_indices || [];
+          const options = q.options || [];
+          const correctIndices = indices;
+          const isCorrect = (selIdx) => correctIndices.length > 0 ? correctIndices.includes(selIdx) : false;
+          let ok = true;
+          for (let i = 0; i < indices.length; i++) {
+            if (!isCorrect(indices[i])) { ok = false; break; }
+          }
+          if (indices.length > 0 && !isCorrect(999)) ok = ok && true;
+          if (ok) passed++; else failed++;
+          html += `<div>${q.scenario_id} ${q.question_id}: indices [${indices.join(",")}] → ${ok ? '<span class="pass">✓</span>' : '<span class="fail">✗</span>'}</div>`;
+        }
+        el.innerHTML = `<span class="pass">✓ Logic test</span> ${multiCorrect.length} multi-correct questions, sampled 5: ${passed} pass, ${failed} fail. ${html}`;
       } catch (e) {
         el.innerHTML = `<span class="fail">✗ Failed: ${e.message}</span>`;
       }

@@ -2098,8 +2098,9 @@ function renderTrialQuestionsPage(root) {
           questionDiv.appendChild(answerLabel);
         }
         
-        // Show expected correct answer index from scenario_questions.json (for debugging)
-        if (questionData.correct_answer_index !== undefined && questionData.correct_answer_index !== null) {
+        // Show expected correct answer index/indices from scenario_questions.json (for debugging)
+        const debugIndices = questionData.correct_answer_indices || (questionData.correct_answer_index !== undefined && questionData.correct_answer_index !== null ? [questionData.correct_answer_index] : []);
+        if (debugIndices.length > 0) {
           const debugAnswerLabel = document.createElement("div");
           debugAnswerLabel.style.marginTop = "8px";
           debugAnswerLabel.style.padding = "6px";
@@ -2107,8 +2108,8 @@ function renderTrialQuestionsPage(root) {
           debugAnswerLabel.style.borderRadius = "4px";
           debugAnswerLabel.style.fontSize = "12px";
           debugAnswerLabel.style.fontFamily = "monospace";
-          const correctOption = questionData.options[questionData.correct_answer_index];
-          debugAnswerLabel.innerHTML = `<strong>DEBUG - Correct answer index:</strong> ${questionData.correct_answer_index} (${escapeHtml(correctOption || 'N/A')})`;
+          const correctOptions = debugIndices.map(i => questionData.options[i]).filter(Boolean);
+          debugAnswerLabel.innerHTML = `<strong>DEBUG - Correct answer index(es):</strong> ${debugIndices.join(", ")} (${escapeHtml(correctOptions.join(", ") || 'N/A')})`;
           debugAnswerLabel.dir = "ltr";
           questionDiv.appendChild(debugAnswerLabel);
         }
@@ -2208,11 +2209,14 @@ function renderTrialQuestionsPage(root) {
         const selected = document.querySelector(`input[name="scenario_question_${questionData.question_id}_${idx}"]:checked`);
         if (selected) {
           const selectedIndex = parseInt(selected.value);
+          const correctIndices = questionData.correct_answer_indices || (questionData.correct_answer_index !== undefined && questionData.correct_answer_index !== null ? [questionData.correct_answer_index] : []);
+          const isCorrect = correctIndices.length > 0 ? correctIndices.includes(selectedIndex) : false;
           scenarioAnswers[questionData.question_id] = {
             answer_index: selectedIndex,
             answer_text: questionData.options[selectedIndex],
             correct_answer_index: questionData.correct_answer_index,
-            is_correct: selectedIndex === questionData.correct_answer_index
+            correct_answer_indices: questionData.correct_answer_indices,
+            is_correct: isCorrect
           };
         } else {
           scenarioAnswers[questionData.question_id] = state.debugMode ? "DBG" : null;

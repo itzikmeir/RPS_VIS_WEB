@@ -25,6 +25,7 @@ def run_unittest(verbose=False, skip_pipeline=False):
     if not skip_pipeline:
         suite.addTests(loader.loadTestsFromName("tests.test_pipeline"))
     suite.addTests(loader.loadTestsFromName("tests.test_data_integrity"))
+    suite.addTests(loader.loadTestsFromName("tests.test_multi_correct_answers"))
     suite.addTests(loader.loadTestsFromName("tests.test_log_viewers"))
     # Browser tests use pytest; skip in unittest mode to avoid import issues
     # Run with: python -m pytest tests/test_frontend_browser.py -v
