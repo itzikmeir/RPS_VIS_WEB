@@ -51,8 +51,6 @@ const state = {
   currentTrialSelectedRoute: null,
   // Reference to current trial iframe container for cleanup
   currentTrialIframeContainer: null,
-  // Temporary storage for workload answers before trust page
-  tempWorkloadAnswers: null,
 
   // log buffers
   logs: {
@@ -173,7 +171,6 @@ function persistToStorage() {
     visIndex: state.visIndex,
     trialIndex: state.trialIndex,
     logs: state.logs,
-    tempWorkloadAnswers: state.tempWorkloadAnswers,
     savedAt: Date.now()
   };
   const dataStr = JSON.stringify(snapshot);
@@ -545,7 +542,6 @@ function renderLoginPage(root) {
             questionnaires: logs.questionnaires || [],
             interactions: logs.interactions || []
           };
-          state.tempWorkloadAnswers = snapshot.tempWorkloadAnswers || null;
           state.currentPageEnterTs = Date.now();
           persistToStorage(); // Persist restored state immediately
           render();
@@ -561,7 +557,6 @@ function renderLoginPage(root) {
           state.visIndex = 0;
           state.trialIndex = 0;
           state.logs = { pages: [], trials: [], questionnaires: [], interactions: [] };
-          state.tempWorkloadAnswers = null;
           render();
         };
         btnContainer.appendChild(resumeBtn);
@@ -2600,107 +2595,11 @@ function renderModelCompletionPage(root) {
   continueBtn.textContent = "המשך";
   continueBtn.onclick = () => {
     logPageExit(pageName);
-    const hasWorkload = state.questionsConfig?.model_summary_questions?.workload?.length > 0;
-    state.pageType = hasWorkload ? "model_summary_workload" : "model_summary_trust";
-    render();
-  };
-  buttonGroup.appendChild(continueBtn);
-  root.appendChild(buttonGroup);
-}
-
-function renderModelSummaryWorkloadPage(root) {
-  const model = state.schedule.models[state.modelIndex];
-  const pageName = `ModelSummaryWorkloadPage_M${state.modelIndex}`;
-  logPageEntry(pageName, {
-    model_index: state.modelIndex
-  });
-  
-  root.innerHTML = "";
-  
-  const title = document.createElement("h1");
-  title.className = "page-title";
-  // Avoid repeating the word "מודל" twice in the title
-  title.textContent = `שאלון מסכם ${getDisplayModelName(state.modelIndex)}`;
-  title.dir = "rtl";
-  root.appendChild(title);
-  
-  // Render workload questions
-  if (state.questionsConfig && state.questionsConfig.model_summary_questions) {
-    const workloadSection = document.createElement("div");
-    workloadSection.style.marginTop = "20px";
-    
-    if (state.questionsConfig.model_summary_questions.workload) {
-      state.questionsConfig.model_summary_questions.workload.forEach((question, idx) => {
-        let questionDiv;
-        if (question.type === "scale_minus10_10") {
-          questionDiv = createMinus10To10Question(question, `model_workload_${question.id}`);
-        } else {
-          // Fallback to regular Likert if type not recognized
-          questionDiv = createLikertQuestion(question, `model_workload_${question.id}`);
-        }
-        workloadSection.appendChild(questionDiv);
-      });
-    }
-    
-    root.appendChild(workloadSection);
-  }
-  
-  const buttonGroup = document.createElement("div");
-  buttonGroup.className = "button-group";
-  
-  const continueBtn = document.createElement("button");
-  continueBtn.textContent = "המשך";
-  continueBtn.onclick = () => {
-    // Validate answers (skip in debug mode)
-    if (!state.debugMode && state.questionsConfig && state.questionsConfig.model_summary_questions) {
-      // Validate workload questions
-      if (state.questionsConfig.model_summary_questions.workload) {
-        for (const question of state.questionsConfig.model_summary_questions.workload) {
-          // For slider-based questions, check hidden input
-          const hiddenInput = document.getElementById(`model_workload_${question.id}_value`);
-          // Check if input exists and has a valid numeric value (including "0" which is valid)
-          if (!hiddenInput) {
-            alert(`אנא ענה על השאלה: ${question.text}`);
-            return;
-          }
-          const value = parseInt(hiddenInput.value);
-          if (isNaN(value) || value < -10 || value > 10) {
-            alert(`אנא ענה על השאלה: ${question.text}`);
-            return;
-          }
-        }
-      }
-    }
-    
-    // Collect workload answers and store temporarily
-    const workloadAnswers = {};
-    if (state.questionsConfig && state.questionsConfig.model_summary_questions) {
-      if (state.questionsConfig.model_summary_questions.workload) {
-        state.questionsConfig.model_summary_questions.workload.forEach(question => {
-          // For slider-based questions, get value from hidden input
-          const hiddenInput = document.getElementById(`model_workload_${question.id}_value`);
-          if (hiddenInput && hiddenInput.value !== "") {
-            workloadAnswers[question.id] = parseInt(hiddenInput.value);
-          } else {
-            // Fallback: try radio button (for backward compatibility)
-            const selected = document.querySelector(`input[name="model_workload_${question.id}"]:checked`);
-            workloadAnswers[question.id] = selected ? parseInt(selected.value) : (state.debugMode ? "DBG" : null);
-          }
-        });
-      }
-    }
-    
-    // Store workload answers temporarily
-    state.tempWorkloadAnswers = workloadAnswers;
-    
-    logPageExit(pageName);
-    
-    // Navigate to trust questions page
+    // Only trust questionnaire at end of each model (no workload)
     state.pageType = "model_summary_trust";
     render();
   };
   buttonGroup.appendChild(continueBtn);
-  
   root.appendChild(buttonGroup);
 }
 
@@ -2715,8 +2614,7 @@ function renderModelSummaryTrustPage(root) {
   
   const title = document.createElement("h1");
   title.className = "page-title";
-  // Avoid repeating the word "מודל" twice in the title
-  title.textContent = `שאלון מסכם ${getDisplayModelName(state.modelIndex)}`;
+  title.textContent = `שאלון מסכם אמון - ${getDisplayModelName(state.modelIndex)}`;
   title.dir = "rtl";
   root.appendChild(title);
   
@@ -2891,9 +2789,8 @@ function renderModelSummaryTrustPage(root) {
       }
     }
     
-    // Trust answers (workload is collected per-vis in nasa_tlx)
+    // Trust answers only (no workload in model summary)
     const answers = {
-      workload: state.tempWorkloadAnswers || {},
       trust: trustAnswers
     };
     
@@ -2915,9 +2812,6 @@ function renderModelSummaryTrustPage(root) {
     });
     persistToStorage();
     
-    // Clear temporary workload answers
-    state.tempWorkloadAnswers = null;
-    
     // Navigate to next model or model_selection (at end)
     if (state.modelIndex < state.schedule.models.length - 1) {
       state.modelIndex++;
@@ -2934,11 +2828,6 @@ function renderModelSummaryTrustPage(root) {
   buttonGroup.appendChild(continueBtn);
   
   root.appendChild(buttonGroup);
-}
-
-// Keep old function name for backward compatibility
-function renderModelSummaryPage(root) {
-  renderModelSummaryWorkloadPage(root);
 }
 
 function createLikertQuestion(question, namePrefix) {
@@ -4203,7 +4092,10 @@ function render() {
     } else if (state.pageType === "model_completion") {
       renderModelCompletionPage(root);
     } else if (state.pageType === "model_summary" || state.pageType === "model_summary_workload") {
-      renderModelSummaryWorkloadPage(root);
+      // Legacy/backward compat: redirect to trust-only summary (no workload)
+      state.pageType = "model_summary_trust";
+      render();
+      return;
     } else if (state.pageType === "model_summary_trust") {
       renderModelSummaryTrustPage(root);
     } else if (state.pageType === "model_selection") {
@@ -4544,18 +4436,13 @@ function navigateToNextPage() {
         render();
       }
     } else if (state.pageType === "model_completion") {
-      const hasWorkload = state.questionsConfig?.model_summary_questions?.workload?.length > 0;
-      state.pageType = hasWorkload ? "model_summary_workload" : "model_summary_trust";
-      render();
-    } else if (state.pageType === "model_summary_workload") {
-      // Workload page -> trust page
+      // Only trust questionnaire at end of each model
       state.pageType = "model_summary_trust";
       render();
     } else if (state.pageType === "model_summary_trust") {
       // Trust page -> next model or visualization condition
-      // Collect debug answers for workload and trust questions
+      // Collect debug answers for trust questions only
       const debugAnswers = {
-        workload: state.tempWorkloadAnswers || {},
         trust: {}
       };
       
@@ -4582,8 +4469,6 @@ function navigateToNextPage() {
       });
       persistToStorage();
       
-      state.tempWorkloadAnswers = null;
-      
       // Model summary -> next model or visualization condition
       if (state.modelIndex < state.schedule.models.length - 1) {
         // More models
@@ -4597,8 +4482,8 @@ function navigateToNextPage() {
         render();
       }
     } else if (state.pageType === "model_summary") {
-      // Legacy: redirect to workload page
-      state.pageType = "model_summary_workload";
+      // Legacy: redirect to trust-only summary
+      state.pageType = "model_summary_trust";
       render();
     } else if (state.pageType === "model_selection") {
       // Log questionnaire for visualization condition
