@@ -710,11 +710,7 @@ function renderInfoPage(root, pageId) {
     const video = document.createElement("video");
     video.id = "experimentVideo";
     video.controls = true;
-    // Autoplay muted so browsers allow automatic playback on page load
-    video.autoplay = true;
-    video.muted = true;
-    video.setAttribute('muted', '');
-    video.setAttribute('autoplay', '');
+    // No autoplay/muted – video starts paused so sound plays when user clicks play
     video.playsInline = true;
     video.preload = "metadata";
     video.style.width = "100%";
@@ -775,11 +771,26 @@ function renderInfoPage(root, pageId) {
       mediaSlot.appendChild(mediaContainer);
     }
 
+    // Overlay "Start Training" button shown over the video
+    const startOverlay = document.createElement("div");
+    startOverlay.style.cssText = "position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);cursor:pointer;border-radius:4px;z-index:10;";
+    const startBtn = document.createElement("button");
+    startBtn.textContent = "▶  התחל הדרכה";
+    startBtn.dir = "rtl";
+    startBtn.style.cssText = "font-size:1.4rem;font-weight:bold;padding:14px 36px;border:none;border-radius:8px;background:#2563eb;color:#fff;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.4);";
+    startOverlay.appendChild(startBtn);
+    startOverlay.addEventListener("click", () => {
+      startOverlay.remove();
+      video.play();
+    });
+
     // If loadedmetadata fires, assume file exists and show video
     video.addEventListener("loadedmetadata", () => {
       if (handled) return;
       handled = true;
+      videoWrapper.style.position = "relative";
       videoWrapper.appendChild(video);
+      videoWrapper.appendChild(startOverlay);
       mediaContainer.appendChild(videoWrapper);
       mediaSlot.appendChild(mediaContainer);
     });
