@@ -2262,10 +2262,9 @@ function renderTrialQuestionsPage(root) {
         render();
       } else {
         state.stage = "experiment";
-        state.pageType = "info";
+        state.pageType = "experiment_transition";
         state.modelIndex = 0;
         state.visIndex = 0;
-        state.modelIndex = 0;
         state.trialIndex = 0;
         render();
       }
@@ -2318,11 +2317,38 @@ function renderExperimentTransitionPage(root) {
 
   content.dir = "rtl";
   root.appendChild(content);
-  
+
+  // Stop sign alert box
+  const stopBox = document.createElement("div");
+  stopBox.dir = "rtl";
+  stopBox.style.marginTop = "30px";
+  stopBox.style.padding = "20px 24px";
+  stopBox.style.background = "#fff3cd";
+  stopBox.style.border = "2px solid #e85d04";
+  stopBox.style.borderRadius = "10px";
+  stopBox.style.display = "flex";
+  stopBox.style.alignItems = "center";
+  stopBox.style.gap = "16px";
+
+  const stopIcon = document.createElement("span");
+  stopIcon.textContent = "🛑";
+  stopIcon.style.fontSize = "48px";
+  stopIcon.style.flexShrink = "0";
+  stopBox.appendChild(stopIcon);
+
+  const stopText = document.createElement("span");
+  stopText.textContent = "קרא/י לנסיין לפני המשך לניסוי!";
+  stopText.style.fontSize = "20px";
+  stopText.style.fontWeight = "700";
+  stopText.style.color = "#7d1a00";
+  stopBox.appendChild(stopText);
+
+  root.appendChild(stopBox);
+
   const buttonGroup = document.createElement("div");
   buttonGroup.className = "button-group";
   buttonGroup.style.marginTop = "30px";
-  
+
   const continueBtn = document.createElement("button");
   continueBtn.textContent = "המשך לניסוי";
   continueBtn.onclick = () => {
