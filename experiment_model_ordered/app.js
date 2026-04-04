@@ -30,6 +30,7 @@ const state = {
   questionsConfig: null,
   scenarioQuestions: null,
   debugMode: false,
+  isRemote: false,
 
   // phase and page pointers
   stage: "login",
@@ -363,7 +364,7 @@ function renderLoginPage(root) {
   
   const debugGroup = document.createElement("div");
   debugGroup.className = "form-group";
-  
+
   const debugLabel = document.createElement("label");
   const debugCheckbox = document.createElement("input");
   debugCheckbox.type = "checkbox";
@@ -371,8 +372,19 @@ function renderLoginPage(root) {
   debugLabel.appendChild(debugCheckbox);
   debugLabel.appendChild(document.createTextNode(" Debug mode"));
   debugGroup.appendChild(debugLabel);
-  
+
   form.appendChild(debugGroup);
+
+  const remoteGroup = document.createElement("div");
+  remoteGroup.className = "form-group";
+  const remoteLabel = document.createElement("label");
+  const remoteCheckbox = document.createElement("input");
+  remoteCheckbox.type = "checkbox";
+  remoteCheckbox.id = "remoteMode";
+  remoteLabel.appendChild(remoteCheckbox);
+  remoteLabel.appendChild(document.createTextNode(" Remote experiment with screen test"));
+  remoteGroup.appendChild(remoteLabel);
+  form.appendChild(remoteGroup);
 
   // Experiment instructions for the experimenter and participant (Hebrew, multi-line)
   const instructions = document.createElement("div");
@@ -380,16 +392,20 @@ function renderLoginPage(root) {
   instructions.dir = "rtl";
   instructions.style.marginTop = "16px";
   instructions.style.whiteSpace = "pre-line";
-  instructions.textContent =
+  instructions.innerHTML =
+    "ברוכים הבאים לניסוי!\n" +
+    "לפני שנתחיל, כמה דגשים חשובים :\n" +
+    "<strong>במקרה של התרעה, נפסיק את הניסוי ונעבור למרחב המוגן הקרוב ביותר.</strong>\n\n" +
     "הניסוי ייקח כשעה.\n" +
     "במהלך הניסוי אין הפסקות ולכן עכשיו זה הזמן להתפנות לשירותים.\n" +
     "ניתן לשתות במהלך הניסוי, ניתן להביא כוס מים מפינת הקפה.\n" +
     "האם מיקום המסך, המקלדת, העכבר וכן גובה הכיסא נוחים לך? כעת זה זמן טוב לסדר את זה.\n" +
-    "האם הטמפרטורה מתאימה?.\n" +
+    "האם הטמפרטורה מתאימה?\n" +
     " טלפון מושתק ולא בהישג יד.\n" +
-    "האם התאורה מתאימה?.\n" +
-    "וודא אודיו (אוזניות) תקין- נסיין.\n" +
-    "נסיין- התחל הקלטת מסך.";
+    "האם התאורה מתאימה?.\n\n" +
+    "נסיין:\n" +
+    "וודא אודיו (אוזניות) תקין.\n" +
+    "התחל הקלטת מסך!";
   form.appendChild(instructions);
   
   const errorDiv = document.createElement("div");
@@ -426,6 +442,7 @@ function renderLoginPage(root) {
       state.schedule = schedule;
       state.questionsConfig = questionsConfig;
       state.scenarioQuestions = scenarioQuestions;
+      state.isRemote = remoteCheckbox.checked;
 
       // Ensure new practice trials (one extra per visualization) are included
       // If the experimenter added SCN_031_S, SCN_032_R, SCN_033_H files
@@ -549,7 +566,7 @@ function renderLoginPage(root) {
         freshBtn.onclick = () => {
           document.body.removeChild(modal);
           clearStorageForParticipant(id);
-          state.stage = "pre";
+          state.stage = state.isRemote ? "screen_check" : "pre";
           state.pageType = "info";
           state.preIntroPageIndex = 0;
           state.practiceIndex = 0;
@@ -566,7 +583,7 @@ function renderLoginPage(root) {
         document.body.appendChild(modal);
       } else {
         logPageExit("LoginPage");
-        state.stage = "pre";
+        state.stage = state.isRemote ? "screen_check" : "pre";
         state.pageType = "info";
         state.preIntroPageIndex = 0;
         render();
@@ -588,6 +605,271 @@ function renderLoginPage(root) {
       startBtn.click();
     }
   });
+}
+
+// === Screen Environment Check (remote experiments only) ===
+function renderScreenCheckPage(root) {
+  logPageEntry("ScreenCheck");
+  root.innerHTML = "";
+  root.dir = "rtl";
+
+  const title = document.createElement("h1");
+  title.className = "page-title";
+  title.textContent = "בדיקת סביבת הניסוי";
+  root.appendChild(title);
+
+  const subtitle = document.createElement("p");
+  subtitle.className = "page-content";
+  subtitle.textContent = "לפני תחילת הניסוי יש לוודא שסביבת התצוגה מתאימה. אנא עבור על שלוש הבדיקות הבאות:";
+  root.appendChild(subtitle);
+
+  let tabsConfirmed = false;
+  let calibDone = false;
+  let continueBtn = null;
+
+  // -- 1. Window maximized --
+  const sec1 = document.createElement("div");
+  sec1.style.cssText = "background:#f8f9fa;border:1px solid #dee2e6;border-radius:8px;padding:16px;margin-bottom:20px;";
+  const sec1Title = document.createElement("h3");
+  sec1Title.style.marginTop = "0";
+  sec1Title.textContent = "1. חלון הדפדפן — גודל מקסימלי";
+  sec1.appendChild(sec1Title);
+
+  const windowStatus = document.createElement("div");
+  windowStatus.style.cssText = "padding:10px;border-radius:6px;margin-bottom:10px;";
+
+  function isWindowMaximized() {
+    return window.outerWidth >= screen.availWidth * 0.97 &&
+      window.outerHeight >= screen.availHeight * 0.97;
+  }
+
+  function updateWindowStatus() {
+    if (isWindowMaximized()) {
+      windowStatus.style.cssText = "padding:10px;border-radius:6px;margin-bottom:10px;background:#d4edda;color:#155724;";
+      windowStatus.textContent = "✔ החלון ממוקסם";
+    } else {
+      windowStatus.style.cssText = "padding:10px;border-radius:6px;margin-bottom:10px;background:#f8d7da;color:#721c24;";
+      windowStatus.textContent =
+        "⚠ החלון אינו ממוקסם. גודל נוכחי: " +
+        window.outerWidth + "\xD7" + window.outerHeight +
+        " | זמין: " + screen.availWidth + "\xD7" + screen.availHeight;
+    }
+    if (continueBtn) updateContinueBtn();
+  }
+
+  const maxInstr = document.createElement("p");
+  maxInstr.style.cssText = "margin:6px 0;color:#555;font-size:14px;";
+  maxInstr.textContent = "לחץ F11 למצב מסך מלא, או הגדל את החלון לגודל מרבי, ולאחר מכן לחץ בדוק שוב.";
+  const recheckBtn = document.createElement("button");
+  recheckBtn.textContent = "בדוק שוב";
+  recheckBtn.style.marginTop = "8px";
+  recheckBtn.onclick = updateWindowStatus;
+  sec1.appendChild(windowStatus);
+  sec1.appendChild(maxInstr);
+  sec1.appendChild(recheckBtn);
+  root.appendChild(sec1);
+  updateWindowStatus();
+
+  // -- 2. Other tabs closed --
+  const sec2 = document.createElement("div");
+  sec2.style.cssText = "background:#f8f9fa;border:1px solid #dee2e6;border-radius:8px;padding:16px;margin-bottom:20px;";
+  const sec2Title = document.createElement("h3");
+  sec2Title.style.marginTop = "0";
+  sec2Title.textContent = "2. סגירת לשוניות אחרות";
+  sec2.appendChild(sec2Title);
+  const tabsInstr = document.createElement("p");
+  tabsInstr.style.margin = "0 0 12px 0";
+  tabsInstr.textContent = "סגור את כל הלשוניות האחרות בדפדפן כדי למנוע הסחות דעת ולהבטיח ביצועים אופטימליים.";
+  sec2.appendChild(tabsInstr);
+  const tabsWarning = document.createElement("p");
+  tabsWarning.style.cssText = "margin:0 0 12px 0;color:#856404;background:#fff3cd;border-radius:6px;padding:8px 12px;font-size:14px;";
+  tabsWarning.textContent = "⚠ במהלך הניסוי אין לעבור ללשוניות אחרות — כל מעבר יירשם ועשוי לפסול את הנתונים.";
+  sec2.appendChild(tabsWarning);
+  const tabsRow = document.createElement("div");
+  tabsRow.style.cssText = "display:flex;align-items:center;gap:8px;";
+  const tabsCb = document.createElement("input");
+  tabsCb.type = "checkbox";
+  tabsCb.id = "sc_tabsCb";
+  tabsCb.style.cssText = "width:18px;height:18px;cursor:pointer;flex-shrink:0;";
+  const tabsLbl = document.createElement("label");
+  tabsLbl.setAttribute("for", "sc_tabsCb");
+  tabsLbl.style.cssText = "cursor:pointer;font-size:15px;margin:0;font-weight:normal;";
+  tabsLbl.textContent = "סגרתי את כל הלשוניות האחרות";
+  tabsCb.onchange = () => {
+    tabsConfirmed = tabsCb.checked;
+    updateContinueBtn();
+  };
+  tabsRow.appendChild(tabsCb);
+  tabsRow.appendChild(tabsLbl);
+  sec2.appendChild(tabsRow);
+  root.appendChild(sec2);
+
+  // -- 3. Physical screen calibration --
+  const sec3 = document.createElement("div");
+  sec3.style.cssText = "background:#f8f9fa;border:1px solid #dee2e6;border-radius:8px;padding:16px;margin-bottom:20px;";
+  const sec3Title = document.createElement("h3");
+  sec3Title.style.marginTop = "0";
+  sec3Title.textContent = "3. כיול גודל מסך";
+  sec3.appendChild(sec3Title);
+  const calibInstr = document.createElement("p");
+  calibInstr.style.margin = "0 0 14px 0";
+  calibInstr.innerHTML =
+    "הנח <strong>כרטיס אשראי / תעודת זהות / רישיון נהיגה</strong> על המסך.<br>" +
+    "גרור את הידית הכחולה (פינה שמאלית-תחתונה) עד שהמלבן תואם בדיוק את הכרטיס.<br>" +
+    "<small style='color:#555'>לכוונון עדין השתמש בכפתורי ± לאחר הגרירה הגסה.</small>";
+  sec3.appendChild(calibInstr);
+
+  // ISO 7810 ID-1: 85.60 x 53.98 mm
+  const CARD_W_MM = 85.6;
+  const CARD_H_MM = 53.98;
+  const CARD_RATIO = CARD_H_MM / CARD_W_MM;
+  let cardWidthPx = 280;
+
+  const cardWrap = document.createElement("div");
+  cardWrap.style.cssText = "display:inline-block;position:relative;margin:4px 0 16px 0;";
+  const cardRect = document.createElement("div");
+  cardRect.style.cssText =
+    "width:" + cardWidthPx + "px;height:" + Math.round(cardWidthPx * CARD_RATIO) + "px;" +
+    "border:2.5px dashed #1976d2;background:rgba(25,118,210,0.06);border-radius:8px;position:relative;";
+  const cardLabel = document.createElement("span");
+  cardLabel.style.cssText =
+    "position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);" +
+    "color:#1976d2;font-size:13px;text-align:center;pointer-events:none;line-height:1.5;";
+  cardLabel.innerHTML = "כרטיס אשראי /<br>ת\"ז / רישיון";
+  cardRect.appendChild(cardLabel);
+  const handle = document.createElement("div");
+  handle.title = "גרור לשינוי גודל";
+  handle.style.cssText =
+    "position:absolute;bottom:-8px;left:-8px;" +
+    "width:18px;height:18px;background:#1976d2;border-radius:50%;cursor:nesw-resize;" +
+    "box-shadow:0 1px 4px rgba(0,0,0,0.3);";
+  cardRect.appendChild(handle);
+  cardWrap.appendChild(cardRect);
+  sec3.appendChild(cardWrap);
+
+  const calibResult = document.createElement("div");
+  calibResult.style.cssText = "padding:10px 14px;border-radius:6px;background:#e9ecef;font-size:14px;line-height:1.6;";
+  calibResult.textContent = "גרור את הידית הכחולה כדי לכייל את הגודל.";
+  sec3.appendChild(calibResult);
+
+  // Fine-tune buttons (±1 px, ±5 px)
+  const fineRow = document.createElement("div");
+  fineRow.style.cssText = "display:flex;align-items:center;gap:6px;margin-top:10px;flex-wrap:wrap;";
+  const fineLbl = document.createElement("span");
+  fineLbl.style.cssText = "font-size:13px;color:#555;margin-left:4px;";
+  fineLbl.textContent = "כוונון עדין:";
+  fineRow.appendChild(fineLbl);
+  [{ d: -5, label: "−5" }, { d: -1, label: "−1" }, { d: +1, label: "+1" }, { d: +5, label: "+5" }].forEach(({ d, label }) => {
+    const btn = document.createElement("button");
+    btn.textContent = label + " px";
+    btn.style.cssText = "padding:4px 10px;font-size:13px;border:1px solid #1976d2;background:#fff;color:#1976d2;border-radius:4px;cursor:pointer;";
+    btn.onclick = () => {
+      cardWidthPx = Math.max(80, Math.min(700, cardWidthPx + d));
+      cardRect.style.width = cardWidthPx + "px";
+      cardRect.style.height = Math.round(cardWidthPx * CARD_RATIO) + "px";
+      updateCalibResult();
+    };
+    fineRow.appendChild(btn);
+  });
+  sec3.appendChild(fineRow);
+
+  function updateCalibResult() {
+    const dpr = window.devicePixelRatio || 1;
+    const physW = screen.width * dpr;
+    const physH = screen.height * dpr;
+    const physCard = cardWidthPx * dpr;
+    const ppi = physCard / (CARD_W_MM / 25.4);
+    const diagInch = Math.sqrt(physW * physW + physH * physH) / ppi;
+    const diagStr = diagInch.toFixed(1);
+    const resStr = screen.width + "\xD7" + screen.height;
+    const pxStr = " (" + Math.round(cardWidthPx) + " px)";
+    if (diagInch < 22) {
+      calibResult.style.cssText = "padding:10px 14px;border-radius:6px;background:#f8d7da;color:#721c24;font-size:14px;line-height:1.6;";
+      calibResult.innerHTML = "גודל מסך משוחזר: <strong>" + diagStr + " אינץ\u02BC</strong> " + resStr + pxStr + "<br><small>\u26A0 לניסוי מומלץ מסך של לפחות 24 אינץ\u02BC. אנא פנה לנסיין.</small>";
+    } else if (diagInch < 24) {
+      calibResult.style.cssText = "padding:10px 14px;border-radius:6px;background:#fff3cd;color:#856404;font-size:14px;line-height:1.6;";
+      calibResult.innerHTML = "גודל מסך משוחזר: <strong>" + diagStr + " אינץ\u02BC</strong> " + resStr + pxStr + "<br><small>מסך קטן מהאידיאלי (24\u201327 אינץ\u02BC). אנא פנה לנסיין אם יש ספק.</small>";
+    } else {
+      calibResult.style.cssText = "padding:10px 14px;border-radius:6px;background:#d4edda;color:#155724;font-size:14px;line-height:1.6;";
+      calibResult.innerHTML = "\u2714 גודל מסך משוחזר: <strong>" + diagStr + " אינץ\u02BC</strong> " + resStr + pxStr;
+    }
+    calibDone = true;
+    state.logs.interactions.push({
+      interaction_type: "screen_calibration",
+      card_width_px: Math.round(cardWidthPx),
+      estimated_ppi: Math.round(ppi),
+      estimated_screen_inches: parseFloat(diagStr),
+      screen_res_w: screen.width,
+      screen_res_h: screen.height,
+      timestamp: Date.now()
+    });
+    updateContinueBtn();
+  }
+
+  // Mouse drag
+  let dragging = false;
+  let dragStartX = 0;
+  let dragStartW = cardWidthPx;
+  handle.addEventListener("mousedown", (e) => {
+    dragging = true;
+    dragStartX = e.clientX;
+    dragStartW = cardWidthPx;
+    e.preventDefault();
+  });
+  const onMouseMove = (e) => {
+    if (!dragging) return;
+    const dx = e.clientX - dragStartX;
+    // handle is on the left: drag left (negative dx) = bigger
+    cardWidthPx = Math.max(80, Math.min(700, dragStartW - dx));
+    cardRect.style.width = cardWidthPx + "px";
+    cardRect.style.height = Math.round(cardWidthPx * CARD_RATIO) + "px";
+    updateCalibResult();
+  };
+  const onMouseUp = () => { dragging = false; };
+  document.addEventListener("mousemove", onMouseMove);
+  document.addEventListener("mouseup", onMouseUp);
+
+  // Touch drag
+  handle.addEventListener("touchstart", (e) => {
+    dragging = true;
+    dragStartX = e.touches[0].clientX;
+    dragStartW = cardWidthPx;
+    e.preventDefault();
+  }, { passive: false });
+  document.addEventListener("touchmove", (e) => {
+    if (!dragging) return;
+    const dx = e.touches[0].clientX - dragStartX;
+    cardWidthPx = Math.max(80, Math.min(700, dragStartW - dx));
+    cardRect.style.width = cardWidthPx + "px";
+    cardRect.style.height = Math.round(cardWidthPx * CARD_RATIO) + "px";
+    updateCalibResult();
+  }, { passive: false });
+  document.addEventListener("touchend", () => { dragging = false; });
+
+  root.appendChild(sec3);
+
+  // -- Continue button --
+  function updateContinueBtn() {
+    if (!continueBtn) return;
+    continueBtn.disabled = !(isWindowMaximized() && tabsConfirmed && calibDone);
+  }
+
+  const btnGroup = document.createElement("div");
+  btnGroup.className = "button-group";
+  btnGroup.style.marginTop = "24px";
+  continueBtn = document.createElement("button");
+  continueBtn.textContent = "המשך לניסוי";
+  continueBtn.disabled = true;
+  continueBtn.onclick = () => {
+    document.removeEventListener("mousemove", onMouseMove);
+    document.removeEventListener("mouseup", onMouseUp);
+    logPageExit("ScreenCheck");
+    state.stage = "pre";
+    state.preIntroPageIndex = 0;
+    render();
+  };
+  btnGroup.appendChild(continueBtn);
+  root.appendChild(btnGroup);
 }
 
 function renderInfoPage(root, pageId) {
@@ -4098,6 +4380,8 @@ function render() {
   
   if (state.stage === "login") {
     renderLoginPage(root);
+  } else if (state.stage === "screen_check") {
+    renderScreenCheckPage(root);
   } else if (state.stage === "pre") {
     const pageId = PRE_INTRO_PAGE_IDS[state.preIntroPageIndex];
     renderInfoPage(root, pageId);
@@ -4276,7 +4560,11 @@ function navigateToNextPage() {
   
   // Determine next page based on current state
   if (state.stage === "login") {
-    // After login, go to first pre-intro page
+    // After login, go to screen check (if remote) or first pre-intro page
+    state.stage = state.isRemote ? "screen_check" : "pre";
+    state.preIntroPageIndex = 0;
+    render();
+  } else if (state.stage === "screen_check") {
     state.stage = "pre";
     state.preIntroPageIndex = 0;
     render();
@@ -4653,6 +4941,61 @@ window.addEventListener("beforeunload", (e) => {
     e.returnValue = "";
   }
 });
+
+// ── Runtime environment monitors ─────────────────────────────────────────────
+
+// 1. Tab visibility: log whenever participant switches away during a trial
+document.addEventListener("visibilitychange", () => {
+  if (!state.participantId || state.stage === "login" || state.stage === "end") return;
+  state.logs.interactions.push({
+    interaction_type: document.hidden ? "tab_hidden" : "tab_visible",
+    stage: state.stage,
+    page_type: state.pageType,
+    trial_index: state.trialIndex,
+    timestamp: Date.now()
+  });
+  if (document.hidden && state.stage === "experiment" && state.pageType === "trial") {
+    showEnvWarning("⚠ הנבדק עבר ללשונית אחרת");
+  }
+});
+
+// 2. Window resize: log and warn whenever window size changes during the experiment
+let resizeWarningTimeout = null;
+window.addEventListener("resize", () => {
+  if (!state.participantId || state.stage === "login" || state.stage === "end") return;
+  state.logs.interactions.push({
+    interaction_type: "window_resize",
+    stage: state.stage,
+    page_type: state.pageType,
+    outer_w: window.outerWidth,
+    outer_h: window.outerHeight,
+    inner_w: window.innerWidth,
+    inner_h: window.innerHeight,
+    timestamp: Date.now()
+  });
+  clearTimeout(resizeWarningTimeout);
+  resizeWarningTimeout = setTimeout(() => {
+    const ok = window.outerWidth >= screen.availWidth * 0.97 &&
+               window.outerHeight >= screen.availHeight * 0.97;
+    if (!ok) showEnvWarning("⚠ גודל החלון השתנה — אנא הגדל חזרה למסך מלא (F11)");
+  }, 300);
+});
+
+// Floating warning banner (auto-dismisses after 5 s)
+function showEnvWarning(msg) {
+  const existing = document.getElementById("env-warning-banner");
+  if (existing) existing.remove();
+  const banner = document.createElement("div");
+  banner.id = "env-warning-banner";
+  banner.dir = "rtl";
+  banner.style.cssText =
+    "position:fixed;top:0;left:0;right:0;z-index:99999;" +
+    "background:#e53935;color:#fff;font-size:16px;font-weight:600;" +
+    "padding:12px 20px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.3);";
+  banner.textContent = msg;
+  document.body.appendChild(banner);
+  setTimeout(() => { if (banner.parentNode) banner.remove(); }, 5000);
+}
 
 // Initialize
 document.addEventListener("DOMContentLoaded", () => {
