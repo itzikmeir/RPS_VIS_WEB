@@ -3486,13 +3486,9 @@ function createMinus10To10Question(question, namePrefix) {
   leftButton.style.alignItems = "center";
   leftButton.style.justifyContent = "center";
   leftButton.style.padding = "0";
-  // Minus image
-  const minusImg = new Image();
-  minusImg.src = assetPath("Images/minus.jpg");
-  minusImg.alt = "-";
-  minusImg.style.width = "16px";
-  minusImg.style.height = "16px";
-  leftButton.appendChild(minusImg);
+  leftButton.textContent = "\u25C4"; // ◄
+  leftButton.style.fontSize = "18px";
+  leftButton.style.color = "#555";
   
   const rightButton = document.createElement("button");
   rightButton.type = "button";
@@ -3511,13 +3507,9 @@ function createMinus10To10Question(question, namePrefix) {
   rightButton.style.alignItems = "center";
   rightButton.style.justifyContent = "center";
   rightButton.style.padding = "0";
-  // Plus image
-  const plusImg = new Image();
-  plusImg.src = assetPath("Images/plus.png");
-  plusImg.alt = "+";
-  plusImg.style.width = "16px";
-  plusImg.style.height = "16px";
-  rightButton.appendChild(plusImg);
+  rightButton.textContent = "\u25BA"; // ►
+  rightButton.style.fontSize = "18px";
+  rightButton.style.color = "#555";
   
   // Function to update slider position and value
   const updateSlider = (value) => {
