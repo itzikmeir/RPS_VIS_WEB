@@ -899,7 +899,7 @@ function renderInfoPage(root, pageId) {
       "system_layout": "תצוגת המערכת",
       "system_criteria": "תצוגת שיקולי המערכת",
       "helper_explanation": "עזר תצוגת שיקולי מערכת",
-      "experiment_flow": "מהלך הניסוי"
+      "experiment_flow": "דגשים לניסוי"
     };
     pageData = {
       id: pageId,
@@ -1021,17 +1021,66 @@ function renderInfoPage(root, pageId) {
     root.appendChild(content);
   }
 
-  // Extra emphasized warning at the end of experiment_flow page
+  // Content for experiment_flow page
   if (pageId === "experiment_flow") {
-    const warning = document.createElement("div");
-    warning.className = "page-content";
-    warning.dir = "rtl";
-    warning.style.whiteSpace = "pre-wrap";
-    warning.style.marginTop = "16px";
-    warning.style.fontWeight = "700";
-    warning.textContent =
-      "בלחיצה על \"המשך לתרגול\" תעבור ישירות לתרחיש התרגול ללא יכולת להפסיק את הניסוי משלב זה.\n\nבהצלחה";
-    root.appendChild(warning);
+    const wrap = document.createElement("div");
+    wrap.className = "page-content";
+    wrap.dir = "rtl";
+
+    const tipsTitle = document.createElement("p");
+    tipsTitle.style.fontWeight = "700";
+    tipsTitle.style.marginBottom = "6px";
+    tipsTitle.textContent = "כדאי לעבוד בשיטת האלימינציה:";
+    wrap.appendChild(tipsTitle);
+
+    const ul = document.createElement("ul");
+    ul.style.margin = "0 0 14px 0";
+    ul.style.paddingRight = "20px";
+    [
+      "להבין מה הדרישה שמוצגת בתרחיש ולחפש את המסלול שיש לו את הציונים הגבוהים ביותר באותה קטגוריה.",
+      "אם יש מסלול עם ציון נמוך ניתן לפסול אותו.",
+      "מהשניים הנותרים נבחר את זה שקצר יותר בזמן.",
+    ].forEach(function(t) {
+      const li = document.createElement("li");
+      li.textContent = t;
+      li.style.marginBottom = "4px";
+      ul.appendChild(li);
+    });
+    wrap.appendChild(ul);
+
+    const boldReminder = document.createElement("p");
+    boldReminder.style.fontWeight = "700";
+    boldReminder.style.marginBottom = "10px";
+    boldReminder.textContent = "זכור/י: יש מסלול אחד שהוא הכי מיטבי לאור הדרישה, אנחנו לא מנסים להכשיל אתכם, המודלים חישבו ושקללו אותם אך עלייך לבקר את המלצתם.";
+    wrap.appendChild(boldReminder);
+
+    [
+      "יש לבדוק היטב את כל המסלולים כדי לזהות מי הכי מתאים לדרישה. יש גם לנסות להצליח בזמן המומלץ — ניתן להמשיך גם אחרי סיום הזמן שהוגדר, הכל בסדר, הניסוי ימשיך.",
+      "לאחר כל תרחיש תשאל מספר שאלות, חלקן ישירות על המטלה וחלקן נוגעות לפרטים אחרים במסך התרחיש. עלייך לנסות לענות לפי מה שאת/ה זוכר/ת. אם אינך זוכר/ת יש לבחור בתשובה \"לא יודע/ת\" ולהתקדם הלאה.",
+    ].forEach(function(txt) {
+      const p = document.createElement("p");
+      p.textContent = txt;
+      p.style.marginBottom = "10px";
+      wrap.appendChild(p);
+    });
+
+    const question = document.createElement("p");
+    question.style.fontWeight = "700";
+    question.style.marginBottom = "4px";
+    question.textContent = "האם הבנת מה עליך לעשות?";
+    wrap.appendChild(question);
+
+    const referral = document.createElement("p");
+    referral.style.marginBottom = "16px";
+    referral.textContent = "אם יש שאלות נוספות פנה לנסיין עכשיו.";
+    wrap.appendChild(referral);
+
+    const practiceNote = document.createElement("p");
+    practiceNote.style.marginTop = "8px";
+    practiceNote.textContent = "כעת תוכל/י להמשיך ולתרגל את מה שהוסבר לך. לאחר מספר סבבי תרגול תתחיל את הניסוי עצמו.";
+    wrap.appendChild(practiceNote);
+
+    root.appendChild(wrap);
   }
   // Insert a dedicated media slot so all media (images, video, iframe)
   // appear immediately after the page content and before inputs/buttons.
@@ -1045,6 +1094,7 @@ function renderInfoPage(root, pageId) {
     instr.dir = "rtl";
     instr.style.marginTop = "2px";
     instr.style.marginBottom = "6px";
+    instr.textContent = "ניתן להגדיל את ההקלטה, להתאים את הווליום ולחזור קדימה ואחורה.";
     root.appendChild(instr);
   }
   root.appendChild(mediaSlot);
@@ -4358,10 +4408,22 @@ function renderEndPage(root) {
   content.appendChild(boldSpan);
   content.appendChild(document.createElement("br"));
   content.appendChild(document.createTextNode("תודה על השתתפותך"));
-  content.appendChild(document.createElement("br"));
-  content.appendChild(document.createTextNode("כעת הנסיין יעביר לך את התשלום המובטח"));
   content.dir = "rtl";
   root.appendChild(content);
+
+  const paymentWarning = document.createElement("div");
+  paymentWarning.dir = "rtl";
+  paymentWarning.style.cssText =
+    "background:#f8d7da;color:#721c24;border-radius:8px;padding:14px 18px;" +
+    "margin-top:20px;font-size:16px;font-weight:700;";
+  paymentWarning.textContent = "⚠ אין לסגור חלון זה עד לאישור הנסיין.";
+  root.appendChild(paymentWarning);
+
+  const paymentNote = document.createElement("p");
+  paymentNote.dir = "rtl";
+  paymentNote.style.cssText = "margin-top:14px;font-size:15px;";
+  paymentNote.textContent = "כעת הנסיין ישלם לך — יש לחתום שקיבלת את התשלום.";
+  root.appendChild(paymentNote);
   
   const buttonGroup = document.createElement("div");
   buttonGroup.className = "button-group";
