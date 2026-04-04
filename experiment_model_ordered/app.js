@@ -682,7 +682,7 @@ function renderScreenCheckPage(root) {
   tabsInstr.textContent = "סגור את כל הלשוניות האחרות בדפדפן כדי למנוע הסחות דעת ולהבטיח ביצועים אופטימליים.";
   sec2.appendChild(tabsInstr);
   const tabsWarning = document.createElement("p");
-  tabsWarning.style.cssText = "margin:0 0 12px 0;color:#856404;background:#fff3cd;border-radius:6px;padding:8px 12px;font-size:14px;";
+  tabsWarning.style.cssText = "margin:0 0 12px 0;color:#721c24;background:#f8d7da;border-radius:6px;padding:8px 12px;font-size:14px;";
   tabsWarning.textContent = "⚠ במהלך הניסוי אין לעבור ללשוניות אחרות — כל מעבר יירשם ועשוי לפסול את הנתונים.";
   sec2.appendChild(tabsWarning);
   const tabsRow = document.createElement("div");
@@ -783,15 +783,19 @@ function renderScreenCheckPage(root) {
     const diagStr = diagInch.toFixed(1);
     const resStr = screen.width + "\xD7" + screen.height;
     const pxStr = " (" + Math.round(cardWidthPx) + " px)";
+    const base = "גודל מסך משוחזר: <strong>" + diagStr + " אינץ\u02BC</strong> " + resStr + pxStr;
     if (diagInch < 22) {
       calibResult.style.cssText = "padding:10px 14px;border-radius:6px;background:#f8d7da;color:#721c24;font-size:14px;line-height:1.6;";
-      calibResult.innerHTML = "גודל מסך משוחזר: <strong>" + diagStr + " אינץ\u02BC</strong> " + resStr + pxStr + "<br><small>\u26A0 לניסוי מומלץ מסך של לפחות 24 אינץ\u02BC. אנא פנה לנסיין.</small>";
+      calibResult.innerHTML = base + "<br><small>\u26A0 מסך קטן מדי (מתחת ל-24\u2033). אנא פנה לנסיין.</small>";
     } else if (diagInch < 24) {
       calibResult.style.cssText = "padding:10px 14px;border-radius:6px;background:#fff3cd;color:#856404;font-size:14px;line-height:1.6;";
-      calibResult.innerHTML = "גודל מסך משוחזר: <strong>" + diagStr + " אינץ\u02BC</strong> " + resStr + pxStr + "<br><small>מסך קטן מהאידיאלי (24\u201327 אינץ\u02BC). אנא פנה לנסיין אם יש ספק.</small>";
-    } else {
+      calibResult.innerHTML = base + "<br><small>\u26A0 מסך קטן מהאידיאלי (24\u201327\u2033). אנא פנה לנסיין אם יש ספק.</small>";
+    } else if (diagInch <= 27) {
       calibResult.style.cssText = "padding:10px 14px;border-radius:6px;background:#d4edda;color:#155724;font-size:14px;line-height:1.6;";
-      calibResult.innerHTML = "\u2714 גודל מסך משוחזר: <strong>" + diagStr + " אינץ\u02BC</strong> " + resStr + pxStr;
+      calibResult.innerHTML = "\u2714 " + base;
+    } else {
+      calibResult.style.cssText = "padding:10px 14px;border-radius:6px;background:#f8d7da;color:#721c24;font-size:14px;line-height:1.6;";
+      calibResult.innerHTML = base + "<br><small>\u26A0 מסך גדול מדי (מעל 27\u2033) — עלול ליצור מרווחים גדולים מדי בממשק. אנא פנה לנסיין.</small>";
     }
     calibDone = true;
     state.logs.interactions.push({
