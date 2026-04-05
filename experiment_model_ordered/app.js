@@ -407,6 +407,13 @@ function renderLoginPage(root) {
     "וודא אודיו (אוזניות) תקין.\n" +
     "התחל הקלטת מסך!";
   form.appendChild(instructions);
+
+  const speedTestLink = document.createElement("div");
+  speedTestLink.dir = "rtl";
+  speedTestLink.style.marginTop = "10px";
+  speedTestLink.style.fontSize = "14px";
+  speedTestLink.innerHTML = 'בדיקת מהירות רשת: <a href="https://www.speedtest.net/" target="_blank" rel="noopener noreferrer">speedtest.net</a>';
+  form.appendChild(speedTestLink);
   
   const errorDiv = document.createElement("div");
   errorDiv.id = "loginError";
