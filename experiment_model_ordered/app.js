@@ -218,6 +218,26 @@ function clearStorageForParticipant(participantId) {
   }
 }
 
+const DRIVE_LOGGER_URL = "https://script.google.com/macros/s/AKfycbzUFgtvFF8KZVlokyUUkqjceQcLGBPCa1fhJnPLG4czj5MTRMU274eNbBZ-FCELNcrC/exec";
+
+function uploadLogsToDrive() {
+  const payload = Object.assign({ participant_id: state.participantId }, state.logs);
+  return fetch(DRIVE_LOGGER_URL, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain" }, // avoid CORS preflight
+    body: JSON.stringify(payload)
+  })
+    .then(r => r.json())
+    .then(res => {
+      console.log("Drive upload:", res);
+      return res;
+    })
+    .catch(err => {
+      console.warn("Drive upload failed:", err);
+      return null;
+    });
+}
+
 function downloadLogs() {
   const blob = new Blob([JSON.stringify(state.logs, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
@@ -4354,7 +4374,8 @@ function renderDemographicsPage(root) {
       }
     });
 
-    // Before ending the experiment, download the logs (same as end page button)
+    // Before ending the experiment, upload to Drive and download locally
+    uploadLogsToDrive();
     downloadLogs();
 
     logPageExit(pageName);
@@ -4387,7 +4408,10 @@ function renderDemographicsPage(root) {
 function renderEndPage(root) {
   const pageName = "EndPage";
   logPageEntry(pageName);
-  
+
+  // Auto-upload to Drive as soon as end page is reached
+  uploadLogsToDrive();
+
   root.innerHTML = "";
   
   const title = document.createElement("h1");
