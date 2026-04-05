@@ -146,7 +146,18 @@
       const questionStats = calculateQuestionStatistics(logData.questionnaires || []);
       const consentData = extractConsentData(logData.interactions || []);
 
+      // Derive session start from first page entry timestamp
+      const allPages = logData.pages || [];
+      const firstTs = allPages.length > 0 ? allPages[0].enter_ts : null;
+      const sessionStartStr = firstTs
+        ? new Date(firstTs).toLocaleString("he-IL", { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit" })
+        : "N/A";
+
       let participantDetailsHtml = `<h2>Participant: ${escapeHtml(participantId)}</h2>`;
+      participantDetailsHtml += `<div style="display:inline-block;background:#fff;border:1px solid #bbdefb;border-radius:6px;padding:8px 18px;margin:6px 0 10px 0;font-size:15px;">
+        <span style="color:#555;">&#128197; תאריך ושעת תחילת הניסוי:</span>
+        <strong style="margin-right:8px;color:#0d47a1;">${sessionStartStr}</strong>
+      </div>`;
       if (schedule && schedule.model_order_text) {
         participantDetailsHtml += `<p style="margin: 8px 0; color: #555;">Model order: ${escapeHtml(schedule.model_order_text)}</p>`;
       }
