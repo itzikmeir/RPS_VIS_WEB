@@ -1,209 +1,300 @@
-## Experiment Data & App Pipeline
+# RPS_VIS — Multidimensional Route Planning: Visual Explanatory AI Experiment
 
-This repository contains two experiment platforms:
+A browser-based controlled user experiment investigating how different AI visualization types affect **trust calibration** and **route selection** in autonomous vehicle navigation systems.
 
-1. **Model‑Ordered Experiment** – Current format (Model A → Model B), with NASA TLX per visualization and Trust per model. Platform: `experiment_model_ordered/`. **Entry point:** `index.html` (redirects) or `experiment_model_ordered/index.html`.
-2. **Original Experiment** – Visualization‑first format, archived in `old_experiment_order_files_by_vis_type/`.
-
----
-
-### Model-Ordered Experiment (New Format)
-
-A **separate experiment platform** uses the **Model-first** order: Model A (Vis1, Vis2, Vis3) → Model B (Vis1, Vis2, Vis3), with NASA TLX after each visualization and Trust after each model.
-
-**Practice:** 6 practices total – 2 × עמודות נערמות, 2 × רדאר, 2 × מפת חום. Before each trial, the scenario intro shows the visualization image (STACKED.png, RADAR.png, HEATֹMAP.png) and "דגשים" guidelines.
-
-- **Platform:** `experiment_model_ordered/index.html`
-- **Data:** `Model_Ordered_experiment/Models_Experiment_Order_Expanded.xlsx` (or `.csv`)
-- **Full documentation:** See `Model_Ordered_experiment/README.md`
-
-**Quick start:**
-1. `python python_scripts/build_model_ordered_participants.py`
-2. `python python_scripts/update_correct_routes_model_ordered.py`
-3. (Optional) `python python_scripts/update_recommendations_model_ordered.py`
-4. Open `experiment_model_ordered/index.html` in a browser
-
-**Persistence:** Progress is saved to localStorage after each trial and questionnaire. On re-login, participants can resume from the last point. If storage is full, the oldest participant's data is evicted. Logs are not cleared on completion. See `Model_Ordered_experiment/README.md` for details.
+> **Research context:** M.Sc. thesis, Department of Information Systems, University of Haifa.  
+> Supervised by Prof. Tsvi Kuflik and Prof. Yoel Lanir.  
+> Author: Itzik Meir
 
 ---
 
-### Original Experiment (Visualization-first) – Archived
+## What This Is
 
-**Platform:** `old_experiment_order_files_by_vis_type/`. **Architecture:** See `old_experiment_order_files_by_vis_type/system_readme.md`.
+Participants are presented with simulated route-planning scenarios for an autonomous vehicle. The AI system recommends one route out of three options, and the participant must decide whether to follow the recommendation or choose a different route. Each scenario is accompanied by a visual explanation of the AI's reasoning across five dimensions (comfort, safety, speed, cost, complexity).
 
-### 1. Generate participant schedules JSON
+The experiment tests **three visualization types**:
+- **Heatmap** (`_H`) — color-coded table showing scores per route section
+- **Stacked Bar** (`_S`) — aggregated bar charts per route
+- **Radar** (`_R`) — multi-axis spider chart per route
 
-- **File**: `old_experiment_order_files_by_vis_type/Untitled-1.ipynb`  
-- **Input**: `old_experiment_order_files_by_vis_type/Experiment_Order_Expanded.xlsx`  
-- **Output**:  
-  - `old_experiment_order_files_by_vis_type/participants_json/PXXX.json` – per‑participant schedule and trial list.  
-  - `old_experiment_order_files_by_vis_type/participants_all.json` – combined list of all participants.  
-- **What it does**:  
-  - Reads the experiment design Excel (practice + 3 conditions, models, repetitions).  
-  - For each participant, builds:  
-    - `practice` trials with `scenario_id`, difficulty, etc.  
-    - `conditions[*].models[*].trials[*]` with the correct `scenario_id`s.  
-  - Writes one JSON per participant plus a combined file.  
-- **How to run**:  
-  - Open `Untitled-1.ipynb` in Jupyter / VSCode / Cursor.  
-  - Make sure `INPUT_PATH` points to `Experiment_Order_Expanded.xlsx`.  
-  - Run the main cell (entire notebook). You should see messages like:  
-    - `Written XX participant JSON files to 'participants_json'`  
-    - `Combined JSON written to 'participants_all.json'`
+And **two AI model types** (within-subject):
+- **Optimal model** — AI recommendations are objectively correct
+- **Sub-optimal model** — AI recommendations are intentionally flawed
+
+This 2×3 design (model × visualization) allows measuring how participants calibrate their trust depending on both the accuracy of the AI and the type of visual explanation.
+
+**Measured variables:** route choice, decision time (ms), AI agreement rate, NASA-TLX cognitive load, trust ratings, demographic data.
 
 ---
 
-### 2. Build scenario‑specific question catalog
+## Participant Criteria
 
-- **File**: `python_scripts/build_scenario_questions_old.py` (for old experiment in `old_experiment_order_files_by_vis_type/`)  
-- **Input**: `old_experiment_order_files_by_vis_type/SCN_Questions_catalog.xlsx`  
-- **Output**: `questions/scenario_questions.json`  
-- **What it does**:  
-  - Reads one row per scenario from `SCN_Questions_catalog.xlsx`.  
-  - For each row:  
-    - Uses `Scenario_ID_H / R / S` (and `Scenario_ID`) as scenario IDs.  
-    - Reads `Q1/O1/A1`, `Q2/O2/A2`, `Q3/O3/A3`.  
-    - Parses the multi‑line options (O*) and infers the correct option index from A*.  
-  - Produces `scenario_questions.json` with entries like:  
-    - `{"scenario_id": "SCN_001_H", "question_id": "sa_1", "question_text": "...", "options": [...], "correct_answer_index": 0}`  
-- **How to run** (from project root):  
-  - `python python_scripts/build_scenario_questions_old.py`  
-  - Expect a message like:  
-    - `Wrote NNN scenario-question entries for 30 rows to 'old_experiment_order_files_by_vis_type/questions/scenario_questions.json'`
+- Age 18–65
+- Normal or corrected-to-normal vision
+- No color blindness (tested via Ishihara plate at experiment start)
+- No physical limitations affecting mouse/keyboard use
+- Valid driver's license and navigation experience preferred
+- Target sample: ~30 participants
 
 ---
 
-### 3. Fill `correct_route` for all participants
+## Project Structure
 
-- **File**: `python_scripts/update_correct_routes_old.py`  
-- **Input**:  
-  - `SCN_Questions_catalog.xlsx` (column `CORRECT_ROUTE`)  
-  - `participants_json/*.json`  
-- **Output**:  
-  - Updated `participants_json/PXXX.json` (each trial has `correct_route` filled).  
-  - Updated `participants_all.json`.  
-- **What it does**:  
-  - Builds a mapping from each scenario ID (`Scenario_ID`, `Scenario_ID_H/R/S`) to its `CORRECT_ROUTE` (e.g. `"א׳"`, `"ב׳"`, `"ג׳"`).  
-  - Walks all participant JSONs and sets/overwrites `correct_route` for:  
-    - `practice[*].correct_route`  
-    - `conditions[*].models[*].trials[*].correct_route`  
-  - Regenerates `participants_all.json` from the updated per‑participant files.  
-- **How to run** (from project root):  
-  - `python python_scripts/update_correct_routes_old.py`  
-  - Expect output like:  
-    - `Loaded XXX scenario -> correct_route mappings from 'SCN_Questions_catalog.xlsx'`  
-    - `Processed P001.json ...`  
-    - `Updated 30 participant files and rewrote 'participants_all.json'`
-
----
-
-### 4. Wire scenarios to the parent app (only if scenario HTMLs change)
-
-- **File**: `python_scripts/wire_scenario_postmessage.py`  
-- **Input**:  
-  - `Scenarios/Correct_Scenarios/SCN_*.html`  
-  - `Scenarios/Inaccurate_Scenarios/SCN_*.html`  
-- **Output**: Modified scenario HTML files in both subfolders under `Scenarios/`.  
-- **What it does**:  
-  - Replaces the old confirm handler in every `SCN_*.html` with a `postMessage` call that sends:  
-    - `{ type: "scenario_route_selected", route: picked, scenarioName: ... }`  
-  - This lets `app.js` receive the route choice and advance from the map to the questions page.  
-- **How to run** (from project root, usually only once after regenerating scenarios):  
-  - `python python_scripts/wire_scenario_postmessage.py`
-
----
-
-### 5. (Optional) Update per-participant AI recommendations
-
-- **File**: `python_scripts/update_recommendations_old.py`  
-- **Input**: `rec_long.xlsx` with columns (per row):  
-  - `participant_id` – e.g. `P001` (or `001`, which will be normalized to `P001`)  
-  - `Scenario_ID` – e.g. `SCN_004_H`  
-  - `Rec_Correct` – whether the AI recommendation is correct for this trial (e.g. `כן` / `לא`)  
-  - `correct_answer` – the true optimal route for that participant & scenario (e.g. `א׳` / `ב׳` / `ג׳`)  
-  - `System_recommendation` – the route recommended by the system (e.g. `א׳` / `ב׳` / `ג׳`)  
-- **Output**:  
-  - Updated `participants_json/PXXX.json` with, per trial:  
-    - `rec_correct` – copied from `Rec_Correct`.  
-    - `correct_route` – overwritten from `correct_answer`.  
-    - `ai_recommended_route` – filled from `System_recommendation`.  
-  - Updated `participants_all.json`.  
-- **What it does**:  
-  - Reads `rec_long.xlsx` and builds a mapping per `(participant_id, Scenario_ID)`.  
-  - For each participant JSON:  
-    - Looks up each `practice` and `conditions[*].models[*].trials[*]` by `(participant_id, scenario_id)`.  
-    - Writes `rec_correct`, `correct_route`, and `ai_recommended_route` according to the Excel.  
-- **How to run** (from project root):  
-  - Make sure `old_experiment_order_files_by_vis_type/rec_long.xlsx` has the columns above (exact English names).  
-  - `python python_scripts/update_recommendations_old.py`  
-  - You should see something like:  
-    - `Loaded N participant-scenario recommendation entries from 'rec_long.xlsx'`  
-    - `Processed P001.json ...`  
-    - `Updated 30 participant files and rewrote 'participants_all.json'`
+```
+RPS_VIS-main/
+│
+├── index.html                          # Entry point — redirects to experiment_model_ordered/
+├── style.css                           # Shared stylesheet
+│
+├── experiment_model_ordered/           # ← ACTIVE EXPERIMENT
+│   ├── index.html                      # Experiment shell
+│   ├── app.js                          # All experiment logic (~4500 lines, single-file SPA)
+│   ├── participants_json/              # One JSON file per participant (P001.json … P030.json)
+│   ├── participants_all.json           # All participants merged (for admin overview)
+│   ├── participants_log/               # Output: collected session logs (P001_log.json …)
+│   ├── questions/questions.json        # All UI text, questionnaire definitions, page content
+│   ├── log_results_viewer.html         # Single-participant results viewer
+│   ├── logs_overview.html              # Multi-participant overview dashboard
+│   ├── admin_storage.html              # Admin tool: view/export localStorage sessions
+│   └── test_debug.html                 # Debug utilities
+│
+├── Scenarios/
+│   ├── Correct_Scenarios/              # HTML scenario files where AI rec is correct (SCN_XXX_H/S/R.html)
+│   └── Inaccurate_Scenarios/           # HTML scenario files where AI rec is wrong
+│
+├── Images/                             # UI images (visualization type illustrations, layouts)
+├── Videos/Introduction.mp4            # Onboarding video shown to participants
+├── color_test/colortest_74.png         # Ishihara color blindness test plate
+│
+├── python_scripts/                     # Data preparation scripts (run once before experiment)
+│   ├── build_model_ordered_participants.py   # Excel → participants_json/*.json
+│   ├── build_scenario_questions_model_ordered.py
+│   ├── update_correct_routes_model_ordered.py
+│   ├── update_correct_answers_model_ordered.py
+│   ├── update_recommendations_model_ordered.py
+│   └── wire_scenario_postmessage.py    # Injects postMessage into scenario HTML files
+│
+├── Model_Ordered_experiment/           # Source Excel files for experiment design
+│   ├── Models_Experiment_Order_Expanded.xlsx   # Master schedule (input to Python scripts)
+│   └── models_SCN_Questions_catalog.xlsx
+│
+├── tests/                              # Automated test suite (pytest + playwright)
+├── visual_sanity_check.py              # Visual QA script for scenario rendering
+└── old_experiment_order_files_by_vis_type/  # Archived previous experiment version
+```
 
 ---
 
-### 6. Run the experiment web app
+## How the Experiment Works
 
-- **Key files**:  
-  - `index.html`  
-  - `app.js`  
-  - `style.css`  
-  - `Scenarios/Correct_Scenarios/SCN_*.html` – scenarios where the AI recommendation should be correct.  
-  - `Scenarios/Inaccurate_Scenarios/SCN_*.html` – scenarios where the AI recommendation should be inaccurate.  
-  - `questions/` (`questions.json`, `scenario_questions.json`)  
-  - `participants_json/` (per‑participant schedules)  
-- **What it does**:  
-  - `index.html` loads `app.js` into the `#app` div.  
-  - `app.js`:  
-    - Loads question configuration (`questions/questions.json`) and scenario questions (`questions/scenario_questions.json`).  
-    - Loads a participant schedule (`participants_json/PXXX.json`) based on the entered ID.  
-    - For each trial, looks at `rec_correct` in the trial data:  
-      - If `rec_correct === "לא"` → loads `Scenarios/Inaccurate_Scenarios/<scenario_id>.html`.  
-      - Otherwise → loads `Scenarios/Correct_Scenarios/<scenario_id>.html`.  
-    - Receives route selection via `postMessage` from the iframe, then shows:  
-      - 2 fixed slider questions.  
-      - 3 scenario‑specific multiple‑choice questions.  
-    - Logs the session into `Participants_log/PXXX_log.json`.  
-- **How to run**:  
-  - Open `index.html` in a browser (ideally via a simple HTTP server).  
-  - Enter a participant ID (e.g. `P001`) and follow the flow.
+### Flow (participant perspective)
 
----
+```
+Login → [Screen Check*] → Color Test → Invitation → Consent Form
+→ Intro Video → System Layout → Experiment Overview ("דגשים לניסוי")
+→ Practice Trials (6 scenarios, 2 per visualization type)
+→ Model A: Vis1 (trials + NASA-TLX) → Vis2 → Vis3 → Trust Survey
+→ Model B: Vis1 (trials + NASA-TLX) → Vis2 → Vis3 → Trust Survey
+→ Model Comparison → Visualization Preference → Demographics
+→ End
+```
 
-### 7. Inspect and export results (HTML tools)
+\* Screen Check appears only when **Remote Experiment** mode is selected at login.
 
-- **File**: `log_results_viewer.html`  
-  - **Purpose**: Inspect a **single participant** log interactively.  
-  - **Input**: `Participants_log/PXXX_log.json` (load via file input in the browser).  
-  - **Features**:  
-    - Summary cards (trial counts, followed AI, optimal choices, total time).  
-    - Detailed views for practice/experiment trials, page visits, and all questionnaires.  
-    - **Questionnaires CSV export** button that downloads a UTF‑8 CSV with, per answered question:  
-      - Participant and questionnaire metadata (type, stage, condition/model indices, trial_id).  
-      - Question group/id/label.  
-      - **Scenario metadata**: `scenario_id`, `rec_correct`, `ai_recommended_route`, `correct_route` (when linked to a trial).  
-      - Answer value and correctness (for scenario questions).  
+### Within each trial
 
-- **File**: `logs_overview.html`  
-  - **Purpose**: Inspect and export **multiple participants’ logs at once**.  
-  - **Input**: Select multiple `Participants_log/PXXX_log.json` files in the browser.  
-  - **Features**:  
-    - High‑level stats across all loaded logs (participants, trials, questionnaires, overall accuracy).  
-    - Per‑participant summary table (trials, questionnaires, pages, interactions, % optimal trials).  
-    - CSV exports for:  
-      - **All questionnaires** (same columns as the per‑participant viewer, for all participants).  
-      - **All trials** (participant, stage, condition/model indices, scenario_id, difficulty, `true_route`, `ai_route`, `user_route`, `followed_ai`, `chose_true_optimal`, `rec_correct`, timestamps).  
-    - CSVs are emitted with a UTF‑8 BOM so Excel correctly displays Hebrew text.
+1. Scenario intro page (describes the travel requirement, e.g. "prefer the safest route")
+2. Scenario iframe — map + visualization — participant selects a route
+3. Per-trial questionnaire — attention check questions + trust rating
+
+### Scenario files
+
+Each scenario is a self-contained HTML file (`SCN_XXX_H/S/R.html`) that renders the map and one visualization type. The iframe communicates the selected route back to the parent via `postMessage`. Scenarios are split into two folders based on whether the AI recommendation is correct or not — the runtime selects the correct folder per trial based on the participant's schedule.
 
 ---
 
-### Recommended order when updating data
+## Running the Experiment
 
-1. **Update experiment design** in `Experiment_Order_Expanded.xlsx` → run `Untitled-1.ipynb`.  
-2. **Update scenario questions / options / correct answers** in `SCN_Questions_catalog.xlsx` → run `python_scripts/build_scenario_questions_old.py`.  
-3. **Update correct routes** (same Excel) → run `python_scripts/update_correct_routes_old.py`.  
-4. **(Optional) Update per-participant AI recommendations** in `rec_long.xlsx` → run `python_scripts/update_recommendations_old.py`.  
-5. **If you regenerated scenario HTMLs** from another tool → run `python_scripts/wire_scenario_postmessage.py`.  
-6. Open `index.html` and test a full run for a participant (e.g. `P001`).
+### Option A — Local (recommended for in-person sessions)
 
+No installation required. Open in any modern browser:
+
+```
+experiment_model_ordered/index.html
+```
+
+Or serve locally to avoid browser file-access restrictions:
+
+```bash
+python -m http.server 8080
+# open http://localhost:8080
+```
+
+### Option B — GitHub Pages (remote sessions)
+
+Hosted at: **https://itzikmeir.github.io/RPS_VIS_WEB/**
+
+Remote sessions: check **"Remote experiment with screen test"** on the login page.  
+This activates a 3-step environment check (window maximized, tabs closed, screen size calibration via credit card drag).
+
+Runtime monitors active throughout the session:
+- Tab-switch events logged and shown as a red banner warning
+- Window resize events logged and warned
+
+### Screen requirements
+
+| | Minimum | Ideal |
+|---|---|---|
+| Screen size | 24" | 24–27" |
+| Resolution | 1920×1080 | 1920×1080 |
+| Browser | Chrome / Edge (latest) | Chrome |
+
+---
+
+## Adding a New Participant
+
+1. Open `Model_Ordered_experiment/Models_Experiment_Order_Expanded.xlsx` and add a row for the new participant ID (e.g., `P031`) with the assigned model order and visualization order.
+2. Run the build script:
+   ```bash
+   python python_scripts/build_model_ordered_participants.py
+   ```
+   This generates `experiment_model_ordered/participants_json/P031.json`.
+3. The participant can now log in using ID `P031`.
+
+**Participant schedule structure:**
+
+```
+participants_json/P031.json
+└── models[]
+    └── visualizations[]
+        └── trials[]
+            ├── scenario_id        (e.g. "SCN_005_H")
+            ├── correct_route      (e.g. "א׳")
+            ├── ai_recommended_route
+            ├── correct_answers    (per attention-check question)
+            └── rec_correct        ("כן" / "לא")
+```
+
+---
+
+## Collected Data
+
+At the end of each session a JSON log is:
+1. **Auto-uploaded** to a shared Google Drive folder — researcher receives it without any action from the participant
+2. **Offered as a local download** as a backup
+
+### Log file structure (`P001_log.json`)
+
+```json
+{
+  "pages": [
+    { "page_name": "LoginPage", "enter_ts": 1743825600000, "exit_ts": 1743825610000, "stage": "login" }
+  ],
+  "trials": [
+    {
+      "trial_id": "experiment_m0_v1_t3",
+      "scenario_id": "SCN_007_H",
+      "model_index": 0,
+      "vis_index": 1,
+      "user_route": "ב׳",
+      "correct_route": "ב׳",
+      "ai_route": "א׳",
+      "chose_true_optimal": true,
+      "followed_ai": false,
+      "start_ts": 1743826000000,
+      "end_ts": 1743826042000
+    }
+  ],
+  "questionnaires": [
+    { "questionnaire_type": "nasa_tlx", "answers": { ... }, "enter_ts": ..., "exit_ts": ... }
+  ],
+  "interactions": [
+    { "interaction_type": "screen_calibration", "estimated_screen_inches": 24.1, "estimated_ppi": 91 },
+    { "interaction_type": "tab_hidden", "stage": "experiment", "page_type": "trial" }
+  ]
+}
+```
+
+All timestamps are Unix milliseconds. **Decision time = `end_ts − start_ts`** (measured entirely on the participant's machine, no network latency).
+
+---
+
+## Viewing Results
+
+### Single participant — `log_results_viewer.html`
+
+Open in a browser and enter the participant ID. Loads `participants_log/P00X_log.json` and displays:
+
+- Session date and start time
+- Summary statistics (total trials, % optimal, % followed AI, avg decision time)
+- Trial-by-trial table with route choices, correctness, and timing
+- NASA-TLX scores per visualization type
+- Trust ratings per model
+- Demographics
+- Attention-check answers
+
+### All participants — `logs_overview.html`
+
+Aggregate dashboard across all log files in `participants_log/`.
+
+---
+
+## Development
+
+### Core file: `experiment_model_ordered/app.js`
+
+Single-file SPA (~4500 lines). All experiment logic, rendering, and data collection in one file. State is a global `state` object; rendering is triggered by calling `render()` after mutating `state.stage` / `state.pageType`.
+
+| `state.stage` | Description |
+|---|---|
+| `login` | Participant ID entry |
+| `screen_check` | Environment validation (remote mode only) |
+| `pre` | Pre-experiment pages (consent, video, etc.) |
+| `practice` | Practice trials |
+| `experiment` | Main experiment — models × visualizations × trials |
+| `post` | Post-experiment questionnaires |
+| `end` | Final screen, log upload/download |
+
+Session state is also persisted to `localStorage` so interrupted sessions can be resumed.
+
+### Content: `questions/questions.json`
+
+All UI text, page definitions, and questionnaire items. Edit here to change displayed content without touching `app.js`.
+
+### Python scripts (data preparation — run once)
+
+```bash
+pip install pandas openpyxl
+python python_scripts/build_model_ordered_participants.py
+python python_scripts/update_correct_routes_model_ordered.py
+python python_scripts/update_correct_answers_model_ordered.py
+python python_scripts/update_recommendations_model_ordered.py
+python python_scripts/wire_scenario_postmessage.py
+```
+
+### Tests
+
+```bash
+pip install -r requirements-test.txt
+python run_tests.py
+```
+
+---
+
+## Deployment
+
+```bash
+# Commit and push to both repositories
+git add .
+git commit -m "your message"
+git push origin master            # github.com/muhammadha04/RPS_VIS
+git push web master               # github.com/itzikmeir/RPS_VIS_WEB
+git push web master:main          # sync main branch for GitHub Pages
+```
+
+---
+
+## Contact
+
+Itzik Meir | itzikmeir@gmail.com | 054-5440818  
+Department of Information Systems, University of Haifa
