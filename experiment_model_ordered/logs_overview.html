@@ -112,9 +112,23 @@
         const trialsWithOptimal = trials.filter(t => t.chose_true_optimal === true).length;
         const accuracy = totalTrials > 0 ? (trialsWithOptimal / totalTrials) * 100 : null;
 
+        const consentInteraction = interactions.find(i => i.interaction_type === 'consent_form_data');
+        const fullName = consentInteraction && consentInteraction.data && consentInteraction.data.name ? consentInteraction.data.name : '';
+
+        const firstTs = pages.length > 0 && pages[0].enter_ts ? pages[0].enter_ts : null;
+        let sessionDate = '', sessionTime = '';
+        if (firstTs) {
+          const dt = new Date(firstTs);
+          sessionDate = dt.toLocaleDateString('he-IL');
+          sessionTime = dt.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+        }
+
         return {
           fileName: r.file.name,
           participantId,
+          fullName,
+          sessionDate,
+          sessionTime,
           totalTrials,
           totalQuestionnaires: questionnaires.length,
           totalPages: pages.length,
@@ -188,6 +202,9 @@
           <tr>
             <th>File</th>
             <th>Participant ID</th>
+            <th>Full Name</th>
+            <th>Date</th>
+            <th>Time</th>
             <th>Total Trials</th>
             <th>Total Questionnaires</th>
             <th>Total Pages</th>
@@ -203,6 +220,9 @@
         tr.innerHTML = `
           <td>${row.fileName}</td>
           <td>${row.participantId}</td>
+          <td>${row.fullName}</td>
+          <td>${row.sessionDate}</td>
+          <td>${row.sessionTime}</td>
           <td>${row.totalTrials}</td>
           <td>${row.totalQuestionnaires}</td>
           <td>${row.totalPages}</td>
