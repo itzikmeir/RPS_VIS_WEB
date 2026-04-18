@@ -20,7 +20,7 @@
     .error { color: #c62828; margin-top: 10px; padding: 10px; background: #ffebee; border-radius: 6px; display: none; }
     .error.show { display: block; }
     table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; background: white; }
-    th { background: #f5f5f5; padding: 10px 8px; text-align: left; font-weight: 600; color: #555; border-bottom: 2px solid #ddd; }
+    th { background: #f5f5f5; padding: 10px 8px; text-align: left; font-weight: 600; color: #555; border-bottom: 2px solid #ddd; cursor: help; }
     td { padding: 8px 8px; border-bottom: 1px solid #e0e0e0; }
     tr:hover { background: #f9f9f9; }
     .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin: 20px 0; }
@@ -114,6 +114,7 @@
 
         const consentInteraction = interactions.find(i => i.interaction_type === 'consent_form_data');
         const fullName = consentInteraction && consentInteraction.data && consentInteraction.data.name ? consentInteraction.data.name : '';
+        const idNumber = consentInteraction && consentInteraction.data && consentInteraction.data.id_number ? consentInteraction.data.id_number : '';
 
         const firstTs = pages.length > 0 && pages[0].enter_ts ? pages[0].enter_ts : null;
         let sessionDate = '', sessionTime = '';
@@ -127,6 +128,7 @@
           fileName: r.file.name,
           participantId,
           fullName,
+          idNumber,
           sessionDate,
           sessionTime,
           totalTrials,
@@ -200,16 +202,17 @@
       table.innerHTML = `
         <thead>
           <tr>
-            <th>File</th>
-            <th>Participant ID</th>
-            <th>Full Name</th>
-            <th>Date</th>
-            <th>Time</th>
-            <th>Total Trials</th>
-            <th>Total Questionnaires</th>
-            <th>Total Pages</th>
-            <th>Total Interactions</th>
-            <th>Correct Trials (%)</th>
+            <th title="The unique identifier assigned to the participant in the experiment (e.g. P001)">Participant ID</th>
+            <th title="The participant's full name as entered in the consent form">Full Name</th>
+            <th title="The participant's national/state identity number as entered in the consent form">ID Number</th>
+            <th title="The name of the JSON log file uploaded for this participant">File</th>
+            <th title="The date on which the participant ran the experiment session">Date</th>
+            <th title="The time at which the participant started the experiment session">Time</th>
+            <th title="The total number of route-choice trials the participant completed across all stages">Total Trials</th>
+            <th title="The total number of questionnaires (post-scenario, model summary, NASA-TLX, etc.) the participant answered">Total Questionnaires</th>
+            <th title="The total number of pages (instructions, trials, questionnaires) the participant navigated through">Total Pages</th>
+            <th title="The total number of recorded interactions (button clicks, form submissions, consent data, etc.) logged during the session">Total Interactions</th>
+            <th title="The percentage of trials in which the participant chose the objectively optimal route (chose_true_optimal = true)">Correct Trials (%)</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -218,9 +221,10 @@
       summary.forEach(row => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td>${row.fileName}</td>
           <td>${row.participantId}</td>
           <td>${row.fullName}</td>
+          <td>${row.idNumber}</td>
+          <td>${row.fileName}</td>
           <td>${row.sessionDate}</td>
           <td>${row.sessionTime}</td>
           <td>${row.totalTrials}</td>
