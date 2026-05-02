@@ -9,7 +9,7 @@
     body { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 0; padding: 20px; background: #f4f4f4; }
     .container { max-width: 1400px; margin: 0 auto; background: #ffffff; padding: 30px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
     h1 { margin-top: 0; color: #1976d2; border-bottom: 3px solid #1976d2; padding-bottom: 10px; }
-    h2 { margin-top: 30px; color: #333; border-bottom: 2px solid #e0e0e0; padding-bottom: 8px; }
+    h2 { margin-top: 18px; margin-bottom: 4px; color: #333; border-bottom: 2px solid #e0e0e0; padding-bottom: 5px; font-size: 15px; }
     .input-section { background: #f5f5f5; padding: 20px; border-radius: 8px; margin-bottom: 30px; }
     .input-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
     label { font-weight: 600; font-size: 14px; color: #333; }
@@ -23,11 +23,12 @@
     th { background: #f5f5f5; padding: 10px 8px; text-align: left; font-weight: 600; color: #555; border-bottom: 2px solid #ddd; cursor: help; }
     td { padding: 8px 8px; border-bottom: 1px solid #e0e0e0; }
     tr:hover { background: #f9f9f9; }
-    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin: 20px 0; }
-    .stat-card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); text-align: center; }
-    .stat-value { font-size: 28px; font-weight: 700; color: #1976d2; margin: 8px 0; }
-    .stat-label { font-size: 13px; color: #666; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; margin: 10px 0; }
+    .stat-card { background: white; padding: 8px 10px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); text-align: center; }
+    .stat-value { font-size: 16px; font-weight: 700; color: #1976d2; margin: 3px 0; }
+    .stat-label { font-size: 11px; color: #666; }
     .downloads-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+    .stats-section-label { grid-column: 1 / -1; font-size: 11px; font-weight: 700; color: #999; text-transform: uppercase; letter-spacing: 1px; padding: 8px 0 2px; border-top: 1px solid #e0e0e0; margin-top: 4px; }
   </style>
 </head>
 <body>
@@ -124,6 +125,60 @@
           sessionTime = dt.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
         }
 
+        const lastExitTs = pages.slice().reverse().map(p => p.exit_ts).find(ts => ts != null) || null;
+        let totalTime = null;
+        if (firstTs && lastExitTs) {
+          const totalMs = lastExitTs - firstTs;
+          const totalMin = Math.floor(totalMs / 60000);
+          const totalSec = Math.floor((totalMs % 60000) / 1000);
+          totalTime = `${totalMin}m ${String(totalSec).padStart(2, '0')}s`;
+        }
+
+        // model_index → model_type (OPT / SUB)
+        const modelTypeByIndex = {};
+        trials.forEach(t => { if (t.model_type && t.model_index != null) modelTypeByIndex[t.model_index] = t.model_type; });
+        pages.forEach(p => { if (p.metadata && p.metadata.model_type && p.metadata.model_index != null) modelTypeByIndex[p.metadata.model_index] = p.metadata.model_type; });
+
+        // Model selection
+        const modelSelQ = questionnaires.find(q => q.questionnaire_type === 'model_selection');
+        let modelChoice = '', modelChoiceType = '', choseOptimal = null;
+        if (modelSelQ && modelSelQ.answers && modelSelQ.answers.model_preference) {
+          modelChoice = modelSelQ.answers.model_preference;
+          const prefIndex = /A$/i.test(modelChoice) ? 0 : /B$/i.test(modelChoice) ? 1 : null;
+          if (prefIndex != null && modelTypeByIndex[prefIndex]) {
+            modelChoiceType = modelTypeByIndex[prefIndex];
+            choseOptimal = modelChoiceType === 'OPT';
+          }
+        }
+
+        // Visualization global preferences + help element
+        const visGlobalQ = questionnaires.find(q => q.questionnaire_type === 'visualization_global');
+        let visPref = ['', '', ''];
+        let helpElement = '';
+        if (visGlobalQ && visGlobalQ.answers) {
+          const ranked = Object.entries(visGlobalQ.answers)
+            .filter(([, v]) => typeof v === 'number')
+            .sort((a, b) => a[1] - b[1]);
+          visPref = [ranked[0]?.[0] || '', ranked[1]?.[0] || '', ranked[2]?.[0] || ''];
+          helpElement = visGlobalQ.answers.help_element || '';
+        }
+
+        // Trust per model (TIAS avg of trust1–trust12)
+        const trustByModel = [];
+        questionnaires.forEach(q => {
+          if (q.questionnaire_type !== 'model_summary' || q.model_index == null) return;
+          const trust = q.answers && q.answers.trust;
+          if (!trust) return;
+          const vals = Object.values(trust).filter(v => typeof v === 'number');
+          if (vals.length === 0) return;
+          trustByModel.push({
+            modelIndex: q.model_index,
+            modelType: modelTypeByIndex[q.model_index] || '?',
+            avg: vals.reduce((a, b) => a + b, 0) / vals.length
+          });
+        });
+        trustByModel.sort((a, b) => a.modelIndex - b.modelIndex);
+
         return {
           fileName: r.file.name,
           participantId,
@@ -131,11 +186,18 @@
           idNumber,
           sessionDate,
           sessionTime,
+          totalTime,
           totalTrials,
           totalQuestionnaires: questionnaires.length,
           totalPages: pages.length,
           totalInteractions: interactions.length,
-          accuracy
+          accuracy,
+          modelChoice,
+          modelChoiceType,
+          choseOptimal,
+          visPref,
+          helpElement,
+          trustByModel
         };
       });
 
@@ -151,7 +213,80 @@
         return allTrials.length > 0 ? (trialsWithOptimal / allTrials.length) * 100 : null;
       })();
       statsGrid.appendChild(createStatCard('Overall Correct Trials', overallAccuracy !== null ? overallAccuracy.toFixed(1) + '%' : 'N/A'));
+      const avgTimeLabel = (() => {
+        const times = summary.map(s => s.totalTime).filter(t => t !== null);
+        if (times.length === 0) return 'N/A';
+        const totalMs = summary.reduce((sum, s) => {
+          if (s.totalTime === null) return sum;
+          const [min, sec] = s.totalTime.match(/(\d+)m (\d+)s/).slice(1).map(Number);
+          return sum + min * 60000 + sec * 1000;
+        }, 0);
+        const avgMs = totalMs / times.length;
+        const m = Math.floor(avgMs / 60000);
+        const s = Math.floor((avgMs % 60000) / 1000);
+        return `${m}m ${String(s).padStart(2, '0')}s`;
+      })();
+      statsGrid.appendChild(createStatCard('Avg Session Time', avgTimeLabel));
       wrapper.appendChild(statsGrid);
+
+      // ── Group Statistics ──────────────────────────────────────────────────
+      const gs = computeGroupStats(valid);
+      const groupTitle = document.createElement('h2');
+      groupTitle.textContent = 'Group Statistics';
+      wrapper.appendChild(groupTitle);
+
+      const statsGrid2 = document.createElement('div');
+      statsGrid2.className = 'stats-grid';
+
+      const addSectionLabel = (text) => {
+        const lbl = document.createElement('div');
+        lbl.className = 'stats-section-label';
+        lbl.textContent = text;
+        statsGrid2.appendChild(lbl);
+      };
+
+      // Demographics
+      if (gs.ages.length > 0 || Object.keys(gs.genderCounts).length > 0) {
+        addSectionLabel('Demographics');
+        if (gs.avgAge !== null) {
+          const ageStr = gs.sdAge !== null ? `${gs.avgAge.toFixed(1)} ± ${gs.sdAge.toFixed(1)}` : gs.avgAge.toFixed(1);
+          statsGrid2.appendChild(createStatCard('Avg Age ± SD', ageStr));
+        }
+        if (Object.keys(gs.genderCounts).length > 0) {
+          const gMap = { 'נקבה': 'F', 'זכר': 'M' };
+          const gStr = Object.entries(gs.genderCounts).map(([g, n]) => `${n} ${gMap[g] || g}`).join(' / ');
+          statsGrid2.appendChild(createStatCard('Gender', gStr));
+        }
+      }
+
+      // Preferences
+      addSectionLabel('Preferences');
+      if (gs.modelPreferences.total > 0) {
+        const pct = gs.modelPreferences.total > 0 ? ` (${Math.round(gs.modelPreferences.OPT / gs.modelPreferences.total * 100)}% OPT)` : '';
+        statsGrid2.appendChild(createStatCard('Preferred Model', `${gs.modelPreferences.OPT} OPT / ${gs.modelPreferences.SUB} SUB${pct}`));
+      }
+      Object.entries(gs.visRankByVis).sort((a, b) => a[1] - b[1]).forEach(([vis, avg]) => {
+        statsGrid2.appendChild(createStatCard(`Vis Rank: ${vis}`, `${avg.toFixed(1)} / 3`));
+      });
+
+      // Performance
+      addSectionLabel('Performance');
+      if (gs.saAccuracy !== null) {
+        statsGrid2.appendChild(createStatCard('SA Accuracy', `${gs.saAccuracy.toFixed(1)}%`));
+      }
+      if (gs.trust.OPT !== null) statsGrid2.appendChild(createStatCard('Trust – OPT', `${gs.trust.OPT.toFixed(2)} / 7`));
+      if (gs.trust.SUB !== null) statsGrid2.appendChild(createStatCard('Trust – SUB', `${gs.trust.SUB.toFixed(2)} / 7`));
+
+      // NASA-TLX
+      if (Object.keys(gs.nasaTlxByVis).length > 0) {
+        addSectionLabel('NASA-TLX by Visualization');
+        Object.entries(gs.nasaTlxByVis).forEach(([vis, avg]) => {
+          statsGrid2.appendChild(createStatCard(`NASA-TLX: ${vis}`, avg.toFixed(2)));
+        });
+      }
+
+      wrapper.appendChild(statsGrid2);
+      // ─────────────────────────────────────────────────────────────────────
 
       const downloadsRow = document.createElement('div');
       downloadsRow.className = 'downloads-row';
@@ -208,11 +343,20 @@
             <th title="The name of the JSON log file uploaded for this participant">File</th>
             <th title="The date on which the participant ran the experiment session">Date</th>
             <th title="The time at which the participant started the experiment session">Time</th>
+            <th title="Total session duration from the first page entered to the last page exited">Total Time</th>
             <th title="The total number of route-choice trials the participant completed across all stages">Total Trials</th>
             <th title="The total number of questionnaires (post-scenario, model summary, NASA-TLX, etc.) the participant answered">Total Questionnaires</th>
             <th title="The total number of pages (instructions, trials, questionnaires) the participant navigated through">Total Pages</th>
             <th title="The total number of recorded interactions (button clicks, form submissions, consent data, etc.) logged during the session">Total Interactions</th>
             <th title="The percentage of trials in which the participant chose the objectively optimal route (chose_true_optimal = true)">Correct Trials (%)</th>
+            <th title="The model the participant selected as preferred at the end of the experiment">Model Choice</th>
+            <th title="Whether the participant's preferred model was the objectively optimal (OPT) model">Chose Optimal?</th>
+            <th title="Visualization ranked 1st (most preferred) in the global visualization preference questionnaire">Vis 1st</th>
+            <th title="Visualization ranked 2nd in the global visualization preference questionnaire">Vis 2nd</th>
+            <th title="Visualization ranked 3rd (least preferred) in the global visualization preference questionnaire">Vis 3rd</th>
+            <th title="The UI element the participant indicated they relied on most for help during the experiment">Help Element</th>
+            <th title="Average TIAS trust score (trust1–trust12) for the first model encountered (model index 0), with its type (OPT/SUB)">Trust M0</th>
+            <th title="Average TIAS trust score (trust1–trust12) for the second model encountered (model index 1), with its type (OPT/SUB)">Trust M1</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -227,11 +371,20 @@
           <td>${row.fileName}</td>
           <td>${row.sessionDate}</td>
           <td>${row.sessionTime}</td>
+          <td>${row.totalTime !== null ? row.totalTime : 'N/A'}</td>
           <td>${row.totalTrials}</td>
           <td>${row.totalQuestionnaires}</td>
           <td>${row.totalPages}</td>
           <td>${row.totalInteractions}</td>
           <td>${row.accuracy !== null ? row.accuracy.toFixed(1) + '%' : 'N/A'}</td>
+          <td>${row.modelChoice ? `${row.modelChoice}${row.modelChoiceType ? ' (' + row.modelChoiceType + ')' : ''}` : 'N/A'}</td>
+          <td style="text-align:center">${row.choseOptimal === true ? '✓' : row.choseOptimal === false ? '✗' : 'N/A'}</td>
+          <td>${row.visPref[0]}</td>
+          <td>${row.visPref[1]}</td>
+          <td>${row.visPref[2]}</td>
+          <td>${row.helpElement || 'N/A'}</td>
+          <td>${row.trustByModel[0] ? `${row.trustByModel[0].avg.toFixed(2)} (${row.trustByModel[0].modelType})` : 'N/A'}</td>
+          <td>${row.trustByModel[1] ? `${row.trustByModel[1].avg.toFixed(2)} (${row.trustByModel[1].modelType})` : 'N/A'}</td>
         `;
         tbody.appendChild(tr);
       });
@@ -341,6 +494,111 @@
         return /[",\n]/.test(str) ? '"' + str.replace(/"/g, '""') + '"' : str;
       };
       return rows.map(row => row.map(escapeCell).join(',')).join('\n');
+    }
+
+    function computeGroupStats(valid) {
+      const ages = [], genders = [];
+      const modelPreferences = [];
+      const saCorrect = [];
+      const trustByType = { OPT: [], SUB: [] };
+      const nasaTlxByVis = {};
+      const visRankByVis = {};
+
+      valid.forEach(r => {
+        const logs = r.data.logs || r.data;
+        const trials = Array.isArray(logs.trials) ? logs.trials : [];
+        const questionnaires = Array.isArray(logs.questionnaires) ? logs.questionnaires : [];
+        const pages = Array.isArray(logs.pages) ? logs.pages : [];
+
+        // model_index → model_type ('OPT' | 'SUB')
+        const modelTypeByIndex = {};
+        trials.forEach(t => { if (t.model_type && t.model_index != null) modelTypeByIndex[t.model_index] = t.model_type; });
+        pages.forEach(p => { if (p.metadata && p.metadata.model_type && p.metadata.model_index != null) modelTypeByIndex[p.metadata.model_index] = p.metadata.model_type; });
+
+        // vis_index → vis name
+        const visNameByIndex = {};
+        pages.forEach(p => { if (p.metadata && p.metadata.vis_index != null && p.metadata.visualization) visNameByIndex[p.metadata.vis_index] = p.metadata.visualization; });
+
+        // trial_id → stage
+        const trialStageById = {};
+        trials.forEach(t => { if (t.trial_id) trialStageById[t.trial_id] = t.stage; });
+
+        // Demographics
+        const demoQ = questionnaires.find(q => q.questionnaire_type === 'demographics');
+        if (demoQ && demoQ.answers) {
+          if (typeof demoQ.answers.age === 'number') ages.push(demoQ.answers.age);
+          if (demoQ.answers.gender) genders.push(demoQ.answers.gender);
+        }
+
+        // Model preference → OPT / SUB
+        const modelSelQ = questionnaires.find(q => q.questionnaire_type === 'model_selection');
+        if (modelSelQ && modelSelQ.answers && modelSelQ.answers.model_preference) {
+          const pref = modelSelQ.answers.model_preference;
+          const prefIndex = /A$/i.test(pref) ? 0 : /B$/i.test(pref) ? 1 : null;
+          if (prefIndex != null && modelTypeByIndex[prefIndex]) modelPreferences.push(modelTypeByIndex[prefIndex]);
+        }
+
+        // SA accuracy – experiment trials only (sa_1 + sa_2)
+        questionnaires.forEach(q => {
+          if (q.questionnaire_type !== 'post_scenario') return;
+          if (q.trial_id && trialStageById[q.trial_id] !== 'experiment') return;
+          const sa = q.answers && q.answers.scenario_questions;
+          if (!sa) return;
+          ['sa_1', 'sa_2'].forEach(key => {
+            if (sa[key] && typeof sa[key].is_correct === 'boolean') saCorrect.push(sa[key].is_correct ? 1 : 0);
+          });
+        });
+
+        // Trust per model type
+        questionnaires.forEach(q => {
+          if (q.questionnaire_type !== 'model_summary') return;
+          const mt = modelTypeByIndex[q.model_index];
+          if (!mt || !q.answers || !q.answers.trust) return;
+          const vals = Object.values(q.answers.trust).filter(v => typeof v === 'number');
+          if (vals.length > 0) trustByType[mt].push(vals.reduce((a, b) => a + b, 0) / vals.length);
+        });
+
+        // NASA-TLX per visualization
+        questionnaires.forEach(q => {
+          if (q.questionnaire_type !== 'nasa_tlx' || q.vis_index == null) return;
+          const vis = visNameByIndex[q.vis_index];
+          if (!vis || !q.answers) return;
+          const vals = Object.values(q.answers).filter(v => typeof v === 'number');
+          if (vals.length > 0) {
+            if (!nasaTlxByVis[vis]) nasaTlxByVis[vis] = [];
+            nasaTlxByVis[vis].push(vals.reduce((a, b) => a + b, 0) / vals.length);
+          }
+        });
+
+        // Visualization global rankings (1 = most preferred)
+        const visGlobalQ = questionnaires.find(q => q.questionnaire_type === 'visualization_global');
+        if (visGlobalQ && visGlobalQ.answers) {
+          Object.entries(visGlobalQ.answers).forEach(([vis, rank]) => {
+            if (typeof rank === 'number') {
+              if (!visRankByVis[vis]) visRankByVis[vis] = [];
+              visRankByVis[vis].push(rank);
+            }
+          });
+        }
+      });
+
+      const avgAge = ages.length > 0 ? ages.reduce((a, b) => a + b, 0) / ages.length : null;
+      const sdAge = ages.length > 1 ? Math.sqrt(ages.map(a => (a - avgAge) ** 2).reduce((a, b) => a + b, 0) / ages.length) : null;
+      const genderCounts = {};
+      genders.forEach(g => { genderCounts[g] = (genderCounts[g] || 0) + 1; });
+      const optCount = modelPreferences.filter(p => p === 'OPT').length;
+      const subCount = modelPreferences.filter(p => p === 'SUB').length;
+      const avgTrust = (arr) => arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : null;
+
+      return {
+        ages, avgAge, sdAge,
+        genderCounts,
+        modelPreferences: { OPT: optCount, SUB: subCount, total: modelPreferences.length },
+        saAccuracy: saCorrect.length > 0 ? saCorrect.reduce((a, b) => a + b, 0) / saCorrect.length * 100 : null,
+        trust: { OPT: avgTrust(trustByType.OPT), SUB: avgTrust(trustByType.SUB) },
+        nasaTlxByVis: Object.fromEntries(Object.entries(nasaTlxByVis).map(([k, v]) => [k, v.reduce((a, b) => a + b, 0) / v.length])),
+        visRankByVis: Object.fromEntries(Object.entries(visRankByVis).map(([k, v]) => [k, v.reduce((a, b) => a + b, 0) / v.length]))
+      };
     }
 
     function buildTrialsCsvForOverview(trials) {
