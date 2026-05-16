@@ -29,6 +29,7 @@
     .stat-label { font-size: 11px; color: #666; }
     .downloads-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
     .stats-section-label { grid-column: 1 / -1; font-size: 11px; font-weight: 700; color: #999; text-transform: uppercase; letter-spacing: 1px; padding: 8px 0 2px; border-top: 1px solid #e0e0e0; margin-top: 4px; }
+    .cell-green { background: #e8f5e9; color: #2e7d32; font-weight: 600; }
   </style>
 </head>
 <body>
@@ -362,6 +363,17 @@
         <tbody></tbody>
       `;
       const tbody = table.querySelector('tbody');
+      const accVals = summary.map(s => s.accuracy).filter(a => a !== null);
+      const accMin = accVals.length ? Math.min(...accVals) : 0;
+      const accMax = accVals.length ? Math.max(...accVals) : 100;
+      const accColor = (val) => {
+        if (val === null) return '';
+        const t = accMax > accMin ? (val - accMin) / (accMax - accMin) : 1;
+        const r = Math.round(255 - t * (255 - 76));
+        const g = Math.round(152 + t * (175 - 152));
+        const b = Math.round(0   + t * (80  - 0));
+        return `background:rgb(${r},${g},${b});color:#fff;font-weight:600`;
+      };
       summary.forEach(row => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
@@ -376,9 +388,9 @@
           <td>${row.totalQuestionnaires}</td>
           <td>${row.totalPages}</td>
           <td>${row.totalInteractions}</td>
-          <td>${row.accuracy !== null ? row.accuracy.toFixed(1) + '%' : 'N/A'}</td>
-          <td>${row.modelChoice ? `${row.modelChoice}${row.modelChoiceType ? ' (' + row.modelChoiceType + ')' : ''}` : 'N/A'}</td>
-          <td style="text-align:center">${row.choseOptimal === true ? '✓' : row.choseOptimal === false ? '✗' : 'N/A'}</td>
+          <td style="${accColor(row.accuracy)}">${row.accuracy !== null ? row.accuracy.toFixed(1) + '%' : 'N/A'}</td>
+          <td class="${row.modelChoiceType === 'OPT' ? 'cell-green' : ''}">${row.modelChoice ? `${row.modelChoice}${row.modelChoiceType ? ' (' + row.modelChoiceType + ')' : ''}` : 'N/A'}</td>
+          <td class="${row.choseOptimal === true ? 'cell-green' : ''}" style="text-align:center">${row.choseOptimal === true ? '✓' : row.choseOptimal === false ? '✗' : 'N/A'}</td>
           <td>${row.visPref[0]}</td>
           <td>${row.visPref[1]}</td>
           <td>${row.visPref[2]}</td>
