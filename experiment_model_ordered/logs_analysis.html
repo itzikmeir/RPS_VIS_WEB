@@ -485,7 +485,7 @@ function barChart(cs,metric,options={}){
   const cW=W-pl-pr, cH=H-pt-pb;
   const vals=cs.map(c=>c.m), errs=cs.map(c=>c.se);
   const yMin=options.yMin??0;
-  const yMax=options.yMax??Math.max(...vals.map((v,i)=>v+errs[i]))*1.2||1;
+  const yMax=options.yMax??(Math.max(...vals.map((v,i)=>v+errs[i]))*1.2||1);
   const yScale=v=>pt+cH*(1-(v-yMin)/(yMax-yMin));
   const bW=cW/(VIS3.length*1.6), gap=bW*0.6;
 
