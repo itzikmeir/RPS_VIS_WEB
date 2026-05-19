@@ -240,7 +240,7 @@
       "enter_ts": 1773386441926,
       "exit_ts": 1773386459081
     },
-     {
+    {
       "page_name": "ExperimentTransitionPage",
       "stage": "experiment",
       "page_type": "experiment_transition",
@@ -1397,6 +1397,24 @@
       "chose_true_optimal": false,
       "start_ts": 1773386419875,
       "end_ts": 1773386441925
+    },
+    {
+      "trial_id": "P001_experiment_M0_V0_T0",
+      "participant_id": "P001",
+      "stage": "experiment",
+      "model_index": 0,
+      "vis_index": 0,
+      "trial_index": 0,
+      "scenario_id": "SCN_028_S",
+      "difficulty": "H",
+      "true_route": "א׳",
+      "ai_route": "א׳",
+      "model_type": "OPT",
+      "user_route": "ג׳",
+      "followed_ai": false,
+      "chose_true_optimal": false,
+      "start_ts": 1773401336546,
+      "end_ts": 1773401375245
     },
     {
       "trial_id": "P001_experiment_M0_V0_T1",
