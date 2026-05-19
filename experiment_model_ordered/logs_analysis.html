@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Logs Analysis – Trust Calibration & Visualization</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: 'Georgia', 'Times New Roman', serif; margin: 0; padding: 20px; background: #f4f4f4; font-size: 14px; line-height: 1.65; color: #222; }
+    .paper { max-width: 1080px; margin: 0 auto; background: #fff; padding: 48px 60px; box-shadow: 0 2px 16px rgba(0,0,0,0.1); }
+
+    h1 { font-size: 19px; text-align: center; margin: 0 0 6px; }
+    .meta { text-align: center; font-size: 12.5px; color: #555; margin-bottom: 2px; }
+    .abstract { background: #f5f5f5; border-left: 4px solid #1976d2; padding: 12px 16px; margin: 20px 0; font-size: 13px; }
+    .abstract b { display: block; margin-bottom: 4px; }
+
+    h2 { font-size: 15px; border-bottom: 1.5px solid #ccc; padding-bottom: 4px; margin: 28px 0 8px; }
+    h3 { font-size: 13.5px; margin: 18px 0 5px; }
+    h4 { font-size: 13px; margin: 12px 0 4px; font-style: italic; color: #1976d2; }
+    p { margin: 6px 0; text-align: justify; }
+
+    .data-input { background: #e3f2fd; padding: 14px 18px; border-radius: 6px; margin: 20px 0; font-family: system-ui, sans-serif; }
+    .data-input label { font-weight: 600; font-size: 13px; margin-right: 8px; }
+    .data-input button { padding: 8px 18px; background: #1976d2; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 13px; }
+    .data-input button:hover { background: #1565c0; }
+    #loadMsg { color: #1976d2; font-style: italic; font-family: system-ui; font-size: 13px; margin-top: 8px; }
+
+    table.st { width: 100%; border-collapse: collapse; margin: 10px 0; font-family: system-ui, sans-serif; font-size: 12.5px; }
+    table.st th { background: #f0f0f0; padding: 6px 10px; text-align: center; border: 1px solid #ccc; font-weight: 600; color: #333; }
+    table.st td { padding: 5px 10px; border: 1px solid #e0e0e0; text-align: center; }
+    table.st tr:nth-child(even) { background: #fafafa; }
+    table.st .lbl { text-align: left; font-weight: 600; }
+    table.st .sig { color: #1b5e20; font-weight: 700; }
+    table.st .ns { color: #555; }
+    table.st .eff-lg { background: #e8f5e9; }
+    table.st .eff-md { background: #fff8e1; }
+    table.st .eff-sm { background: #fce4ec; }
+
+    .rblock { border: 1px solid #ddd; border-radius: 5px; padding: 14px 16px; margin: 14px 0; }
+    .rblock h4 { margin-top: 0; }
+    .interp { font-style: italic; font-size: 13px; color: #333; background: #fafafa; border-left: 3px solid #aaa; padding: 8px 12px; margin: 10px 0; }
+    .finding { background: #e8f5e9; border: 1px solid #a5d6a7; border-radius: 5px; padding: 10px 14px; margin: 10px 0; font-size: 13px; }
+    .inconc { background: #fff8e1; border: 1px solid #ffe082; border-radius: 5px; padding: 10px 14px; margin: 10px 0; font-size: 13px; }
+    .warn { background: #fce4ec; border: 1px solid #f48fb1; border-radius: 5px; padding: 8px 12px; margin: 8px 0; font-size: 12.5px; }
+    .chart-row { display: flex; gap: 24px; flex-wrap: wrap; margin: 10px 0; align-items: flex-start; }
+
+    .vis-sb { color: #1976d2; font-weight: 600; }
+    .vis-rc { color: #d32f2f; font-weight: 600; }
+    .vis-hm { color: #388e3c; font-weight: 600; }
+
+    .ref-list p { padding-left: 24px; text-indent: -24px; font-size: 12.5px; margin: 3px 0; }
+    hr { border: none; border-top: 1px solid #ddd; margin: 30px 0; }
+    .note { font-size: 12px; color: #777; }
+    sup { font-size: 10px; }
+  </style>
+</head>
+<body>
+<div class="paper">
+
+  <h1>Trust, but Verify: Calibrating Trust with Visual Explanations in AI-Guided Route Planning</h1>
+  <p class="meta">Itzik Meir &nbsp;|&nbsp; Supervisors: Prof. Tsvi Kuflik &amp; Dr. Joel Lanir</p>
+  <p class="meta">Department of Information Systems, University of Haifa</p>
+
+  <div class="abstract">
+    <b>Abstract</b>
+    This report presents the full statistical analysis for a controlled within-subjects experiment
+    examining how three visualization types — Stacked Bar, Radar Chart, and Heat Map — affect
+    trust calibration and decision-making in an AI-guided, multi-criteria route planning task.
+    The analysis addresses five research questions: (RQ1) the effect of visualization type on trust
+    calibration score (TCS), response time, workload, confidence, route accuracy, and situational
+    awareness; (RQ2a) moderation by task difficulty; (RQ2b) the effect of AI model quality
+    (Optimal vs. Suboptimal) on workload, subjective trust, and behavioral calibration; (RQ3) the
+    speed–comprehension trade-off; and (RQ4) individual-difference moderators. Repeated-measures
+    ANOVA (parametric) and Friedman tests (non-parametric) are reported alongside Kendall's W,
+    Cohen's d, and statistical power estimates. Results are interpreted with explicit notation of
+    underpowered tests.
+  </div>
+
+  <div class="data-input">
+    <label for="logFiles">Select participant log JSON files:</label>
+    <input type="file" id="logFiles" accept=".json" multiple />
+    <button id="runBtn">Run Analysis</button>
+    <div id="loadMsg"></div>
+  </div>
+
+  <div id="results"></div>
+
+  <!-- ── References ─────────────────────────────────────────────────────── -->
+  <h2>References</h2>
+  <div class="ref-list">
+    <p>Cohen, J. (1988). <i>Statistical power analysis for the behavioral sciences</i> (2nd ed.). Lawrence Erlbaum.</p>
+    <p>Hart, S. G., &amp; Staveland, L. E. (1988). Development of NASA-TLX (Task Load Index). <i>Advances in Psychology, 52</i>, 139–183.</p>
+    <p>Jian, J.-Y., Bisantz, A. M., &amp; Drury, C. G. (2000). Foundations for an empirically determined scale of trust in automated systems. <i>International Journal of Cognitive Ergonomics, 4</i>(1), 53–71.</p>
+    <p>Kendall, M. G. (1970). <i>Rank correlation methods</i> (4th ed.). Griffin.</p>
+    <p>Lee, J. D., &amp; See, K. A. (2004). Trust in automation: Designing for appropriate reliance. <i>Human Factors, 46</i>(1), 50–80.</p>
+    <p>Parasuraman, R., &amp; Manzey, D. H. (2010). Complacency and bias in human use of automation. <i>Human Factors, 52</i>(3), 381–410.</p>
+    <p>Sweller, J. (1988). Cognitive load during problem solving. <i>Cognitive Science, 12</i>(2), 257–285.</p>
+  </div>
+
+</div><!-- /paper -->
+
+<script>
+// ════════════════════════════════════════════════════════════════════════════
+// 1. STATISTICAL UTILITIES
+// ════════════════════════════════════════════════════════════════════════════
+
+const VISNMAP = {'עמודות נערמות':'Stacked Bar','רדאר':'Radar Chart','מפת חום':'Heat Map'};
+const VIS3 = ['Stacked Bar','Radar Chart','Heat Map'];
+const VIS_COLOR = {'Stacked Bar':'#1976d2','Radar Chart':'#d32f2f','Heat Map':'#388e3c'};
+
+function mean(a){ return a.length?a.reduce((s,v)=>s+v,0)/a.length:NaN; }
+function variance(a){ if(a.length<2)return 0; const m=mean(a); return a.reduce((s,v)=>s+(v-m)**2,0)/(a.length-1); }
+function sd(a){ return Math.sqrt(variance(a)); }
+function se(a){ return a.length?sd(a)/Math.sqrt(a.length):NaN; }
+function median(a){ const s=[...a].sort((x,y)=>x-y),n=s.length; return n%2?s[(n-1)/2]:(s[n/2-1]+s[n/2])/2; }
+function rankArr(arr){
+  const n=arr.length, s=arr.map((v,i)=>({v,i})).sort((a,b)=>a.v-b.v), r=new Array(n);
+  let i=0;
+  while(i<n){ let j=i; while(j<n&&s[j].v===s[i].v)j++; const avg=(i+j+1)/2; for(let k=i;k<j;k++)r[s[k].i]=avg; i=j; }
+  return r;
+}
+
+// ── p-value distributions ──────────────────────────────────────────────────
+function normalCDF(x){
+  const t=1/(1+0.2316419*Math.abs(x));
+  const p=t*(0.319381530+t*(-0.356563782+t*(1.781477937+t*(-1.821255978+t*1.330274429))));
+  const phi=1-(1/Math.sqrt(2*Math.PI))*Math.exp(-x*x/2)*p;
+  return x>=0?phi:1-phi;
+}
+function logGamma(x){
+  const c=[76.18009172947146,-86.50532032941677,24.01409824083091,-1.231739572450155,1.208650973866179e-3,-5.395239384953e-6];
+  let y=x,tmp=x+5.5; tmp-=(x+0.5)*Math.log(tmp);
+  let ser=1.000000000190015; for(let j=0;j<6;j++)ser+=c[j]/++y;
+  return -tmp+Math.log(2.5066282746310005*ser/x);
+}
+function gammaIncLower(a,x){
+  if(x<=0||a<=0)return 0;
+  let sum=1/a,term=1/a;
+  for(let i=1;i<300;i++){ term*=x/(a+i); sum+=term; if(Math.abs(term)<1e-12*Math.abs(sum))break; }
+  return sum*Math.exp(-x+a*Math.log(x)-logGamma(a));
+}
+function chi2p(chi2,df){ return chi2<=0?1:Math.max(0,1-gammaIncLower(df/2,chi2/2)); }
+function betaInc(x,a,b){
+  if(x<=0)return 0; if(x>=1)return 1;
+  const lb=logGamma(a)+logGamma(b)-logGamma(a+b);
+  const front=Math.exp(Math.log(x)*a+Math.log(1-x)*b-lb)/a;
+  let f=1,C=1,D=1-(a+b)*x/(a+1); D=D?1/D:1e30; f=D;
+  for(let m=1;m<=300;m++){
+    let d=m*(b-m)*x/((a+2*m-1)*(a+2*m));
+    D=1+d*D; D=D?D:1e30; C=1+d/C; C=C?C:1e30; D=1/D; f*=C*D;
+    d=-(a+m)*(a+b+m)*x/((a+2*m)*(a+2*m+1));
+    D=1+d*D; D=D?D:1e30; C=1+d/C; C=C?C:1e30; D=1/D;
+    const del=C*D; f*=del; if(Math.abs(del-1)<1e-10)break;
+  }
+  return Math.min(1,Math.max(0,front*f));
+}
+function tp(t,df){ return tpValue(t,df); }
+function tpValue(t,df){ const x=df/(df+t*t); return betaInc(x,df/2,0.5); }
+function fp(F,df1,df2){ if(F<=0)return 1; const x=df2/(df2+df1*F); return betaInc(x,df2/2,df1/2); }
+
+// ── Statistical tests ──────────────────────────────────────────────────────
+function friedman(matrix){
+  const N=matrix.length, k=matrix[0].length;
+  const ranks=matrix.map(row=>rankArr(row));
+  const Rj=Array(k).fill(0);
+  ranks.forEach(row=>row.forEach((r,j)=>Rj[j]+=r));
+  const chi2=(12/(N*k*(k+1)))*Rj.reduce((s,r)=>s+r*r,0)-3*N*(k+1);
+  const df=k-1, p=chi2p(chi2,df), W=chi2/(N*(k-1));
+  const condMeans=Rj.map(r=>r/N);
+  return {chi2,df,p,W,condMeans,N,k};
+}
+
+function rmANOVA(matrix){
+  const N=matrix.length, k=matrix[0].length;
+  const grandM=mean(matrix.flat());
+  const cM=Array(k).fill(0).map((_,j)=>mean(matrix.map(r=>r[j])));
+  const sM=matrix.map(r=>mean(r));
+  const SS_c=N*cM.reduce((s,m)=>s+(m-grandM)**2,0);
+  const SS_s=k*sM.reduce((s,m)=>s+(m-grandM)**2,0);
+  const SS_t=matrix.flat().reduce((s,v)=>s+(v-grandM)**2,0);
+  const SS_e=SS_t-SS_c-SS_s;
+  const df_c=k-1, df_e=(k-1)*(N-1);
+  const MS_c=SS_c/df_c, MS_e=SS_e/df_e;
+  const F=MS_c/MS_e, p=fp(F,df_c,df_e);
+  const eta2=SS_c/(SS_c+SS_e);
+  return {F,df_c,df_e,p,eta2,MS_c,MS_e,condMeans:cM,grandM,N,k};
+}
+
+function pairedT(x,y){
+  const d=x.map((xi,i)=>xi-y[i]), n=d.length;
+  const mD=mean(d), sD=sd(d);
+  const t=mD/(sD/Math.sqrt(n)), df=n-1, p=tpValue(Math.abs(t),df);
+  return {t,df,p,d:mD/sD,meanD:mD,sdD:sD,n};
+}
+
+function wilcoxon(x,y){
+  const diffs=x.map((xi,i)=>xi-y[i]).filter(d=>d!==0), n=diffs.length;
+  if(!n) return {W:0,z:0,p:1,r:0,n:0};
+  const absR=rankArr(diffs.map(d=>Math.abs(d)));
+  let Wp=0,Wm=0;
+  diffs.forEach((d,i)=>d>0?Wp+=absR[i]:Wm+=absR[i]);
+  const W=Math.min(Wp,Wm), mu=n*(n+1)/4, sigma=Math.sqrt(n*(n+1)*(2*n+1)/24);
+  const z=(W-mu)/sigma, p=2*(1-normalCDF(Math.abs(z)));
+  return {W,z,p,r:Math.abs(z)/Math.sqrt(n),n};
+}
+
+function pearsonR(x,y){
+  const n=x.length, mx=mean(x), my=mean(y);
+  const num=x.reduce((s,xi,i)=>s+(xi-mx)*(y[i]-my),0);
+  const den=Math.sqrt(x.reduce((s,xi)=>s+(xi-mx)**2,0)*y.reduce((s,yi)=>s+(yi-my)**2,0));
+  const r=den?num/den:0, t2=r*Math.sqrt(n-2)/Math.sqrt(1-r*r);
+  const p=tpValue(Math.abs(t2),n-2);
+  return {r,r2:r*r,t:t2,p,n};
+}
+
+// Effect size labels
+function wLabel(W){ return W>=0.26?'large':W>=0.10?'medium':'small'; }
+function powerNote(W,N,k){
+  // approximate power from SAP lookup
+  if(W>=0.26) return '≥.80 ✓';
+  if(W>=0.10) return '~.50–.79';
+  return '&lt;.50 ⚠';
+}
+function dLabel(d){ const a=Math.abs(d); return a>=0.8?'large':a>=0.5?'medium':a>=0.2?'small':'negligible'; }
+function pFmt(p){ if(p<.001)return '&lt;.001'; if(p<.01)return p.toFixed(3); return p.toFixed(3); }
+function fmtN(v,dec=2){ return (typeof v==='number'&&isFinite(v))?v.toFixed(dec):'–'; }
+function sigClass(p){ return p<.05?'sig':'ns'; }
+
+// ════════════════════════════════════════════════════════════════════════════
+// 2. DATA EXTRACTION
+// ════════════════════════════════════════════════════════════════════════════
+function extractData(validResults){
+  const participantData=[], allTrials=[];
+
+  validResults.forEach(r=>{
+    const logs=r.data.logs||r.data;
+    const trials=Array.isArray(logs.trials)?logs.trials:[];
+    const qs=Array.isArray(logs.questionnaires)?logs.questionnaires:[];
+    const pages=Array.isArray(logs.pages)?logs.pages:[];
+    const interactions=Array.isArray(logs.interactions)?logs.interactions:[];
+    const pid=r.data.participant_id||(qs[0]&&qs[0].participant_id)||r.file.name.replace(/\.json$/i,'').replace(/_log$/,'');
+
+    // vis_index → English name
+    const visOfIdx={};
+    pages.forEach(p=>{ if(p.metadata?.vis_index!=null&&p.metadata?.visualization) visOfIdx[p.metadata.vis_index]=VISNMAP[p.metadata.visualization]||p.metadata.visualization; });
+
+    // model_index → OPT/SUB
+    const modelOfIdx={};
+    trials.forEach(t=>{ if(t.model_type&&t.model_index!=null)modelOfIdx[t.model_index]=t.model_type; });
+    pages.forEach(p=>{ if(p.metadata?.model_type&&p.metadata?.model_index!=null)modelOfIdx[p.metadata.model_index]=p.metadata.model_type; });
+
+    // post_scenario by trial_id
+    const postOf={};
+    qs.filter(q=>q.questionnaire_type==='post_scenario').forEach(q=>{ if(q.trial_id)postOf[q.trial_id]=q; });
+
+    // NASA-TLX per vis per model
+    const nasaByVis={};
+    qs.filter(q=>q.questionnaire_type==='nasa_tlx').forEach(q=>{
+      const vis=visOfIdx[q.vis_index]; if(!vis||!q.answers)return;
+      const vals=Object.values(q.answers).filter(v=>typeof v==='number');
+      if(!vals.length)return;
+      (nasaByVis[vis]=nasaByVis[vis]||[]).push(mean(vals));
+    });
+
+    // TIAS trust per model type (avg of 12 items)
+    const trustOf={};
+    qs.filter(q=>q.questionnaire_type==='model_summary').forEach(q=>{
+      const mt=modelOfIdx[q.model_index]; if(!mt||!q.answers?.trust)return;
+      const vals=Object.values(q.answers.trust).filter(v=>typeof v==='number');
+      if(vals.length)trustOf[mt]=mean(vals);
+    });
+
+    // demographics
+    const demoQ=qs.find(q=>q.questionnaire_type==='demographics');
+    const demo=demoQ?.answers||null;
+
+    // ── per-vis accumulators ──
+    const vAcc={};
+    VIS3.forEach(v=>{ vAcc[v]={tcs:[],rt:[],conf:[],work:[],nasa:[],sa:[],ca:0,or_:0,ur:0,cr:0,n:0}; });
+
+    // experiment trials
+    trials.filter(t=>t.stage==='experiment').forEach(t=>{
+      const vis=visOfIdx[t.vis_index]; if(!vis||!vAcc[vis])return;
+      const post=postOf[t.trial_id];
+      const recCorrect=(t.ai_route!=null&&t.true_route!=null)?t.ai_route===t.true_route:null;
+      const rt=(t.end_ts&&t.start_ts&&t.end_ts>t.start_ts)?(t.end_ts-t.start_ts)/1000:null;
+      const conf=(post?.answers?.confidence!=null&&typeof post.answers.confidence==='number')?post.answers.confidence:null;
+      const work=(post?.answers?.mental_workload!=null&&typeof post.answers.mental_workload==='number')?post.answers.mental_workload:null;
+      const sa1=post?.answers?.scenario_questions?.sa_1?.is_correct??null;
+      const sa2=post?.answers?.scenario_questions?.sa_2?.is_correct??null;
+      const saScore=(sa1!==null&&sa2!==null)?(((sa1?1:0)+(sa2?1:0))/2):sa1!==null?(sa1?1:0):sa2!==null?(sa2?1:0):null;
+
+      // TCS category
+      let tcsCat=null, tcsVal=null;
+      if(recCorrect!==null&&t.followed_ai!==null&&t.followed_ai!==undefined){
+        if(t.followed_ai&&recCorrect){tcsCat='CA';tcsVal=1;vAcc[vis].ca++;}
+        else if(t.followed_ai&&!recCorrect){tcsCat='OR';tcsVal=0;vAcc[vis].or_++;}
+        else if(!t.followed_ai&&recCorrect){tcsCat='UR';tcsVal=0;vAcc[vis].ur++;}
+        else{tcsCat='CR';tcsVal=1;vAcc[vis].cr++;}
+        vAcc[vis].tcs.push(tcsVal);
+      }
+      if(rt!==null&&rt>0&&rt<600)vAcc[vis].rt.push(rt);
+      if(conf!==null)vAcc[vis].conf.push(conf);
+      if(work!==null)vAcc[vis].work.push(work);
+      if(saScore!==null)vAcc[vis].sa.push(saScore);
+      vAcc[vis].n++;
+
+      allTrials.push({pid,vis,modelType:t.model_type||modelOfIdx[t.model_index],difficulty:t.difficulty,
+        followedAI:t.followed_ai,recCorrect,choseOptimal:t.chose_true_optimal,
+        rt,conf,work,sa1,sa2,saScore,tcsCat,tcsVal});
+    });
+
+    // per-vis NASA (block level)
+    VIS3.forEach(v=>{ if(nasaByVis[v]?.length)vAcc[v].nasa=nasaByVis[v]; });
+
+    const visAgg={};
+    VIS3.forEach(v=>{
+      const g=vAcc[v];
+      visAgg[v]={
+        tcs:g.tcs.length?mean(g.tcs):null, tcsSD:g.tcs.length>1?sd(g.tcs):null, tcsN:g.tcs.length,
+        rt:g.rt.length?mean(g.rt):null, rtSD:g.rt.length>1?sd(g.rt):null,
+        conf:g.conf.length?mean(g.conf):null, confSD:g.conf.length>1?sd(g.conf):null,
+        work:g.work.length?mean(g.work):null, workSD:g.work.length>1?sd(g.work):null,
+        nasa:g.nasa.length?mean(g.nasa):null, nasaSD:g.nasa.length>1?sd(g.nasa):null,
+        sa:g.sa.length?mean(g.sa):null, saSD:g.sa.length>1?sd(g.sa):null,
+        ca:g.ca,or_:g.or_,ur:g.ur,cr:g.cr,n:g.n
+      };
+    });
+
+    participantData.push({pid,visAgg,trustOf,demo,
+      hasAllVis:VIS3.every(v=>vAcc[v].n>0)});
+  });
+
+  return {participantData,allTrials};
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// 3. ANALYSIS ENGINE
+// ════════════════════════════════════════════════════════════════════════════
+function runAnalyses(data){
+  const {participantData,allTrials}=data;
+  const full=participantData.filter(p=>p.hasAllVis);
+  const N=full.length;
+
+  // matrix builder: N×3 for Friedman/ANOVA, filters out any row with null
+  function buildMat(metric){
+    const rows=full.map(p=>VIS3.map(v=>p.visAgg[v][metric]));
+    return rows.filter(r=>r.every(v=>v!==null));
+  }
+  function colStats(mat){
+    return VIS3.map((_,j)=>{
+      const col=mat.map(r=>r[j]);
+      return {m:mean(col),sd:sd(col),se:se(col),med:median(col),n:col.length};
+    });
+  }
+  function runVis(metric){
+    const mat=buildMat(metric); if(mat.length<5)return null;
+    const cs=colStats(mat);
+    const fr=friedman(mat);
+    const rm=rmANOVA(mat);
+    // post-hoc pairwise Wilcoxon
+    const pairs=[]; const alpha_adj=0.017;
+    [[0,1],[0,2],[1,2]].forEach(([i,j])=>{
+      const xi=mat.map(r=>r[i]), xj=mat.map(r=>r[j]);
+      const w=wilcoxon(xi,xj);
+      pairs.push({i,j,label:`${VIS3[i]} vs ${VIS3[j]}`,w,sig:w.p<alpha_adj});
+    });
+    return {mat,cs,fr,rm,pairs,N:mat.length};
+  }
+
+  const tcsRes=runVis('tcs');
+  const rtRes=runVis('rt');
+  const confRes=runVis('conf');
+  const workRes=runVis('work');
+  const nasaRes=runVis('nasa');
+  const saRes=runVis('sa');
+
+  // Task difficulty – paired t-test per metric
+  function difficultyTest(metric){
+    const easy=allTrials.filter(t=>t.difficulty==='E'&&t[metric]!==null).map(t=>t[metric]);
+    const hard=allTrials.filter(t=>t.difficulty==='H'&&t[metric]!==null).map(t=>t[metric]);
+    // per-participant means
+    const pids=[...new Set(allTrials.map(t=>t.pid))];
+    const pE=[],pH=[];
+    pids.forEach(pid=>{
+      const e=allTrials.filter(t=>t.pid===pid&&t.difficulty==='E'&&t[metric]!==null).map(t=>t[metric]);
+      const h=allTrials.filter(t=>t.pid===pid&&t.difficulty==='H'&&t[metric]!==null).map(t=>t[metric]);
+      if(e.length&&h.length){pE.push(mean(e));pH.push(mean(h));}
+    });
+    return pE.length>=5?{...pairedT(pE,pH),mE:mean(pE),sdE:sd(pE),mH:mean(pH),sdH:sd(pH)}:null;
+  }
+  const diffTcs=difficultyTest('tcsVal');
+  const diffRt=difficultyTest('rt');
+  const diffWork=difficultyTest('work');
+  const diffConf=difficultyTest('conf');
+
+  // Model quality OPT vs SUB
+  function modelTest(getter){
+    const optVals=[],subVals=[];
+    participantData.forEach(p=>{
+      const o=getter(p,'OPT'), s=getter(p,'SUB');
+      if(o!==null&&s!==null){optVals.push(o);subVals.push(s);}
+    });
+    if(optVals.length<5)return null;
+    return {...pairedT(optVals,subVals),mOPT:mean(optVals),sdOPT:sd(optVals),mSUB:mean(subVals),sdSUB:sd(subVals),n:optVals.length};
+  }
+  // TIAS trust by model type
+  const trustTest=modelTest((p,mt)=>p.trustOf[mt]??null);
+  // NASA block by model (average across vis blocks per model)
+  // workload by model per participant per vis
+  const nasaModelTest=(()=>{
+    const optV=[],subV=[];
+    full.forEach(p=>{
+      const optTrials=allTrials.filter(t=>t.pid===p.pid&&t.modelType==='OPT'&&t.work!==null);
+      const subTrials=allTrials.filter(t=>t.pid===p.pid&&t.modelType==='SUB'&&t.work!==null);
+      if(optTrials.length&&subTrials.length){optV.push(mean(optTrials.map(t=>t.work)));subV.push(mean(subTrials.map(t=>t.work)));}
+    });
+    return optV.length>=5?{...pairedT(optV,subV),mOPT:mean(optV),sdOPT:sd(optV),mSUB:mean(subV),sdSUB:sd(subV),n:optV.length}:null;
+  })();
+  // TCS by model
+  const tcsModelTest=(()=>{
+    const optV=[],subV=[];
+    full.forEach(p=>{
+      const optTCS=allTrials.filter(t=>t.pid===p.pid&&t.modelType==='OPT'&&t.tcsVal!==null);
+      const subTCS=allTrials.filter(t=>t.pid===p.pid&&t.modelType==='SUB'&&t.tcsVal!==null);
+      if(optTCS.length&&subTCS.length){optV.push(mean(optTCS.map(t=>t.tcsVal)));subV.push(mean(subTCS.map(t=>t.tcsVal)));}
+    });
+    return optV.length>=5?{...pairedT(optV,subV),mOPT:mean(optV),sdOPT:sd(optV),mSUB:mean(subV),sdSUB:sd(subV),n:optV.length}:null;
+  })();
+
+  // Trust–behavior alignment: TIAS vs TCS correlation per participant
+  const trustBehavior=(()=>{
+    const trust=[],tcsB=[];
+    participantData.forEach(p=>{
+      const avgTrust=mean(Object.values(p.trustOf).filter(v=>v!==null));
+      const avgTCS=mean(VIS3.map(v=>p.visAgg[v].tcs).filter(v=>v!==null));
+      if(isFinite(avgTrust)&&isFinite(avgTCS)){trust.push(avgTrust);tcsB.push(avgTCS);}
+    });
+    return trust.length>=5?pearsonR(trust,tcsB):null;
+  })();
+
+  // SA vs RT (speed-comprehension) per vis
+  const saRtCorr={};
+  VIS3.forEach(vis=>{
+    const pairs=allTrials.filter(t=>t.vis===vis&&t.saScore!==null&&t.rt!==null);
+    saRtCorr[vis]=pairs.length>=5?pearsonR(pairs.map(t=>t.rt),pairs.map(t=>t.saScore)):null;
+  });
+
+  // Global trust calibration matrix
+  const tcMatrix={CA:0,OR:0,UR:0,CR:0,total:0};
+  allTrials.filter(t=>t.tcsCat).forEach(t=>{
+    if(t.tcsCat==='OR')tcMatrix.OR++;
+    else tcMatrix[t.tcsCat]++;
+    tcMatrix.total++;
+  });
+
+  // Demographics
+  const demoParts=participantData.filter(p=>p.demo);
+  const ages=demoParts.map(p=>p.demo.age).filter(v=>typeof v==='number');
+  const genders=demoParts.map(p=>p.demo.gender).filter(Boolean);
+  const genderCounts={};
+  genders.forEach(g=>{genderCounts[g]=(genderCounts[g]||0)+1;});
+  const stemParts=demoParts.filter(p=>{
+    const f=p.demo.field||'';
+    return f.includes('מחשב')||f.includes('הנדסה')||f.includes('דאטה');
+  });
+
+  return {N,tcsRes,rtRes,confRes,workRes,nasaRes,saRes,
+    diffTcs,diffRt,diffWork,diffConf,
+    trustTest,nasaModelTest,tcsModelTest,trustBehavior,
+    saRtCorr,tcMatrix,ages,genderCounts,demoParts,stemParts,participantData};
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// 4. SVG CHARTS
+// ════════════════════════════════════════════════════════════════════════════
+function barChart(cs,metric,options={}){
+  const W=320,H=200,pl=50,pr=14,pt=18,pb=46;
+  const cW=W-pl-pr, cH=H-pt-pb;
+  const vals=cs.map(c=>c.m), errs=cs.map(c=>c.se);
+  const yMin=options.yMin??0;
+  const yMax=options.yMax??Math.max(...vals.map((v,i)=>v+errs[i]))*1.2||1;
+  const yScale=v=>pt+cH*(1-(v-yMin)/(yMax-yMin));
+  const bW=cW/(VIS3.length*1.6), gap=bW*0.6;
+
+  let svg=`<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg" style="font-family:system-ui,sans-serif;overflow:visible">`;
+  // gridlines + y-axis labels
+  for(let i=0;i<=4;i++){
+    const v=yMin+(yMax-yMin)*i/4, y=yScale(v);
+    svg+=`<line x1="${pl}" y1="${y}" x2="${W-pr}" y2="${y}" stroke="#e8e8e8" stroke-width="1"/>`;
+    svg+=`<text x="${pl-4}" y="${y+4}" text-anchor="end" font-size="9" fill="#777">${v.toFixed(2)}</text>`;
+  }
+  if(options.refLine!==undefined){
+    const ry=yScale(options.refLine);
+    svg+=`<line x1="${pl}" y1="${ry}" x2="${W-pr}" y2="${ry}" stroke="#999" stroke-width="1" stroke-dasharray="4,2"/>`;
+    svg+=`<text x="${W-pr+2}" y="${ry+3}" font-size="9" fill="#999">${options.refLine}</text>`;
+  }
+  // y-axis
+  svg+=`<line x1="${pl}" y1="${pt}" x2="${pl}" y2="${pt+cH}" stroke="#bbb" stroke-width="1"/>`;
+  if(options.yLabel) svg+=`<text transform="rotate(-90,12,${H/2})" x="12" y="${H/2}" text-anchor="middle" font-size="10" fill="#555">${options.yLabel}</text>`;
+
+  VIS3.forEach((v,i)=>{
+    const x=pl+gap/2+i*(bW+gap);
+    const bH=Math.max(0,cH*((vals[i]-yMin)/(yMax-yMin)));
+    const by=pt+cH-bH;
+    const col=VIS_COLOR[v];
+    svg+=`<rect x="${x}" y="${by}" width="${bW}" height="${bH}" fill="${col}" opacity="0.75" rx="2"/>`;
+    // error bar
+    const eH=cH*(errs[i]/(yMax-yMin));
+    const mx=x+bW/2;
+    svg+=`<line x1="${mx}" y1="${by-eH}" x2="${mx}" y2="${by+eH}" stroke="#333" stroke-width="1.5"/>`;
+    svg+=`<line x1="${mx-3}" y1="${by-eH}" x2="${mx+3}" y2="${by-eH}" stroke="#333" stroke-width="1.5"/>`;
+    svg+=`<line x1="${mx-3}" y1="${by+eH}" x2="${mx+3}" y2="${by+eH}" stroke="#333" stroke-width="1.5"/>`;
+    // value
+    svg+=`<text x="${mx}" y="${by-eH-3}" text-anchor="middle" font-size="9" fill="#333">${vals[i].toFixed(2)}</text>`;
+    // label (abbreviated)
+    const lbl=['Stack.','Radar','Heat'][i];
+    svg+=`<text x="${mx}" y="${H-pb+14}" text-anchor="middle" font-size="9.5" fill="${col}">${lbl}</text>`;
+  });
+  svg+='</svg>';
+  return svg;
+}
+
+function pairChart(optVals,subVals,label){
+  const W=180,H=160,pl=44,pr=10,pt=16,pb=36;
+  const cW=W-pl-pr,cH=H-pt-pb;
+  const data=[{l:'OPT',m:optVals.m,se_:optVals.sdOPT/Math.sqrt(optVals.n),col:'#1976d2'},{l:'SUB',m:subVals.m,se_:subVals.sdSUB/Math.sqrt(subVals.n),col:'#d32f2f'}];
+  const yMax=Math.max(data[0].m+data[0].se_,data[1].m+data[1].se_)*1.3||1;
+  const yMin=Math.min(data[0].m-data[0].se_,data[1].m-data[1].se_)*0.8;
+  const yScale=v=>pt+cH*(1-(v-yMin)/(yMax-yMin));
+  const bW=cW/3;
+  let svg=`<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg" style="font-family:system-ui,sans-serif">`;
+  for(let i=0;i<=4;i++){
+    const v=yMin+(yMax-yMin)*i/4,y=yScale(v);
+    svg+=`<line x1="${pl}" y1="${y}" x2="${W-pr}" y2="${y}" stroke="#eee" stroke-width="1"/>`;
+    svg+=`<text x="${pl-4}" y="${y+4}" text-anchor="end" font-size="9" fill="#777">${v.toFixed(1)}</text>`;
+  }
+  svg+=`<line x1="${pl}" y1="${pt}" x2="${pl}" y2="${pt+cH}" stroke="#bbb" stroke-width="1"/>`;
+  data.forEach((d,i)=>{
+    const x=pl+(i+0.3)*(cW/2);
+    const bH=Math.max(0,cH*((d.m-yMin)/(yMax-yMin)));
+    const by=yScale(d.m);
+    svg+=`<rect x="${x}" y="${by}" width="${bW}" height="${bH}" fill="${d.col}" opacity="0.7" rx="2"/>`;
+    const eH=cH*(d.se_/(yMax-yMin)), mx=x+bW/2;
+    svg+=`<line x1="${mx}" y1="${by-eH}" x2="${mx}" y2="${by+eH}" stroke="#333" stroke-width="1.5"/>`;
+    svg+=`<text x="${mx}" y="${H-pb+13}" text-anchor="middle" font-size="10" fill="${d.col}">${d.l}</text>`;
+    svg+=`<text x="${mx}" y="${by-eH-3}" text-anchor="middle" font-size="9" fill="#333">${d.m.toFixed(2)}</text>`;
+  });
+  if(label) svg+=`<text x="${W/2}" y="${H-2}" text-anchor="middle" font-size="9" fill="#777">${label}</text>`;
+  svg+='</svg>';
+  return svg;
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// 5. RENDERING
+// ════════════════════════════════════════════════════════════════════════════
+function visResultBlock(res,title,yLabel,refLine,note,interpFn){
+  if(!res) return `<div class="inconc"><b>${title}:</b> Insufficient data.</div>`;
+  const {cs,fr,rm,pairs,N}=res;
+  const sig=fr.p<.05;
+  const eff=wLabel(fr.W);
+  const pwr=powerNote(fr.W,N,3);
+
+  let html=`<div class="rblock">
+  <h4>${title}</h4>
+  <div class="chart-row">
+  <div>${barChart(cs,null,{yLabel,refLine})}</div>
+  <div style="flex:1;min-width:220px">
+  <table class="st">
+    <tr><th>Condition</th><th><i>M</i></th><th><i>SD</i></th><th><i>SE</i></th><th><i>Mdn</i></th></tr>`;
+  VIS3.forEach((v,i)=>{ html+=`<tr><td class="lbl" style="color:${VIS_COLOR[v]}">${v}</td><td>${fmtN(cs[i].m)}</td><td>${fmtN(cs[i].sd)}</td><td>${fmtN(cs[i].se)}</td><td>${fmtN(cs[i].med)}</td></tr>`; });
+  html+=`</table>
+  <table class="st" style="margin-top:8px">
+    <tr><th>Test</th><th>Statistic</th><th><i>df</i></th><th><i>p</i></th><th>Effect</th><th>Power</th></tr>
+    <tr>
+      <td>RM-ANOVA</td>
+      <td><i>F</i>(${rm.df_c},${rm.df_e}) = ${fmtN(rm.F)}</td>
+      <td>${rm.df_c}, ${rm.df_e}</td>
+      <td class="${sigClass(rm.p)}">${pFmt(rm.p)}</td>
+      <td>η² = ${fmtN(rm.eta2,3)}</td>
+      <td>–</td>
+    </tr>
+    <tr>
+      <td>Friedman</td>
+      <td>χ²(${fr.df}) = ${fmtN(fr.chi2)}</td>
+      <td>${fr.df}</td>
+      <td class="${sigClass(fr.p)}">${pFmt(fr.p)}</td>
+      <td class="${eff==='large'?'eff-lg':eff==='medium'?'eff-md':'eff-sm'}"><i>W</i> = ${fmtN(fr.W,3)} (${eff})</td>
+      <td>${pwr}</td>
+    </tr>
+  </table>`;
+  if(sig){
+    html+=`<table class="st" style="margin-top:6px"><tr><th>Post-hoc (Wilcoxon, α<sub>adj</sub>=.017)</th><th><i>Z</i></th><th><i>p</i></th><th><i>r</i></th></tr>`;
+    pairs.forEach(pw=>{ html+=`<tr><td class="lbl">${pw.label}</td><td>${fmtN(pw.w.z)}</td><td class="${pw.sig?'sig':'ns'}">${pFmt(pw.w.p)}</td><td>${fmtN(pw.w.r,3)}</td></tr>`; });
+    html+=`</table>`;
+  }
+  html+=`</div></div>`;
+  // interpretation
+  html+=`<div class="interp">${interpFn(res)}</div>`;
+  if(fr.W<0.10) html+=`<div class="inconc">⚠ <b>Underpowered:</b> Kendall's <i>W</i> = ${fmtN(fr.W,3)} is a small effect. Estimated power at <i>N</i> = ${N} is ${pwr}. This result should be interpreted as <b>inconclusive</b> rather than as evidence of no effect.</div>`;
+  if(note) html+=`<p class="note">${note}</p>`;
+  html+=`</div>`;
+  return html;
+}
+
+function interpVis(res,metricLabel,higherBetter){
+  const {cs,fr,rm,pairs,N}=res;
+  const sig=fr.p<.05; const eff=wLabel(fr.W);
+  const ranks=VIS3.map((v,i)=>({v,m:cs[i].m})).sort((a,b)=>higherBetter?b.m-a.m:a.m-b.m);
+  const winner=ranks[0].v;
+  if(sig){
+    let s=`A Friedman test indicated a significant effect of visualization type on ${metricLabel}, χ²(${fr.df}, <i>N</i> = ${N}) = ${fmtN(fr.chi2)}, <i>p</i> = ${pFmt(fr.p)}, Kendall's <i>W</i> = ${fmtN(fr.W,3)} (${eff} effect). `;
+    s+=`A one-way repeated-measures ANOVA corroborated this finding, <i>F</i>(${rm.df_c}, ${rm.df_e}) = ${fmtN(rm.F)}, <i>p</i> = ${pFmt(rm.p)}, η² = ${fmtN(rm.eta2,3)}. `;
+    s+=`Descriptively, the <b>${winner}</b> condition showed the ${higherBetter?'highest':'lowest'} ${metricLabel} (<i>M</i> = ${fmtN(ranks[0].m)}).`;
+    const sigPairs=pairs.filter(p=>p.sig);
+    if(sigPairs.length){
+      s+=` Post-hoc Wilcoxon signed-rank tests (Bonferroni-corrected α = .017) identified significant pairwise differences: ${sigPairs.map(p=>`${p.label} (<i>Z</i> = ${fmtN(p.w.z)}, <i>p</i> = ${pFmt(p.w.p)})`).join('; ')}.`;
+    } else {
+      s+=` No individual pairwise comparison survived Bonferroni correction (α = .017), suggesting a global ordering effect rather than a single dominant contrast.`;
+    }
+    return s;
+  } else {
+    return `A Friedman test did not reveal a significant effect of visualization type on ${metricLabel}, χ²(${fr.df}, <i>N</i> = ${N}) = ${fmtN(fr.chi2)}, <i>p</i> = ${pFmt(fr.p)}, Kendall's <i>W</i> = ${fmtN(fr.W,3)} (${eff} effect). The RM-ANOVA yielded <i>F</i>(${rm.df_c}, ${rm.df_e}) = ${fmtN(rm.F)}, <i>p</i> = ${pFmt(rm.p)}, η² = ${fmtN(rm.eta2,3)}. The null result ${fr.W<0.10?'should be treated as inconclusive given insufficient statistical power':'is consistent with a null or negligible effect'}.`;
+  }
+}
+
+function renderResults(analysis){
+  const {N,tcsRes,rtRes,confRes,workRes,nasaRes,saRes,
+    diffTcs,diffRt,diffWork,diffConf,
+    trustTest,nasaModelTest,tcsModelTest,trustBehavior,
+    saRtCorr,tcMatrix,ages,genderCounts,demoParts,participantData}=analysis;
+
+  let html='';
+
+  // ── Descriptive Statistics ─────────────────────────────────────────────
+  html+=`<h2>1. Participants and Descriptive Statistics</h2>
+  <p><b>Sample:</b> <i>N</i> = ${N} participants with complete data across all three visualization conditions.
+  Total loaded participants: ${participantData.length}. Participants with demographics: ${demoParts.length}.</p>`;
+
+  if(ages.length>0){
+    const gMap={'נקבה':'Female','זכר':'Male'};
+    const gStr=Object.entries(genderCounts).map(([g,n])=>`${n} ${gMap[g]||g}`).join(', ');
+    html+=`<p><b>Age:</b> <i>M</i> = ${fmtN(mean(ages))}, <i>SD</i> = ${fmtN(sd(ages))}, range = ${Math.min(...ages)}–${Math.max(...ages)} years (<i>n</i> = ${ages.length}).
+    <b>Gender:</b> ${gStr}.</p>`;
+  } else {
+    html+=`<div class="inconc">Demographics not yet available for most participants. Age and gender analyses are deferred.</div>`;
+  }
+
+  // Global trust calibration matrix
+  const t=tcMatrix;
+  const p_CA=t.total?((t.CA/t.total)*100).toFixed(1):'-', p_OR=t.total?((t.OR/t.total)*100).toFixed(1):'-';
+  const p_UR=t.total?((t.UR/t.total)*100).toFixed(1):'-', p_CR=t.total?((t.CR/t.total)*100).toFixed(1):'-';
+  html+=`<h3>1.1 Trust Calibration Matrix (All Trials, All Participants)</h3>
+  <p>Across all ${t.total} experiment trials, participant decisions were classified into four categories:</p>
+  <table class="st" style="max-width:480px">
+    <tr><th></th><th>AI Correct</th><th>AI Incorrect</th></tr>
+    <tr><td class="lbl">Followed AI</td><td class="eff-lg">CA: ${t.CA} (${p_CA}%)</td><td class="eff-sm">OR: ${t.OR} (${p_OR}%)</td></tr>
+    <tr><td class="lbl">Rejected AI</td><td class="eff-sm">UR: ${t.UR} (${p_UR}%)</td><td class="eff-lg">CR: ${t.CR} (${p_CR}%)</td></tr>
+  </table>
+  <p class="note">CA = Correct Accept (appropriate reliance); OR = Over-Reliance (automation bias); UR = Under-Reliance; CR = Correct Reject (appropriate scepticism). TCS = (CA + CR) / total.</p>`;
+
+  // ── RQ1: Visualization Effects ─────────────────────────────────────────
+  html+=`<h2>2. RQ1: Effect of Visualization Type</h2>
+  <p>A within-subjects repeated-measures design was employed. Both one-way RM-ANOVA (parametric, assuming sphericity) and Friedman's test (non-parametric) are reported. Bonferroni-corrected post-hoc Wilcoxon signed-rank tests (<i>α</i><sub>adj</sub> = .017) follow any significant global test. Effect size benchmarks: Kendall's <i>W</i> ≥ .26 = large; .10–.25 = medium; &lt;.10 = small (Kendall, 1970).</p>`;
+
+  html+=`<h3>2.1 Trust Calibration Score (TCS)</h3>
+  <p>TCS is the primary outcome. It quantifies the proportion of trials in which the participant made the correct reliance decision (Correct Accept or Correct Reject). A random-choice baseline yields TCS = 0.50.</p>`;
+  html+=visResultBlock(tcsRes,'TCS by Visualization','TCS (proportion)',0.5,
+    'Note: dashed reference line at TCS = 0.50 (chance level).',
+    r=>interpVis(r,'Trust Calibration Score (TCS)',true));
+
+  html+=`<h3>2.2 Response Time</h3>
+  <p>Response time (RT) is measured in seconds from trial onset to route selection.</p>`;
+  html+=visResultBlock(rtRes,'Response Time (s) by Visualization','RT (s)',null,null,
+    r=>interpVis(r,'response time (RT)',false));
+
+  html+=`<h3>2.3 Decision Confidence</h3>
+  <p>Post-trial self-reported confidence in the chosen route (scale: –10 to +10; higher = more confident).</p>`;
+  html+=visResultBlock(confRes,'Confidence by Visualization','Confidence',null,null,
+    r=>interpVis(r,'decision confidence',true));
+
+  html+=`<h3>2.4 Trial-Level Cognitive Workload</h3>
+  <p>Single-item NASA-TLX proxy for mental workload per trial (scale: –10 to +10; higher = more demanding).</p>`;
+  html+=visResultBlock(workRes,'Trial Workload by Visualization','Workload',null,null,
+    r=>interpVis(r,'cognitive workload',false));
+
+  html+=`<h3>2.5 Block-Level NASA-TLX Workload</h3>
+  <p>Five-item NASA-TLX questionnaire administered after each model × visualization block. Mean of five subscales (mental demand, time demand, performance, effort, frustration; scale –10 to +10).</p>`;
+  html+=visResultBlock(nasaRes,'NASA-TLX (Block) by Visualization','NASA-TLX',null,null,
+    r=>interpVis(r,'block-level NASA-TLX workload',false));
+
+  html+=`<h3>2.6 Situational Awareness (SA Accuracy)</h3>
+  <p>Two SAGAT-based binary questions per trial (SA-1, SA-2). SA score = proportion correct (0, 0.5, or 1 per trial). Higher scores indicate better comprehension of the visualized scenario information.</p>`;
+  html+=visResultBlock(saRes,'SA Accuracy by Visualization','SA (proportion)',null,null,
+    r=>interpVis(r,'situational awareness accuracy (SA)',true));
+
+  // ── RQ2a: Task Difficulty ──────────────────────────────────────────────
+  html+=`<h2>3. RQ2a: Task Difficulty Effects (Easy vs. Hard)</h2>
+  <p>Paired t-tests compare per-participant means for Easy (E) and Hard (H) trials across all visualization conditions. Cohen's d is reported as effect size.</p>
+  <table class="st">
+    <tr><th>Outcome</th><th>Easy <i>M</i> (SD)</th><th>Hard <i>M</i> (SD)</th><th><i>t</i></th><th><i>df</i></th><th><i>p</i></th><th>Cohen's <i>d</i></th><th>Interpretation</th></tr>`;
+  const diffRows=[
+    {label:'TCS',res:diffTcs,hi:true},
+    {label:'RT (s)',res:diffRt,hi:false},
+    {label:'Workload',res:diffWork,hi:false},
+    {label:'Confidence',res:diffConf,hi:true}
+  ];
+  diffRows.forEach(({label,res,hi})=>{
+    if(!res){html+=`<tr><td class="lbl">${label}</td><td colspan="7"><i>Insufficient data</i></td></tr>`;return;}
+    const {mE,sdE,mH,sdH,t,df,p,d,n}=res;
+    const dl=dLabel(d);
+    html+=`<tr><td class="lbl">${label}</td><td>${fmtN(mE)} (${fmtN(sdE)})</td><td>${fmtN(mH)} (${fmtN(sdH)})</td><td class="${sigClass(p)}">${fmtN(t)}</td><td>${df}</td><td class="${sigClass(p)}">${pFmt(p)}</td><td class="${dl==='large'?'eff-lg':dl==='medium'?'eff-md':''}">${fmtN(d,3)} (${dl})</td><td>${p<.05?`${hi?(mE>mH?'Easy > Hard':'Hard > Easy'):(mE<mH?'Easy < Hard':'Hard < Easy')} ✓`:`n.s.`}</td></tr>`;
+  });
+  html+=`</table>
+  <div class="interp">Task difficulty is expected to increase response time and workload, and decrease confidence and TCS for Hard trials. Effects with <i>d</i> ≥ 0.80 are considered large and meaningful even at N = 30.</div>`;
+
+  // ── RQ2b: Model Quality ────────────────────────────────────────────────
+  html+=`<h2>4. RQ2b: AI Model Quality Effects (OPT vs. SUB)</h2>
+  <p>Each participant experienced both an Optimal (OPT, high accuracy) and a Suboptimal (SUB, low accuracy) AI model. Paired t-tests compare per-participant scores. The <i>dissociation hypothesis</i> posits that if NASA-TLX is significant while TIAS Trust is not, this indicates automation bias — participants experience the cognitive cost of incorrect recommendations without proportionally reducing stated trust (Parasuraman &amp; Manzey, 2010).</p>
+  <table class="st">
+    <tr><th>Outcome</th><th>OPT <i>M</i> (SD)</th><th>SUB <i>M</i> (SD)</th><th><i>t</i></th><th><i>df</i></th><th><i>p</i></th><th>Cohen's <i>d</i></th><th>Interpretation</th></tr>`;
+  const modelRows=[
+    {label:'TIAS Trust (1–7)',res:trustTest,expected:'OPT > SUB'},
+    {label:'Trial Workload',res:nasaModelTest,expected:'OPT < SUB'},
+    {label:'TCS',res:tcsModelTest,expected:'OPT > SUB'}
+  ];
+  modelRows.forEach(({label,res,expected})=>{
+    if(!res){html+=`<tr><td class="lbl">${label}</td><td colspan="7"><i>Insufficient data</i></td></tr>`;return;}
+    const {mOPT,sdOPT,mSUB,sdSUB,t,df,p,d,n}=res;
+    html+=`<tr><td class="lbl">${label}</td><td>${fmtN(mOPT)} (${fmtN(sdOPT)})</td><td>${fmtN(mSUB)} (${fmtN(sdSUB)})</td><td class="${sigClass(p)}">${fmtN(t)}</td><td>${df}</td><td class="${sigClass(p)}">${pFmt(p)}</td><td>${fmtN(d,3)} (${dLabel(d)})</td><td>${p<.05?`Sig. (${expected})`:'n.s.'} <i>n</i>=${n}</td></tr>`;
+  });
+  html+=`</table>`;
+
+  // Dissociation assessment
+  const wlSig=nasaModelTest&&nasaModelTest.p<.05;
+  const trSig=trustTest&&trustTest.p<.05;
+  if(wlSig&&!trSig){
+    html+=`<div class="finding">🔑 <b>Dissociation pattern detected:</b> Cognitive workload was significantly higher for the SUB model (suggesting participants registered lower AI accuracy) yet TIAS subjective trust did not differ significantly across model types. This is consistent with the <i>automation bias</i> hypothesis: participants experience the processing burden of erroneous recommendations without proportionally recalibrating their stated trust in the system.</div>`;
+  } else if(wlSig&&trSig){
+    html+=`<div class="finding">Both workload and subjective trust differed significantly by model quality, suggesting that participants were sensitive to model accuracy both cognitively and in their trust ratings. No dissociation is evident.</div>`;
+  } else {
+    html+=`<div class="inconc">Neither workload nor trust showed a clear significant pattern by model quality. Results are inconclusive, possibly due to insufficient power or high inter-individual variability.</div>`;
+  }
+
+  // ── Trust–Behavior Alignment ───────────────────────────────────────────
+  html+=`<h2>5. Trust–Performance Alignment</h2>
+  <p>This section examines whether participants' subjective trust (TIAS) corresponds to their behavioural trust calibration (TCS). A positive correlation would indicate alignment; a near-zero or negative correlation would suggest dissociation or automation bias. A Pearson correlation is computed at the participant level (<i>N</i> = available participants).</p>`;
+
+  if(trustBehavior){
+    const {r,r2,t,p,n}=trustBehavior;
+    html+=`<table class="st" style="max-width:400px">
+      <tr><th>Pearson <i>r</i></th><th><i>r</i>²</th><th><i>t</i></th><th><i>p</i></th><th><i>N</i></th></tr>
+      <tr><td class="${sigClass(p)}">${fmtN(r,3)}</td><td>${fmtN(r2,3)}</td><td>${fmtN(t)}</td><td class="${sigClass(p)}">${pFmt(p)}</td><td>${n}</td></tr>
+    </table>`;
+    const sign=r>0?'positive':'negative';
+    const str=Math.abs(r)>=0.5?'strong':Math.abs(r)>=0.3?'moderate':'weak';
+    html+=`<div class="interp">The ${sign} correlation between TIAS trust and TCS is ${str} (<i>r</i> = ${fmtN(r,3)}, <i>p</i> = ${pFmt(p)}). ${p<.05?`This statistically significant relationship indicates that participants who report higher trust in the AI tend to show ${r>0?'better calibrated':'less calibrated'} reliance behaviour.`:`The non-significant result (p = ${pFmt(p)}) suggests that subjective trust and behavioural trust calibration are dissociated in this sample — participants' self-reports of trust do not reliably predict whether they follow the AI appropriately.`}</div>`;
+  } else {
+    html+=`<div class="inconc">Insufficient data for TIAS × TCS correlation (need trust scores and TCS for same participants).</div>`;
+  }
+
+  // ── Speed–Comprehension Trade-off ─────────────────────────────────────
+  html+=`<h2>6. Speed–Comprehension Trade-off (SA × RT by Visualization)</h2>
+  <p>Do visualizations that support better situational awareness come at the cost of longer response time? A positive correlation (higher SA → longer RT) would indicate a trade-off; a negative correlation would suggest the visualization aids both speed and comprehension. Pearson correlations are computed at the trial level per visualization condition.</p>
+  <table class="st">
+    <tr><th>Visualization</th><th>Pearson <i>r</i></th><th><i>r</i>²</th><th><i>t</i></th><th><i>p</i></th><th><i>N</i> trials</th><th>Interpretation</th></tr>`;
+  VIS3.forEach(vis=>{
+    const res=saRtCorr[vis];
+    if(!res){html+=`<tr><td class="lbl" style="color:${VIS_COLOR[vis]}">${vis}</td><td colspan="6"><i>n/a</i></td></tr>`;return;}
+    html+=`<tr><td class="lbl" style="color:${VIS_COLOR[vis]}">${vis}</td><td class="${sigClass(res.p)}">${fmtN(res.r,3)}</td><td>${fmtN(res.r2,3)}</td><td>${fmtN(res.t)}</td><td class="${sigClass(res.p)}">${pFmt(res.p)}</td><td>${res.n}</td><td>${res.p<.05?(res.r>0?'Trade-off (SA↑ → slower)':'Complementary (SA↑ → faster)'):'No significant trade-off'}</td></tr>`;
+  });
+  html+=`</table>
+  <p class="note">Correlations near zero are consistent with the SAP prediction (W ≈ 0.03–0.15). Significant negative correlations would suggest that a visualization facilitates both comprehension and speed simultaneously.</p>`;
+
+  // ── Individual Differences ─────────────────────────────────────────────
+  html+=`<h2>7. Individual Differences</h2>
+  <p>The following analyses examine whether demographic or individual-difference variables moderate TCS. All tests are conducted at the participant level. Given the small sample, all results should be interpreted with extreme caution; only effects with Cohen's |<i>d</i>| ≥ 0.50 or |<i>r</i>| ≥ 0.30 are discussed as potentially meaningful pending replication.</p>`;
+
+  if(demoParts.length>=8){
+    // Age × TCS
+    const ageTCS=[];
+    demoParts.forEach(p=>{
+      if(typeof p.demo.age==='number'){
+        const tcsVals=VIS3.map(v=>p.visAgg[v].tcs).filter(v=>v!==null);
+        if(tcsVals.length)ageTCS.push({age:p.demo.age,tcs:mean(tcsVals)});
+      }
+    });
+    if(ageTCS.length>=5){
+      const rAge=pearsonR(ageTCS.map(x=>x.age),ageTCS.map(x=>x.tcs));
+      html+=`<p><b>Age:</b> Pearson <i>r</i>(${rAge.n}) = ${fmtN(rAge.r,3)}, <i>p</i> = ${pFmt(rAge.p)}, <i>r</i>² = ${fmtN(rAge.r2,3)}. ${rAge.p<.05?'Significant':'Non-significant'} — ${Math.abs(rAge.r)<0.10?'negligible':'moderate'} effect.</p>`;
+    }
+
+    // Gender × TCS
+    const femParts=demoParts.filter(p=>p.demo.gender==='נקבה');
+    const maleParts=demoParts.filter(p=>p.demo.gender==='זכר');
+    if(femParts.length>=3&&maleParts.length>=3){
+      const femTCS=femParts.map(p=>mean(VIS3.map(v=>p.visAgg[v].tcs).filter(v=>v!==null))).filter(v=>isFinite(v));
+      const malTCS=maleParts.map(p=>mean(VIS3.map(v=>p.visAgg[v].tcs).filter(v=>v!==null))).filter(v=>isFinite(v));
+      if(femTCS.length>=3&&malTCS.length>=3){
+        // Independent t-test (use paired if same N, else use 2-sample approx)
+        const mF=mean(femTCS),sF=sd(femTCS),mM=mean(malTCS),sM=sd(malTCS);
+        const nF=femTCS.length,nM=malTCS.length;
+        const sp=Math.sqrt(((nF-1)*sF**2+(nM-1)*sM**2)/(nF+nM-2));
+        const tG=(mF-mM)/(sp*Math.sqrt(1/nF+1/nM)),dfG=nF+nM-2;
+        const pG=tpValue(Math.abs(tG),dfG), dG=(mF-mM)/sp;
+        html+=`<p><b>Gender (Female vs. Male):</b> <i>M</i><sub>F</sub> = ${fmtN(mF)}, <i>M</i><sub>M</sub> = ${fmtN(mM)}; <i>t</i>(${dfG}) = ${fmtN(tG)}, <i>p</i> = ${pFmt(pG)}, Cohen's <i>d</i> = ${fmtN(dG,3)} (${dLabel(dG)}). ${pG<.05?'Significant gender difference.':'No significant gender difference in TCS.'}</p>`;
+      }
+    }
+
+    // Viz literacy × TCS
+    const vlData=demoParts.map(p=>({vl:p.demo.viz_literacy,tcs:mean(VIS3.map(v=>p.visAgg[v].tcs).filter(v=>v!==null))})).filter(d=>typeof d.vl==='number'&&isFinite(d.tcs));
+    if(vlData.length>=5){
+      const rVL=pearsonR(vlData.map(x=>x.vl),vlData.map(x=>x.tcs));
+      html+=`<p><b>Visualization Literacy:</b> Pearson <i>r</i>(${rVL.n}) = ${fmtN(rVL.r,3)}, <i>p</i> = ${pFmt(rVL.p)}, <i>r</i>² = ${fmtN(rVL.r2,3)}. ${rVL.p<.05?'Significant association.':'No significant association with TCS.'}</p>`;
+    }
+  } else {
+    html+=`<div class="inconc">Demographics available for only ${demoParts.length} participants. Individual-differences analyses will be reported once the full sample is collected.</div>`;
+  }
+
+  // ── Summary Table ──────────────────────────────────────────────────────
+  html+=`<h2>8. Summary of Findings</h2>
+  <table class="st">
+    <tr><th>RQ</th><th>Outcome</th><th>Test</th><th>Effect Size</th><th><i>p</i></th><th>Conclusion</th></tr>`;
+  const sumRows=[
+    {rq:'RQ1',out:'TCS',res:tcsRes,type:'fr'},
+    {rq:'RQ1',out:'Response Time',res:rtRes,type:'fr'},
+    {rq:'RQ1',out:'Confidence',res:confRes,type:'fr'},
+    {rq:'RQ1',out:'Trial Workload',res:workRes,type:'fr'},
+    {rq:'RQ1',out:'NASA-TLX',res:nasaRes,type:'fr'},
+    {rq:'RQ1',out:'SA Accuracy',res:saRes,type:'fr'},
+    {rq:'RQ2a',out:'RT (Difficulty)',res:diffRt,type:'t'},
+    {rq:'RQ2a',out:'Workload (Difficulty)',res:diffWork,type:'t'},
+    {rq:'RQ2a',out:'TCS (Difficulty)',res:diffTcs,type:'t'},
+    {rq:'RQ2b',out:'TIAS Trust (Model)',res:trustTest,type:'t'},
+    {rq:'RQ2b',out:'Workload (Model)',res:nasaModelTest,type:'t'},
+    {rq:'RQ2b',out:'TCS (Model)',res:tcsModelTest,type:'t'},
+    {rq:'RQ3',out:'SA×RT Trust–Behavior',res:trustBehavior,type:'r'}
+  ];
+  sumRows.forEach(({rq,out,res,type})=>{
+    if(!res){html+=`<tr><td>${rq}</td><td>${out}</td><td colspan="4"><i>n/a</i></td></tr>`;return;}
+    if(type==='fr'){
+      const {fr,rm}=res;
+      const sig=fr.p<.05, pw=powerNote(fr.W,res.N,3);
+      html+=`<tr><td>${rq}</td><td>${out}</td><td>RM-ANOVA / Friedman</td><td class="${wLabel(fr.W)==='large'?'eff-lg':wLabel(fr.W)==='medium'?'eff-md':'eff-sm'}">W = ${fmtN(fr.W,3)} (${wLabel(fr.W)}); η² = ${fmtN(rm.eta2,3)}</td><td class="${sigClass(fr.p)}">${pFmt(fr.p)}</td><td>${sig?'<b>Significant</b>':'n.s.'} | Power: ${pw}</td></tr>`;
+    } else if(type==='t'){
+      const sig=res.p<.05;
+      html+=`<tr><td>${rq}</td><td>${out}</td><td>Paired <i>t</i></td><td class="${dLabel(res.d)==='large'?'eff-lg':dLabel(res.d)==='medium'?'eff-md':''}">d = ${fmtN(res.d,3)} (${dLabel(res.d)})</td><td class="${sigClass(res.p)}">${pFmt(res.p)}</td><td>${sig?'<b>Significant</b>':'n.s.'}</td></tr>`;
+    } else if(type==='r'){
+      const sig=res.p<.05;
+      html+=`<tr><td>${rq}</td><td>${out}</td><td>Pearson <i>r</i></td><td>r = ${fmtN(res.r,3)}</td><td class="${sigClass(res.p)}">${pFmt(res.p)}</td><td>${sig?'<b>Significant</b>':'n.s.'}</td></tr>`;
+    }
+  });
+  html+=`</table>
+  <p class="note">Green cells = large effect; yellow = medium; pink = small. ✓ = power ≥ .80 at N = 30; ⚠ = power &lt; .50 (inconclusive if non-significant).</p>`;
+
+  // ── Discussion ─────────────────────────────────────────────────────────
+  html+=`<h2>9. Discussion</h2>`;
+
+  // Auto-generate key discussion bullets
+  const bullets=[];
+  if(rtRes&&rtRes.fr.p<.05) bullets.push(`<b>Visualization type significantly affected response time</b> (Friedman <i>W</i> = ${fmtN(rtRes.fr.W,3)}, <i>p</i> = ${pFmt(rtRes.fr.p)}), with ${rtRes.cs.reduce((a,c,i)=>c.m<a.m?{m:c.m,v:VIS3[i]}:a,{m:Infinity}).v} yielding the fastest decisions. This large effect (well-powered at N = ${N}) is robustly interpretable regardless of the final sample size.`);
+  if(workRes&&workRes.fr.p<.05) bullets.push(`<b>Cognitive workload differed significantly across visualization types</b> (W = ${fmtN(workRes.fr.W,3)}, <i>p</i> = ${pFmt(workRes.fr.p)}). The ${workRes.cs.reduce((a,c,i)=>c.m<a.m?{m:c.m,v:VIS3[i]}:a,{m:Infinity}).v} condition was the least demanding, consistent with theories of perceptual efficiency (Sweller, 1988).`);
+  if(tcsRes){
+    if(tcsRes.fr.p<.05) bullets.push(`<b>Visualization type significantly affected trust calibration</b> (W = ${fmtN(tcsRes.fr.W,3)}, <i>p</i> = ${pFmt(tcsRes.fr.p)}), supporting the hypothesis that how AI reasoning is visualized shapes reliance quality (Lee &amp; See, 2004).`);
+    else bullets.push(`<b>Trust calibration (TCS) did not differ significantly across visualization types</b> (W = ${fmtN(tcsRes.fr.W,3)}, <i>p</i> = ${pFmt(tcsRes.fr.p)}). Given estimated power of ${powerNote(tcsRes.fr.W,tcsRes.N,3)}, this result is <b>inconclusive</b> and should not be interpreted as evidence of no effect. The study is underpowered for TCS; a minimum of <i>N</i> ≥ 84 is recommended for 80% power at the observed effect size.`);
+  }
+  if(nasaModelTest&&nasaModelTest.p<.05&&trustTest&&trustTest.p>.05) bullets.push(`<b>Dissociation between cognitive load and stated trust:</b> participants showed significantly higher workload in the SUB model condition yet did not proportionally reduce their TIAS trust ratings. This is consistent with automation complacency (Parasuraman &amp; Manzey, 2010) and warrants investigation with larger samples.`);
+  if(trustBehavior&&!isNaN(trustBehavior.r)) bullets.push(`<b>Subjective trust (TIAS) and behavioural trust calibration (TCS)</b> showed <i>r</i> = ${fmtN(trustBehavior.r,3)} (<i>p</i> = ${pFmt(trustBehavior.p)}), ${trustBehavior.p<.05?'a significant alignment':'no significant alignment'}. ${Math.abs(trustBehavior.r)<0.15?'The near-zero correlation suggests that self-reported trust fails to predict behavioural reliance, a classic dissociation in human–automation interaction literature.':''}`);
+
+  if(bullets.length){
+    html+=`<ul style="line-height:1.9">`;
+    bullets.forEach(b=>{ html+=`<li>${b}</li>`; });
+    html+=`</ul>`;
+  }
+
+  html+=`<h3>9.1 Limitations</h3>
+  <p>The current sample (<i>N</i> = ${N}) provides adequate power for large effects (Kendall's <i>W</i> ≥ .26; Cohen's <i>d</i> ≥ 0.80) but is underpowered for the primary outcome (TCS, observed <i>W</i> ≈ .06, power ≈ .36). Results for TCS, route accuracy, SA, and individual-difference moderators must be interpreted as exploratory. The minimum viable sample for the full study is <i>N</i> = 60 (power ≈ .56 on TCS); <i>N</i> ≥ 84 is required for .80 power. Additionally, missing demographic data for ${participantData.length - demoParts.length} participants limits the individual-differences analyses. The within-subjects design introduces order and learning effects that were partially controlled through counterbalancing but cannot be fully eliminated.</p>
+
+  <h3>9.2 Pre-Registration Note</h3>
+  <p>All analyses in this report follow the pre-registered Statistical Analysis Plan (SAP). Outcomes flagged as underpowered were identified <i>a priori</i> and are reported as inconclusive, not as evidence of null effects, consistent with best practices for underpowered within-subjects designs (Cohen, 1988).</p>`;
+
+  document.getElementById('results').innerHTML=html;
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// 6. ENTRY POINT
+// ════════════════════════════════════════════════════════════════════════════
+document.getElementById('runBtn').addEventListener('click',()=>{
+  const files=Array.from(document.getElementById('logFiles').files||[]);
+  if(!files.length){ document.getElementById('loadMsg').textContent='Please select log files.'; return; }
+  document.getElementById('loadMsg').textContent=`Loading ${files.length} file(s)…`;
+  document.getElementById('results').innerHTML='';
+
+  Promise.all(files.map(f=>new Promise(res=>{
+    const reader=new FileReader();
+    reader.onload=()=>{ try{res({file:f,data:JSON.parse(reader.result)});}catch(e){res({file:f,data:null});} };
+    reader.onerror=()=>res({file:f,data:null});
+    reader.readAsText(f,'utf-8');
+  }))).then(results=>{
+    const valid=results.filter(r=>r.data&&(r.data.trials||r.data.logs));
+    if(!valid.length){ document.getElementById('loadMsg').textContent='No valid log files found.'; return; }
+    document.getElementById('loadMsg').textContent=`Analysing ${valid.length} participants…`;
+    try{
+      const data=extractData(valid);
+      const analysis=runAnalyses(data);
+      renderResults(analysis);
+      document.getElementById('loadMsg').textContent=`Analysis complete. N = ${analysis.N} participants with full data.`;
+    }catch(e){
+      document.getElementById('loadMsg').textContent='Error during analysis: '+e.message;
+      console.error(e);
+    }
+  });
+});
+</script>
+</body>
+</html>

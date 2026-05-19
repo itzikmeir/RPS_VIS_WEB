@@ -30,6 +30,13 @@
     .downloads-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
     .stats-section-label { grid-column: 1 / -1; font-size: 11px; font-weight: 700; color: #999; text-transform: uppercase; letter-spacing: 1px; padding: 8px 0 2px; border-top: 1px solid #e0e0e0; margin-top: 4px; }
     .cell-green { background: #e8f5e9; color: #2e7d32; font-weight: 600; }
+    .cell-missing { background: #fff3e0; color: #e65100; font-style: italic; }
+    .tab-bar { display: flex; gap: 4px; margin: 18px 0 0; border-bottom: 2px solid #1976d2; }
+    .tab-btn { padding: 7px 20px; border: none; border-radius: 6px 6px 0 0; font-size: 13px; font-weight: 600; cursor: pointer; background: #e3f2fd; color: #1976d2; transition: background 0.15s; }
+    .tab-btn.active { background: #1976d2; color: #fff; }
+    .tab-btn:hover:not(.active) { background: #bbdefb; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
   </style>
 </head>
 <body>
@@ -135,6 +142,12 @@
           totalTime = `${totalMin}m ${String(totalSec).padStart(2, '0')}s`;
         }
 
+        // Demographics
+        const demoQ = questionnaires.find(q => q.questionnaire_type === 'demographics');
+        const demoFields = ['age','gender','native_language','education','field','navigation_use','tech_skill','viz_literacy'];
+        const demographics = {};
+        demoFields.forEach(f => { demographics[f] = (demoQ && demoQ.answers && demoQ.answers[f] != null && demoQ.answers[f] !== '') ? demoQ.answers[f] : null; });
+
         // model_index → model_type (OPT / SUB)
         const modelTypeByIndex = {};
         trials.forEach(t => { if (t.model_type && t.model_index != null) modelTypeByIndex[t.model_index] = t.model_type; });
@@ -198,7 +211,8 @@
           choseOptimal,
           visPref,
           helpElement,
-          trustByModel
+          trustByModel,
+          demographics
         };
       });
 
@@ -330,9 +344,22 @@
 
       wrapper.appendChild(downloadsRow);
 
-      const tableTitle = document.createElement('h2');
-      tableTitle.textContent = 'Per-participant summary';
-      wrapper.appendChild(tableTitle);
+      // ── Tab bar ───────────────────────────────────────────────────────────
+      const tabBar = document.createElement('div');
+      tabBar.className = 'tab-bar';
+      const tabSummary = document.createElement('button');
+      tabSummary.className = 'tab-btn active';
+      tabSummary.textContent = 'Summary';
+      const tabDemo = document.createElement('button');
+      tabDemo.className = 'tab-btn';
+      tabDemo.textContent = 'Demographics';
+      tabBar.appendChild(tabSummary);
+      tabBar.appendChild(tabDemo);
+      wrapper.appendChild(tabBar);
+
+      // ── Summary panel ─────────────────────────────────────────────────────
+      const panelSummary = document.createElement('div');
+      panelSummary.className = 'tab-panel active';
 
       const table = document.createElement('table');
       table.innerHTML = `
@@ -400,7 +427,65 @@
         `;
         tbody.appendChild(tr);
       });
-      wrapper.appendChild(table);
+      panelSummary.appendChild(table);
+      wrapper.appendChild(panelSummary);
+
+      // ── Demographics panel ────────────────────────────────────────────────
+      const panelDemo = document.createElement('div');
+      panelDemo.className = 'tab-panel';
+
+      const mc = (val) => val !== null && val !== undefined ? '' : 'cell-missing';
+      const mv = (val) => val !== null && val !== undefined ? String(val) : '—';
+
+      const demoTable = document.createElement('table');
+      demoTable.innerHTML = `
+        <thead>
+          <tr>
+            <th title="Participant ID">ID</th>
+            <th title="Full name from consent form">Full Name</th>
+            <th title="Age in years">Age</th>
+            <th title="Gender">Gender</th>
+            <th title="Native language">Native Language</th>
+            <th title="Highest education level">Education</th>
+            <th title="Field of study or work">Field</th>
+            <th title="Self-reported frequency of navigation app use (1–7)">Nav. Use</th>
+            <th title="Self-reported general tech skill (1–7)">Tech Skill</th>
+            <th title="Self-reported visualization literacy (1–7)">Viz Literacy</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      `;
+      const demoTbody = demoTable.querySelector('tbody');
+      summary.forEach(row => {
+        const d = row.demographics;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${row.participantId}</td>
+          <td>${row.fullName || '—'}</td>
+          <td class="${mc(d.age)}">${mv(d.age)}</td>
+          <td class="${mc(d.gender)}">${mv(d.gender)}</td>
+          <td class="${mc(d.native_language)}">${mv(d.native_language)}</td>
+          <td class="${mc(d.education)}">${mv(d.education)}</td>
+          <td class="${mc(d.field)}">${mv(d.field)}</td>
+          <td class="${mc(d.navigation_use)}">${mv(d.navigation_use)}</td>
+          <td class="${mc(d.tech_skill)}">${mv(d.tech_skill)}</td>
+          <td class="${mc(d.viz_literacy)}">${mv(d.viz_literacy)}</td>
+        `;
+        demoTbody.appendChild(tr);
+      });
+      panelDemo.appendChild(demoTable);
+      wrapper.appendChild(panelDemo);
+
+      // Tab switching
+      tabSummary.addEventListener('click', () => {
+        tabSummary.classList.add('active'); tabDemo.classList.remove('active');
+        panelSummary.classList.add('active'); panelDemo.classList.remove('active');
+      });
+      tabDemo.addEventListener('click', () => {
+        tabDemo.classList.add('active'); tabSummary.classList.remove('active');
+        panelDemo.classList.add('active'); panelSummary.classList.remove('active');
+      });
+      // ─────────────────────────────────────────────────────────────────────
 
       overviewContent.innerHTML = '';
       overviewContent.appendChild(wrapper);
