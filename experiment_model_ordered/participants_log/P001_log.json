@@ -240,6 +240,67 @@
       "enter_ts": 1773386441926,
       "exit_ts": 1773386459081
     },
+     {
+      "page_name": "ExperimentTransitionPage",
+      "stage": "experiment",
+      "page_type": "experiment_transition",
+      "metadata": {},
+      "enter_ts": 1773401288622,
+      "exit_ts": 1773401323941
+    },
+    {
+      "page_name": "ModelIntroPage_M0",
+      "stage": "experiment",
+      "page_type": "model_intro",
+      "metadata": {
+        "model_index": 0,
+        "model_type": "OPT"
+      },
+      "enter_ts": 1773401323942,
+      "exit_ts": 1773401326542
+    },
+    {
+      "page_name": "VisIntroPage_M0_V0",
+      "stage": "experiment",
+      "page_type": "vis_intro",
+      "metadata": {
+        "model_index": 0,
+        "vis_index": 0,
+        "visualization": "עמודות נערמות"
+      },
+      "enter_ts": 1773401326543,
+      "exit_ts": 1773401333223
+    },
+    {
+      "page_name": "ScenarioIntroPage",
+      "stage": "experiment",
+      "page_type": "scenario_intro",
+      "metadata": {},
+      "enter_ts": 1773401333223,
+      "exit_ts": 1773401336546
+    },
+    {
+      "page_name": "TrialPage",
+      "stage": "experiment",
+      "page_type": "trial",
+      "metadata": {
+        "scenario_id": "SCN_028_S",
+        "stage": "experiment"
+      },
+      "enter_ts": 1773401336546,
+      "exit_ts": 1773401375245
+    },
+    {
+      "page_name": "TrialQuestionsPage",
+      "stage": "experiment",
+      "page_type": "trial_questions",
+      "metadata": {
+        "scenario_id": "SCN_028_S",
+        "stage": "experiment"
+      },
+      "enter_ts": 1773401375250,
+      "exit_ts": 1773401402318
+    },
     {
       "page_name": "ScenarioIntroPage",
       "stage": "experiment",
