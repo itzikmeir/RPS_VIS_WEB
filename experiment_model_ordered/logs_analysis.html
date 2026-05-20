@@ -52,6 +52,19 @@
     hr { border: none; border-top: 1px solid #ddd; margin: 30px 0; }
     .note { font-size: 12px; color: #777; }
     sup { font-size: 10px; }
+    .export-btn { padding: 8px 18px; background: #388e3c; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 13px; margin-left: 8px; }
+    .export-btn:hover { background: #2e7d32; }
+    @media print {
+      .data-input { display: none !important; }
+      #loadMsg { display: none !important; }
+      body { background: white; padding: 0; }
+      .paper { box-shadow: none; padding: 20px 30px; max-width: 100%; }
+      h2 { break-after: avoid; }
+      .rblock { break-inside: avoid; }
+      table.st { break-inside: avoid; font-size: 11px; }
+      .chart-row { break-inside: avoid; }
+      .finding, .inconc, .warn { break-inside: avoid; }
+    }
   </style>
 </head>
 <body>
@@ -80,6 +93,7 @@
     <label for="logFiles">Select participant log JSON files:</label>
     <input type="file" id="logFiles" accept=".json" multiple />
     <button id="runBtn">Run Analysis</button>
+    <button class="export-btn" id="exportPdfBtn" title="Print / Save as PDF">Export to PDF</button>
     <div id="loadMsg"></div>
   </div>
 
@@ -481,11 +495,15 @@ function runAnalyses(data){
 // 4. SVG CHARTS
 // ════════════════════════════════════════════════════════════════════════════
 function barChart(cs,metric,options={}){
-  const W=320,H=200,pl=50,pr=14,pt=18,pb=46;
+  const W=320,H=210,pl=54,pr=18,pt=20,pb=46;
   const cW=W-pl-pr, cH=H-pt-pb;
-  const vals=cs.map(c=>c.m), errs=cs.map(c=>c.se);
-  const yMin=options.yMin??0;
-  const yMax=options.yMax??(Math.max(...vals.map((v,i)=>v+errs[i]))*1.2||1);
+  const vals=cs.map(c=>c.m), errs=cs.map(c=>c.se||0);
+  // Auto-compute axis bounds from data + error bars
+  const dataLow=Math.min(...vals.map((v,i)=>v-errs[i]));
+  const dataHigh=Math.max(...vals.map((v,i)=>v+errs[i]));
+  const span=Math.max(dataHigh-dataLow,0.01);
+  const yMin=options.yMin!==undefined ? options.yMin : (dataLow<0 ? dataLow-span*0.15 : 0);
+  const yMax=options.yMax!==undefined ? options.yMax : (dataHigh>0 ? dataHigh+span*0.15 : span*0.15)||1;
   const yScale=v=>pt+cH*(1-(v-yMin)/(yMax-yMin));
   const bW=cW/(VIS3.length*1.6), gap=bW*0.6;
 
@@ -496,6 +514,11 @@ function barChart(cs,metric,options={}){
     svg+=`<line x1="${pl}" y1="${y}" x2="${W-pr}" y2="${y}" stroke="#e8e8e8" stroke-width="1"/>`;
     svg+=`<text x="${pl-4}" y="${y+4}" text-anchor="end" font-size="9" fill="#777">${v.toFixed(2)}</text>`;
   }
+  // zero baseline (visible when data spans negative)
+  if(yMin<0&&yMax>0){
+    const y0=yScale(0);
+    svg+=`<line x1="${pl}" y1="${y0}" x2="${W-pr}" y2="${y0}" stroke="#888" stroke-width="1"/>`;
+  }
   if(options.refLine!==undefined){
     const ry=yScale(options.refLine);
     svg+=`<line x1="${pl}" y1="${ry}" x2="${W-pr}" y2="${ry}" stroke="#999" stroke-width="1" stroke-dasharray="4,2"/>`;
@@ -503,23 +526,25 @@ function barChart(cs,metric,options={}){
   }
   // y-axis
   svg+=`<line x1="${pl}" y1="${pt}" x2="${pl}" y2="${pt+cH}" stroke="#bbb" stroke-width="1"/>`;
-  if(options.yLabel) svg+=`<text transform="rotate(-90,12,${H/2})" x="12" y="${H/2}" text-anchor="middle" font-size="10" fill="#555">${options.yLabel}</text>`;
+  if(options.yLabel) svg+=`<text transform="rotate(-90,14,${H/2})" x="14" y="${H/2}" text-anchor="middle" font-size="10" fill="#555">${options.yLabel}</text>`;
 
+  const yZero=Math.max(pt,Math.min(pt+cH,yScale(0))); // clamp zero line to chart area
   VIS3.forEach((v,i)=>{
     const x=pl+gap/2+i*(bW+gap);
-    const bH=Math.max(0,cH*((vals[i]-yMin)/(yMax-yMin)));
-    const by=pt+cH-bH;
+    const yVal=yScale(vals[i]);
+    const barTop=Math.min(yZero,yVal), barBot=Math.max(yZero,yVal);
+    const bH=Math.max(1,barBot-barTop);
     const col=VIS_COLOR[v];
-    svg+=`<rect x="${x}" y="${by}" width="${bW}" height="${bH}" fill="${col}" opacity="0.75" rx="2"/>`;
-    // error bar
+    svg+=`<rect x="${x}" y="${barTop}" width="${bW}" height="${bH}" fill="${col}" opacity="0.75" rx="2"/>`;
+    // error bar centred on value
     const eH=cH*(errs[i]/(yMax-yMin));
     const mx=x+bW/2;
-    svg+=`<line x1="${mx}" y1="${by-eH}" x2="${mx}" y2="${by+eH}" stroke="#333" stroke-width="1.5"/>`;
-    svg+=`<line x1="${mx-3}" y1="${by-eH}" x2="${mx+3}" y2="${by-eH}" stroke="#333" stroke-width="1.5"/>`;
-    svg+=`<line x1="${mx-3}" y1="${by+eH}" x2="${mx+3}" y2="${by+eH}" stroke="#333" stroke-width="1.5"/>`;
-    // value
-    svg+=`<text x="${mx}" y="${by-eH-3}" text-anchor="middle" font-size="9" fill="#333">${vals[i].toFixed(2)}</text>`;
-    // label (abbreviated)
+    svg+=`<line x1="${mx}" y1="${yVal-eH}" x2="${mx}" y2="${yVal+eH}" stroke="#333" stroke-width="1.5"/>`;
+    svg+=`<line x1="${mx-3}" y1="${yVal-eH}" x2="${mx+3}" y2="${yVal-eH}" stroke="#333" stroke-width="1.5"/>`;
+    svg+=`<line x1="${mx-3}" y1="${yVal+eH}" x2="${mx+3}" y2="${yVal+eH}" stroke="#333" stroke-width="1.5"/>`;
+    // value label: above bar for positive, below for negative
+    const lblY=vals[i]>=0 ? yVal-eH-3 : yVal+eH+10;
+    svg+=`<text x="${mx}" y="${lblY}" text-anchor="middle" font-size="9" fill="#333">${vals[i].toFixed(2)}</text>`;
     const lbl=['Stack.','Radar','Heat'][i];
     svg+=`<text x="${mx}" y="${H-pb+14}" text-anchor="middle" font-size="9.5" fill="${col}">${lbl}</text>`;
   });
@@ -891,6 +916,8 @@ function renderResults(analysis){
 // ════════════════════════════════════════════════════════════════════════════
 // 6. ENTRY POINT
 // ════════════════════════════════════════════════════════════════════════════
+document.getElementById('exportPdfBtn').addEventListener('click',()=>window.print());
+
 document.getElementById('runBtn').addEventListener('click',()=>{
   const files=Array.from(document.getElementById('logFiles').files||[]);
   if(!files.length){ document.getElementById('loadMsg').textContent='Please select log files.'; return; }
