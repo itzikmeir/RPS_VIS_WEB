@@ -3391,6 +3391,28 @@
       "correct": null,
       "enter_ts": 1775549397278,
       "exit_ts": 1775549459417
+    },
+       {
+      "trial_id": null,
+      "participant_id": "P007",
+      "stage": "post",
+      "condition_index": null,
+      "model_index": null,
+      "trial_index": null,
+      "questionnaire_type": "demographics",
+      "answers": {
+        "age": 18,
+        "gender": "נקבה",
+        "native_language": "עברית",
+        "education": "ללא תואר",
+        "field": "אחר",
+        "navigation_use": 5,
+        "tech_skill": 4,
+        "viz_literacy": 5
+      },
+      "correct": null,
+      "enter_ts": 1777626396472,
+      "exit_ts": 1777626440950
     }
   ],
   "interactions": [

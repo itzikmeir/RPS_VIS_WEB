@@ -1279,14 +1279,6 @@
       "metadata": {},
       "enter_ts": 1773388152062,
       "exit_ts": 1773388187906
-    },
-    {
-      "page_name": "DemographicsPage",
-      "stage": "post",
-      "page_type": "demographics",
-      "metadata": {},
-      "enter_ts": 1773388187907,
-      "exit_ts": null
     }
   ],
   "trials": [
@@ -3390,6 +3382,28 @@
       "correct": null,
       "enter_ts": 1773388152062,
       "exit_ts": 1773388187907
+    },
+     {
+      "trial_id": null,
+      "participant_id": "P001",
+      "stage": "post",
+      "condition_index": null,
+      "model_index": null,
+      "trial_index": null,
+      "questionnaire_type": "demographics",
+      "answers": {
+        "age": 24,
+        "gender": "נקבה",
+        "native_language": "עברית",
+        "education": "תואר ראשון",
+        "field": "מדעי המחשב / הנדסה / דאטה",
+        "navigation_use": 5,
+        "tech_skill": 6,
+        "viz_literacy": 6
+      },
+      "correct": null,
+      "enter_ts": 1777626396472,
+      "exit_ts": 1777626440950
     }
   ],
   "interactions": [

@@ -3399,6 +3399,28 @@
       "correct": null,
       "enter_ts": 1776418552425,
       "exit_ts": 1776418588831
+    },
+     {
+      "trial_id": null,
+      "participant_id": "P016",
+      "stage": "post",
+      "condition_index": null,
+      "model_index": null,
+      "trial_index": null,
+      "questionnaire_type": "demographics",
+      "answers": {
+        "age": 45,
+        "gender": "זכר",
+        "native_language": "עברית",
+        "education": "תואר שני",
+        "field": "מדעי המחשב / הנדסה / דאטה",
+        "navigation_use": 5,
+        "tech_skill": 3,
+        "viz_literacy": 6
+      },
+      "correct": null,
+      "enter_ts": 1777626396472,
+      "exit_ts": 1777626440950
     }
   ],
   "interactions": [

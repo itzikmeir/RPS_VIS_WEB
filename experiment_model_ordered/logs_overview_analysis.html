@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>All Logs Overview (Model-Ordered)</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 0; padding: 20px; background: #f4f4f4; }
+    .container { max-width: 1600px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    h1 { margin-top: 0; color: #1976d2; border-bottom: 3px solid #1976d2; padding-bottom: 10px; }
+    .input-section { background: #f5f5f5; padding: 20px; border-radius: 8px; margin-bottom: 24px; }
+    .input-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    label { font-weight: 600; font-size: 14px; color: #333; }
+    input[type="file"] { font-size: 14px; }
+    button { padding: 10px 20px; border-radius: 6px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; background: #1976d2; color: #fff; transition: background 0.2s; }
+    button:hover:not(:disabled) { background: #1565c0; }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    .error { color: #c62828; margin-top: 10px; padding: 10px; background: #ffebee; border-radius: 6px; display: none; }
+    .error.show { display: block; }
+
+    /* Tabs */
+    .tabs { display: flex; gap: 0; border-bottom: 2px solid #1976d2; margin-bottom: 20px; }
+    .tab-btn { padding: 10px 28px; border: none; background: #e3f0fb; color: #1976d2; font-weight: 600; cursor: pointer; border-radius: 6px 6px 0 0; font-size: 14px; border: 1px solid #bbdefb; border-bottom: none; margin-right: 4px; transition: background 0.15s; }
+    .tab-btn.active { background: #1976d2; color: #fff; }
+    .tab-btn:hover:not(.active) { background: #bbdefb; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* Stats */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(175px, 1fr)); gap: 12px; margin: 0 0 20px 0; }
+    .stat-card { background: #f8fafd; padding: 16px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); text-align: center; border: 1px solid #e3eaf4; }
+    .stat-value { font-size: 26px; font-weight: 700; color: #1976d2; margin: 6px 0; }
+    .stat-label { font-size: 12px; color: #666; }
+
+    /* Table */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 12.5px; background: white; }
+    th { background: #f0f4f9; padding: 9px 7px; text-align: center; font-weight: 600; color: #444; border-bottom: 2px solid #c5d5e8; cursor: pointer; white-space: nowrap; user-select: none; position: sticky; top: 0; z-index: 1; }
+    th:hover { background: #dde8f5; }
+    th .sort-icon { margin-left: 4px; color: #999; font-size: 10px; }
+    td { padding: 7px 7px; border-bottom: 1px solid #eaeaea; text-align: center; white-space: nowrap; }
+    tr:hover td { background: #f5f9ff; }
+    td.left { text-align: left; }
+
+    /* Value styling */
+    .missing { background: #fff3e0 !important; color: #e65100; font-style: italic; }
+    .missing-red { background: #ffebee !important; color: #c62828; font-style: italic; }
+    .acc-high { color: #2e7d32; font-weight: 700; }
+    .acc-mid  { color: #f57c00; font-weight: 600; }
+    .acc-low  { color: #c62828; font-weight: 700; }
+
+    /* Downloads */
+    .downloads-row { display: flex; flex-wrap: wrap; gap: 10px; margin: 16px 0; }
+    .section-title { font-size: 15px; font-weight: 700; color: #333; margin: 20px 0 8px 0; border-bottom: 1px solid #e0e0e0; padding-bottom: 6px; }
+    .legend { font-size: 12px; color: #777; margin-bottom: 8px; }
+    .legend span { display: inline-block; width: 14px; height: 14px; border-radius: 3px; vertical-align: middle; margin-right: 4px; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>All Logs Overview (Model-Ordered)</h1>
+
+  <div class="input-section">
+    <div class="input-row">
+      <label for="logFiles">Select log JSON files (multiple):</label>
+      <input type="file" id="logFiles" accept=".json" multiple />
+      <button id="loadLogsBtn">Load Logs</button>
+    </div>
+    <div id="overviewError" class="error"></div>
+  </div>
+
+  <div id="overviewContent"></div>
+</div>
+
+<script>
+const logInput = document.getElementById('logFiles');
+const loadLogsBtn = document.getElementById('loadLogsBtn');
+const overviewError = document.getElementById('overviewError');
+const overviewContent = document.getElementById('overviewContent');
+
+function showError(msg) { overviewError.textContent = msg; overviewError.classList.add('show'); }
+function clearError() { overviewError.textContent = ''; overviewError.classList.remove('show'); }
+
+loadLogsBtn.addEventListener('click', () => {
+  clearError();
+  overviewContent.innerHTML = '';
+  const files = Array.from(logInput.files || []);
+  if (!files.length) { showError('Please select one or more JSON log files.'); return; }
+  loadLogsBtn.disabled = true;
+  Promise.all(files.map(file => new Promise(resolve => {
+    const r = new FileReader();
+    r.onload = () => {
+      try { resolve({ file, data: JSON.parse(r.result) }); }
+      catch (e) { resolve({ file, data: null }); }
+    };
+    r.onerror = () => resolve({ file, data: null });
+    r.readAsText(file, 'utf-8');
+  }))).then(results => {
+    loadLogsBtn.disabled = false;
+    renderOverview(results);
+  });
+});
+
+// ── helpers ────────────────────────────────────────────────────────────────────
+
+const VIS_LABELS = { 0: 'Stacked', 1: 'Radar', 2: 'HeatMap' };
+const VIS_HEBREW = { 'עמודות מוערמות': 'Stacked', 'רדאר': 'Radar', 'מפת חום': 'HeatMap' };
+
+function visLabel(idx) { return VIS_LABELS[idx] ?? `Vis${idx}`; }
+
+function hebrewVisToEn(heb) { return VIS_HEBREW[heb] || heb; }
+
+function translateModelPref(s) {
+  if (!s || s === 'DBG') return null;
+  if (s.includes('A') || s.includes('א')) return 'Model A';
+  if (s.includes('B') || s.includes('ב')) return 'Model B';
+  return s;
+}
+
+function prefAreaLabel(helpEl) {
+  if (!helpEl || helpEl === 'DBG') return null;
+  if (helpEl.startsWith('א') || helpEl.includes('מסלולים') || helpEl.includes('route')) return 'Routes';
+  if (helpEl.startsWith('ב') || helpEl.includes('מפה') || helpEl.includes('map')) return 'Map';
+  if (helpEl.startsWith('ג') || helpEl.includes('ויזואליזצ')) return 'Visualization';
+  return helpEl.substring(0, 20);
+}
+
+function mean(arr) {
+  const nums = arr.filter(v => v !== null && v !== undefined && v !== 'DBG' && !isNaN(Number(v)));
+  return nums.length ? nums.reduce((a, b) => a + Number(b), 0) / nums.length : null;
+}
+
+function pct(correct, total) {
+  return total > 0 ? (correct / total * 100) : null;
+}
+
+function accSubset(trials, filterFn) {
+  const sub = trials.filter(filterFn);
+  const valid = sub.filter(t => t.chose_true_optimal === true || t.chose_true_optimal === false);
+  return valid.length ? pct(valid.filter(t => t.chose_true_optimal === true).length, valid.length) : null;
+}
+
+function getVisRankingStr(answers) {
+  const entries = Object.entries(answers)
+    .filter(([k]) => k !== 'help_element')
+    .map(([k, v]) => ({ label: hebrewVisToEn(k), rank: Number(v) }))
+    .sort((a, b) => a.rank - b.rank);
+  return entries.map(e => e.label).join(' > ');
+}
+
+// ── compute per-participant summary ───────────────────────────────────────────
+
+function computeSummary(participantId, trials, questionnaires) {
+  const main = trials.filter(t => t.stage !== 'practice');
+
+  // Time
+  const durations = main.map(t => (t.end_ts && t.start_ts) ? (t.end_ts - t.start_ts) : null).filter(d => d !== null);
+  const totalTimeMs = durations.reduce((a, b) => a + b, 0);
+  const avgTimeMs   = durations.length ? totalTimeMs / durations.length : null;
+
+  // Accuracy
+  const totalAcc = accSubset(main, () => true);
+  const accOPT   = accSubset(main, t => t.model_type === 'OPT');
+  const accSUB   = accSubset(main, t => t.model_type === 'SUB');
+  const accEasy  = accSubset(main, t => t.difficulty === 'E');
+  const accHard  = accSubset(main, t => t.difficulty === 'H');
+  const accVis0  = accSubset(main, t => String(t.vis_index) === '0');
+  const accVis1  = accSubset(main, t => String(t.vis_index) === '1');
+  const accVis2  = accSubset(main, t => String(t.vis_index) === '2');
+
+  // AI follow rate
+  const followTrials = main.filter(t => t.followed_ai === true || t.followed_ai === false);
+  const aiFollow = followTrials.length ? pct(followTrials.filter(t => t.followed_ai === true).length, followTrials.length) : null;
+
+  // Avg confidence (post_scenario)
+  const confVals = questionnaires
+    .filter(q => q.questionnaire_type === 'post_scenario' && q.answers && q.answers.confidence !== undefined && q.answers.confidence !== 'DBG')
+    .map(q => q.answers.confidence);
+  const avgConf = mean(confVals);
+
+  // SA accuracy (scenario awareness questions)
+  let saCorrect = 0, saTotal = 0;
+  questionnaires
+    .filter(q => q.questionnaire_type === 'post_scenario' && q.answers && q.answers.scenario_questions)
+    .forEach(q => {
+      Object.values(q.answers.scenario_questions).forEach(sq => {
+        if (sq && sq.is_correct !== undefined && sq.is_correct !== null) {
+          saTotal++;
+          if (sq.is_correct === true) saCorrect++;
+        }
+      });
+    });
+  const saAcc = saTotal ? pct(saCorrect, saTotal) : null;
+
+  // NASA TLX per model (avg across vis × dims)
+  const TLX_DIMS = ['mental_demand', 'time_demand', 'performance', 'effort', 'frustration'];
+  const tlxModel = (midx) => {
+    const qs = questionnaires.filter(q => q.questionnaire_type === 'nasa_tlx' && q.model_index === midx && q.answers);
+    if (!qs.length) return null;
+    const vals = [];
+    qs.forEach(q => TLX_DIMS.forEach(d => { const v = q.answers[d]; if (v !== null && v !== undefined && v !== 'DBG') vals.push(Number(v)); }));
+    return mean(vals);
+  };
+  const tlxA = tlxModel(0);
+  const tlxB = tlxModel(1);
+
+  // Trust per model (avg raw)
+  const trustModel = (midx) => {
+    const qs = questionnaires.filter(q => q.questionnaire_type === 'model_summary' && q.model_index === midx && q.answers && q.answers.trust);
+    if (!qs.length) return null;
+    const vals = [];
+    qs.forEach(q => Object.values(q.answers.trust).forEach(v => { if (v !== null && v !== undefined && v !== 'DBG') vals.push(Number(v)); }));
+    return mean(vals);
+  };
+  const trustA = trustModel(0);
+  const trustB = trustModel(1);
+
+  // Visualization preferences
+  const vg = questionnaires.find(q => q.questionnaire_type === 'visualization_global' && q.answers);
+  const visRanking = vg ? getVisRankingStr(vg.answers) : null;
+  const prefArea   = vg ? prefAreaLabel(vg.answers.help_element) : null;
+
+  // Model preference
+  const ms = questionnaires.find(q => q.questionnaire_type === 'model_selection' && q.answers);
+  const prefModel = ms ? translateModelPref(ms.answers.model_preference) : null;
+
+  // Demographics
+  const dq = questionnaires.find(q => q.questionnaire_type === 'demographics' && q.answers);
+  const demo = dq ? dq.answers : null;
+
+  return {
+    participantId,
+    trials: main.length,
+    totalTimeSec: durations.length ? totalTimeMs / 1000 : null,
+    avgTimeSec: avgTimeMs !== null ? avgTimeMs / 1000 : null,
+    totalAcc, accOPT, accSUB, accEasy, accHard,
+    accVis0, accVis1, accVis2,
+    aiFollow, avgConf, saAcc,
+    tlxA, tlxB, trustA, trustB,
+    visRanking, prefArea, prefModel, demo
+  };
+}
+
+// ── formatting helpers ─────────────────────────────────────────────────────────
+
+function fmtPct(v) {
+  if (v === null || v === undefined) return { text: '--', cls: 'missing' };
+  const n = Number(v);
+  const text = n.toFixed(1) + '%';
+  const cls = n >= 70 ? 'acc-high' : n >= 50 ? 'acc-mid' : 'acc-low';
+  return { text, cls };
+}
+
+function fmtNum(v, digits = 1) {
+  if (v === null || v === undefined) return { text: '--', cls: 'missing' };
+  return { text: Number(v).toFixed(digits), cls: '' };
+}
+
+function fmtStr(v) {
+  if (v === null || v === undefined || v === 'DBG') return { text: '--', cls: 'missing' };
+  return { text: String(v), cls: '' };
+}
+
+function cell(td, { text, cls }) {
+  td.textContent = text;
+  if (cls) td.className = cls;
+}
+
+function td(text, cls) {
+  const el = document.createElement('td');
+  el.textContent = text ?? '--';
+  if (cls) el.className = cls;
+  if (text === null || text === undefined) el.className = 'missing';
+  return el;
+}
+
+function pctTd(v) {
+  const el = document.createElement('td');
+  const f = fmtPct(v);
+  el.textContent = f.text;
+  if (f.cls) el.className = f.cls;
+  return el;
+}
+
+function numTd(v, digits = 1) {
+  const el = document.createElement('td');
+  const f = fmtNum(v, digits);
+  el.textContent = f.text;
+  if (f.cls) el.className = f.cls;
+  return el;
+}
+
+// ── sortable table ─────────────────────────────────────────────────────────────
+
+function makeSortable(table) {
+  const ths = table.querySelectorAll('thead th');
+  let sortCol = -1, sortAsc = true;
+  ths.forEach((th, col) => {
+    th.addEventListener('click', () => {
+      if (sortCol === col) sortAsc = !sortAsc;
+      else { sortCol = col; sortAsc = true; }
+      ths.forEach((h, i) => {
+        const icon = h.querySelector('.sort-icon');
+        if (icon) icon.textContent = i === col ? (sortAsc ? '▲' : '▼') : '⇅';
+      });
+      const tbody = table.querySelector('tbody');
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      rows.sort((a, b) => {
+        const av = a.children[col]?.textContent?.trim() ?? '';
+        const bv = b.children[col]?.textContent?.trim() ?? '';
+        const an = parseFloat(av), bn = parseFloat(bv);
+        if (!isNaN(an) && !isNaN(bn)) return sortAsc ? an - bn : bn - an;
+        return sortAsc ? av.localeCompare(bv) : bv.localeCompare(av);
+      });
+      rows.forEach(r => tbody.appendChild(r));
+    });
+    const icon = document.createElement('span');
+    icon.className = 'sort-icon';
+    icon.textContent = '⇅';
+    th.appendChild(icon);
+  });
+}
+
+// ── main render ────────────────────────────────────────────────────────────────
+
+function renderOverview(results) {
+  const valid = results.filter(r => r.data && (r.data.trials || r.data.questionnaires));
+  if (!valid.length) { showError('No valid log data found in selected files.'); return; }
+
+  const allSummaries = [];
+  const allTrials = [];
+  const allQuestionnaires = [];
+
+  valid.forEach(r => {
+    const data = r.data;
+    const trials = Array.isArray(data.trials) ? data.trials : [];
+    const questionnaires = Array.isArray(data.questionnaires) ? data.questionnaires : [];
+    const participantId =
+      (questionnaires[0] && questionnaires[0].participant_id) ||
+      (trials[0] && trials[0].participant_id) ||
+      r.file.name.replace(/(_log)?\.json$/i, '');
+
+    trials.forEach(t => { if (!t.participant_id) t.participant_id = participantId; });
+    questionnaires.forEach(q => { if (!q.participant_id) q.participant_id = participantId; });
+
+    allTrials.push(...trials);
+    allQuestionnaires.push(...questionnaires);
+    allSummaries.push(computeSummary(participantId, trials, questionnaires));
+  });
+
+  const wrapper = document.createElement('div');
+
+  // ── tabs ──
+  const tabsDiv = document.createElement('div');
+  tabsDiv.className = 'tabs';
+  ['Summary', 'Demographics'].forEach((label, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'tab-btn' + (i === 0 ? ' active' : '');
+    btn.textContent = label;
+    btn.dataset.tab = label.toLowerCase();
+    btn.onclick = () => {
+      tabsDiv.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      wrapper.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      wrapper.querySelector(`.tab-content[data-tab="${btn.dataset.tab}"]`).classList.add('active');
+    };
+    tabsDiv.appendChild(btn);
+  });
+  wrapper.appendChild(tabsDiv);
+
+  // ── Summary tab ──────────────────────────────────────────────────────────────
+  const summaryTab = document.createElement('div');
+  summaryTab.className = 'tab-content active';
+  summaryTab.dataset.tab = 'summary';
+
+  // stat cards
+  const mainTrials = allTrials.filter(t => t.stage !== 'practice');
+  const overallCorrect = accSubset(mainTrials, () => true);
+  const followTrials   = mainTrials.filter(t => t.followed_ai === true || t.followed_ai === false);
+  const overallFollow  = followTrials.length ? pct(followTrials.filter(t => t.followed_ai === true).length, followTrials.length) : null;
+  const allConf = allQuestionnaires.filter(q => q.questionnaire_type === 'post_scenario' && q.answers && q.answers.confidence !== undefined && q.answers.confidence !== 'DBG').map(q => q.answers.confidence);
+  const overallConf = mean(allConf);
+  const TLX_DIMS = ['mental_demand', 'time_demand', 'performance', 'effort', 'frustration'];
+  const tlxAll = [];
+  allQuestionnaires.filter(q => q.questionnaire_type === 'nasa_tlx' && q.answers).forEach(q => TLX_DIMS.forEach(d => { const v = q.answers[d]; if (v !== null && v !== undefined && v !== 'DBG') tlxAll.push(Number(v)); }));
+  const overallTLX = mean(tlxAll);
+
+  const statsGrid = document.createElement('div');
+  statsGrid.className = 'stats-grid';
+  [
+    ['Participants', valid.length],
+    ['Main Trials', mainTrials.length],
+    ['Overall Accuracy', overallCorrect !== null ? overallCorrect.toFixed(1) + '%' : 'N/A'],
+    ['AI Follow Rate', overallFollow !== null ? overallFollow.toFixed(1) + '%' : 'N/A'],
+    ['Avg Confidence', overallConf !== null ? overallConf.toFixed(1) : 'N/A'],
+    ['Avg TLX (all)', overallTLX !== null ? overallTLX.toFixed(1) : 'N/A'],
+  ].forEach(([label, value]) => {
+    const card = document.createElement('div');
+    card.className = 'stat-card';
+    card.innerHTML = `<div class="stat-value">${value}</div><div class="stat-label">${label}</div>`;
+    statsGrid.appendChild(card);
+  });
+  summaryTab.appendChild(statsGrid);
+
+  // downloads
+  const downloadsRow = document.createElement('div');
+  downloadsRow.className = 'downloads-row';
+  addDownloadBtn(downloadsRow, 'Download Questionnaires CSV', () => buildQuestionnairesCsv(allQuestionnaires, allTrials), 'questionnaires_model_ordered.csv');
+  addDownloadBtn(downloadsRow, 'Download Trials CSV', () => buildTrialsCsv(allTrials), 'trials_model_ordered.csv');
+  summaryTab.appendChild(downloadsRow);
+
+  // legend
+  const legend = document.createElement('div');
+  legend.className = 'legend';
+  legend.innerHTML = `
+    <span style="background:#e8f5e9;border:1px solid #a5d6a7"></span> ≥70% &nbsp;
+    <span style="background:#fff8e1;border:1px solid #ffe082"></span> 50–70% &nbsp;
+    <span style="background:#ffebee;border:1px solid #ef9a9a"></span> &lt;50% &nbsp;
+    <span style="background:#fff3e0;border:1px solid #ffcc80"></span> Missing data
+  `;
+  summaryTab.appendChild(legend);
+
+  const summaryTitle = document.createElement('div');
+  summaryTitle.className = 'section-title';
+  summaryTitle.textContent = 'Per-participant summary';
+  summaryTab.appendChild(summaryTitle);
+
+  const SUMMARY_COLS = [
+    { label: 'Participant',     tip: 'Participant ID' },
+    { label: 'Trials',          tip: 'Number of main (non-practice) trials' },
+    { label: 'Total Time (s)',   tip: 'Sum of trial durations in seconds' },
+    { label: 'Avg Time/Trial (s)', tip: 'Average time per trial in seconds' },
+    { label: 'Accuracy %',      tip: 'Overall % trials where participant chose the truly optimal route' },
+    { label: 'Acc OPT %',       tip: 'Accuracy when model_type=OPT (AI recommendation was correct)' },
+    { label: 'Acc SUB %',       tip: 'Accuracy when model_type=SUB (AI recommendation was suboptimal)' },
+    { label: 'Acc Easy %',      tip: 'Accuracy on Easy difficulty scenarios' },
+    { label: 'Acc Hard %',      tip: 'Accuracy on Hard difficulty scenarios' },
+    { label: 'Acc Stacked %',   tip: 'Accuracy when vis_index=0 (Stacked bars)' },
+    { label: 'Acc Radar %',     tip: 'Accuracy when vis_index=1 (Radar chart)' },
+    { label: 'Acc HeatMap %',   tip: 'Accuracy when vis_index=2 (Heat map)' },
+    { label: 'AI Follow %',     tip: 'Rate of following AI recommendation (followed_ai=true)' },
+    { label: 'Avg Confidence',  tip: 'Average post-trial confidence rating (-10 to +10)' },
+    { label: 'SA Acc %',        tip: 'Situational awareness: % correct on scenario knowledge questions' },
+    { label: 'TLX Model A',     tip: 'Avg NASA-TLX score for Model A (all dims, all vis, -10 to +10)' },
+    { label: 'TLX Model B',     tip: 'Avg NASA-TLX score for Model B (all dims, all vis, -10 to +10)' },
+    { label: 'Trust Model A',   tip: 'Avg raw trust score for Model A (trust1–12, 1–7 scale)' },
+    { label: 'Trust Model B',   tip: 'Avg raw trust score for Model B (trust1–12, 1–7 scale)' },
+    { label: 'Vis Ranking',     tip: 'Visualization preference ranking (most → least preferred)' },
+    { label: 'Pref. Area',      tip: 'Most helpful UI screen area' },
+    { label: 'Pref. Model',     tip: 'Preferred AI model (model_selection)' },
+  ];
+
+  const summaryTable = document.createElement('table');
+  const thead = summaryTable.createTHead();
+  const headerRow = thead.insertRow();
+  SUMMARY_COLS.forEach(col => {
+    const th = document.createElement('th');
+    th.textContent = col.label;
+    th.title = col.tip;
+    headerRow.appendChild(th);
+  });
+
+  const tbody = summaryTable.createTBody();
+  allSummaries.forEach(s => {
+    const tr = tbody.insertRow();
+    tr.appendChild(td(s.participantId, 'left'));
+    tr.appendChild(td(s.trials));
+    tr.appendChild(numTd(s.totalTimeSec, 0));
+    tr.appendChild(numTd(s.avgTimeSec, 1));
+    tr.appendChild(pctTd(s.totalAcc));
+    tr.appendChild(pctTd(s.accOPT));
+    tr.appendChild(pctTd(s.accSUB));
+    tr.appendChild(pctTd(s.accEasy));
+    tr.appendChild(pctTd(s.accHard));
+    tr.appendChild(pctTd(s.accVis0));
+    tr.appendChild(pctTd(s.accVis1));
+    tr.appendChild(pctTd(s.accVis2));
+    tr.appendChild(pctTd(s.aiFollow));
+    tr.appendChild(numTd(s.avgConf, 1));
+    tr.appendChild(pctTd(s.saAcc));
+    tr.appendChild(numTd(s.tlxA, 1));
+    tr.appendChild(numTd(s.tlxB, 1));
+    tr.appendChild(numTd(s.trustA, 2));
+    tr.appendChild(numTd(s.trustB, 2));
+    const visEl = document.createElement('td');
+    if (s.visRanking) { visEl.textContent = s.visRanking; visEl.title = s.visRanking; }
+    else { visEl.textContent = '--'; visEl.className = 'missing'; }
+    tr.appendChild(visEl);
+    tr.appendChild(s.prefArea ? td(s.prefArea) : td(null));
+    tr.appendChild(s.prefModel ? td(s.prefModel) : td(null));
+  });
+
+  const summaryWrap = document.createElement('div');
+  summaryWrap.className = 'table-wrap';
+  summaryWrap.appendChild(summaryTable);
+  summaryTab.appendChild(summaryWrap);
+  makeSortable(summaryTable);
+
+  wrapper.appendChild(summaryTab);
+
+  // ── Demographics tab ─────────────────────────────────────────────────────────
+  const demoTab = document.createElement('div');
+  demoTab.className = 'tab-content';
+  demoTab.dataset.tab = 'demographics';
+
+  const DEMO_FIELDS = [
+    { key: 'age',             label: 'Age' },
+    { key: 'gender',          label: 'Gender' },
+    { key: 'native_language', label: 'Language' },
+    { key: 'education',       label: 'Education' },
+    { key: 'field',           label: 'Field' },
+    { key: 'navigation_use',  label: 'Nav Use (1–7)' },
+    { key: 'tech_skill',      label: 'Tech Skill (1–7)' },
+    { key: 'viz_literacy',    label: 'Viz Literacy (1–7)' },
+  ];
+
+  const missingCount = allSummaries.filter(s => !s.demo).length;
+
+  // ── demographic aggregate stats ──
+  const withDemo = allSummaries.filter(s => s.demo);
+  const demoAges = withDemo.map(s => s.demo.age).filter(v => v !== null && v !== undefined && v !== 'DBG' && !isNaN(Number(v))).map(Number);
+  const avgAge  = demoAges.length ? (demoAges.reduce((a,b) => a+b, 0) / demoAges.length) : null;
+  const minAge  = demoAges.length ? Math.min(...demoAges) : null;
+  const maxAge  = demoAges.length ? Math.max(...demoAges) : null;
+
+  const modeCounts = (key) => {
+    const counts = {};
+    withDemo.forEach(s => { const v = s.demo[key]; if (v && v !== 'DBG') counts[v] = (counts[v]||0) + 1; });
+    return Object.entries(counts).sort((a,b) => b[1]-a[1]);
+  };
+  const topMode = (key) => { const c = modeCounts(key); return c.length ? `${c[0][0]} (${c[0][1]})` : 'N/A'; };
+
+  const scaleAvg = (key) => {
+    const vals = withDemo.map(s => s.demo[key]).filter(v => v !== null && v !== undefined && v !== 'DBG' && !isNaN(Number(v))).map(Number);
+    return vals.length ? (vals.reduce((a,b)=>a+b,0)/vals.length) : null;
+  };
+
+  const genderCounts = modeCounts('gender');
+  const genderSummary = genderCounts.map(([g, n]) => {
+    const short = g === 'זכר' ? 'M' : g === 'נקבה' ? 'F' : g.substring(0,1).toUpperCase();
+    return `${short}:${n}`;
+  }).join(' ');
+
+  const demoStatsGrid = document.createElement('div');
+  demoStatsGrid.className = 'stats-grid';
+  [
+    ['With Demographics', `${withDemo.length} / ${allSummaries.length}`],
+    ['Avg Age', avgAge !== null ? `${avgAge.toFixed(1)} (${minAge}–${maxAge})` : 'N/A'],
+    ['Gender', genderSummary || 'N/A'],
+    ['Top Education', topMode('education')],
+    ['Top Field', topMode('field')],
+    ['Avg Nav Use', scaleAvg('navigation_use') !== null ? scaleAvg('navigation_use').toFixed(1) + ' / 7' : 'N/A'],
+    ['Avg Tech Skill', scaleAvg('tech_skill') !== null ? scaleAvg('tech_skill').toFixed(1) + ' / 7' : 'N/A'],
+    ['Avg Viz Literacy', scaleAvg('viz_literacy') !== null ? scaleAvg('viz_literacy').toFixed(1) + ' / 7' : 'N/A'],
+  ].forEach(([label, value]) => {
+    const card = document.createElement('div');
+    card.className = 'stat-card';
+    card.innerHTML = `<div class="stat-value" style="font-size:20px">${value}</div><div class="stat-label">${label}</div>`;
+    demoStatsGrid.appendChild(card);
+  });
+  demoTab.appendChild(demoStatsGrid);
+
+  const demoNote = document.createElement('div');
+  demoNote.className = 'legend';
+  demoNote.innerHTML = `<strong>${missingCount} participant(s) have no demographics data recorded.</strong>
+    <span style="background:#ffebee;border:1px solid #ef9a9a"></span> Missing field`;
+  demoTab.appendChild(demoNote);
+
+  const demoTitle = document.createElement('div');
+  demoTitle.className = 'section-title';
+  demoTitle.textContent = 'Demographics per participant';
+  demoTab.appendChild(demoTitle);
+
+  const demoTable = document.createElement('table');
+  const dthead = demoTable.createTHead();
+  const dheaderRow = dthead.insertRow();
+  const pidTh = document.createElement('th');
+  pidTh.textContent = 'Participant';
+  dheaderRow.appendChild(pidTh);
+  DEMO_FIELDS.forEach(f => {
+    const th = document.createElement('th');
+    th.textContent = f.label;
+    dheaderRow.appendChild(th);
+  });
+
+  const dtbody = demoTable.createTBody();
+  allSummaries.forEach(s => {
+    const tr = dtbody.insertRow();
+    tr.appendChild(td(s.participantId, 'left'));
+    DEMO_FIELDS.forEach(f => {
+      const el = document.createElement('td');
+      const val = s.demo ? s.demo[f.key] : undefined;
+      if (val === null || val === undefined || val === 'DBG') {
+        el.textContent = '--';
+        el.className = 'missing-red';
+      } else {
+        el.textContent = String(val);
+      }
+      tr.appendChild(el);
+    });
+  });
+
+  const demoWrap = document.createElement('div');
+  demoWrap.className = 'table-wrap';
+  demoWrap.appendChild(demoTable);
+  demoTab.appendChild(demoWrap);
+  makeSortable(demoTable);
+  wrapper.appendChild(demoTab);
+
+  overviewContent.innerHTML = '';
+  overviewContent.appendChild(wrapper);
+}
+
+// ── download helpers ───────────────────────────────────────────────────────────
+
+function addDownloadBtn(parent, label, csvFn, filename) {
+  const btn = document.createElement('button');
+  btn.textContent = label;
+  btn.onclick = () => {
+    const csv = csvFn();
+    if (!csv) { alert('No data to export.'); return; }
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a); URL.revokeObjectURL(url);
+  };
+  parent.appendChild(btn);
+}
+
+function escCell(v) {
+  const s = v === null || v === undefined ? '' : String(v);
+  return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+function csvLine(arr) { return arr.map(escCell).join(','); }
+
+function buildTrialsCsv(trials) {
+  if (!trials || !trials.length) return '';
+  const header = ['participant_id','stage','model_index','vis_index','trial_index',
+    'scenario_id','difficulty','model_type','true_route','ai_route','user_route',
+    'followed_ai','chose_true_optimal','rec_correct','start_ts','end_ts','duration_s'];
+  const rows = [header];
+  trials.forEach(t => {
+    const dur = (t.end_ts && t.start_ts) ? ((t.end_ts - t.start_ts) / 1000).toFixed(1) : '';
+    rows.push([
+      t.participant_id, t.stage, t.model_index, t.vis_index, t.trial_index,
+      t.scenario_id, t.difficulty, t.model_type,
+      t.true_route || t.correct_route, t.ai_route || t.ai_recommended_route, t.user_route,
+      t.followed_ai, t.chose_true_optimal, t.rec_correct,
+      t.start_ts, t.end_ts, dur
+    ]);
+  });
+  return rows.map(csvLine).join('\n');
+}
+
+function buildQuestionnairesCsv(questionnaires, trials) {
+  if (!questionnaires || !questionnaires.length) return '';
+  const trialMap = {};
+  (trials || []).forEach(t => { if (t && t.trial_id) trialMap[t.trial_id] = t; });
+
+  const header = ['participant_id','questionnaire_type','model_index','vis_index',
+    'trial_index','trial_id','scenario_id','difficulty','model_type',
+    'question_group','question_id','answer_value','is_correct','enter_ts','exit_ts'];
+  const rows = [header];
+
+  const push = (base, linkedTrial, group, qid, val, correct) => {
+    rows.push([
+      base.participant_id, base.questionnaire_type, base.model_index, base.vis_index,
+      base.trial_index, base.trial_id,
+      linkedTrial?.scenario_id ?? '', linkedTrial?.difficulty ?? '', linkedTrial?.model_type ?? '',
+      group, qid, val, correct, base.enter_ts, base.exit_ts
+    ]);
+  };
+
+  questionnaires.forEach(q => {
+    const base = {
+      participant_id: q.participant_id || '',
+      questionnaire_type: q.questionnaire_type || '',
+      model_index: q.model_index ?? '',
+      vis_index: q.vis_index ?? '',
+      trial_index: q.trial_index ?? '',
+      trial_id: q.trial_id || '',
+      enter_ts: q.enter_ts || '',
+      exit_ts: q.exit_ts || ''
+    };
+    const lt = base.trial_id ? trialMap[base.trial_id] : null;
+    const ans = q.answers;
+    if (!ans || typeof ans !== 'object') { push(base, lt, '', '', ans, ''); return; }
+
+    if (q.questionnaire_type === 'post_scenario') {
+      if (ans.scenario_questions) {
+        Object.entries(ans.scenario_questions).forEach(([qid, info]) => {
+          push(base, lt, 'sa', qid, info?.answer_text ?? '', info?.is_correct ?? '');
+        });
+      }
+      Object.entries(ans).forEach(([k, v]) => {
+        if (k !== 'scenario_questions') push(base, lt, 'fixed', k, v, '');
+      });
+      return;
+    }
+    if (q.questionnaire_type === 'model_summary') {
+      ['workload','trust'].forEach(g => {
+        if (ans[g] && typeof ans[g] === 'object')
+          Object.entries(ans[g]).forEach(([qid, v]) => push(base, lt, g, qid, v, ''));
+      });
+      Object.entries(ans).filter(([k]) => !['workload','trust'].includes(k)).forEach(([k, v]) => push(base, lt, '', k, v, ''));
+      return;
+    }
+    Object.entries(ans).forEach(([k, v]) => push(base, lt, q.questionnaire_type, k, v, ''));
+  });
+
+  return rows.map(csvLine).join('\n');
+}
+</script>
+</body>
+</html>

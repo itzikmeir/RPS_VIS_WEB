@@ -3391,6 +3391,28 @@
       "correct": null,
       "enter_ts": 1775553582156,
       "exit_ts": 1775553622079
+    },
+        {
+      "trial_id": null,
+      "participant_id": "P009",
+      "stage": "post",
+      "condition_index": null,
+      "model_index": null,
+      "trial_index": null,
+      "questionnaire_type": "demographics",
+      "answers": {
+        "age": 18,
+        "gender": "זכר",
+        "native_language": "עברית",
+        "education": "ללא תואר",
+        "field": "אחר",
+        "navigation_use": 6,
+        "tech_skill": 2,
+        "viz_literacy": 3
+      },
+      "correct": null,
+      "enter_ts": 1777626396472,
+      "exit_ts": 1777626440950
     }
   ],
   "interactions": [

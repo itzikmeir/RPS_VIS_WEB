@@ -3407,6 +3407,28 @@
       "correct": null,
       "enter_ts": 1774637300542,
       "exit_ts": 1774637361264
+    },
+    {
+      "trial_id": null,
+      "participant_id": "P005",
+      "stage": "post",
+      "condition_index": null,
+      "model_index": null,
+      "trial_index": null,
+      "questionnaire_type": "demographics",
+      "answers": {
+        "age": 21,
+        "gender": "זכר",
+        "native_language": "ערבית",
+        "education": "ללא תואר",
+        "field": "מדעי המחשב / הנדסה / דאטה",
+        "navigation_use": 6,
+        "tech_skill": 4,
+        "viz_literacy": 5
+      },
+      "correct": null,
+      "enter_ts": 1777626396472,
+      "exit_ts": 1777626440950
     }
   ],
   "interactions": [
