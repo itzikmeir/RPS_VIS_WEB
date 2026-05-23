@@ -49,6 +49,7 @@
     .acc-high { color: #2e7d32; font-weight: 700; }
     .acc-mid  { color: #f57c00; font-weight: 600; }
     .acc-low  { color: #c62828; font-weight: 700; }
+    .cell-green { background: #e8f5e9 !important; color: #2e7d32; font-weight: 700; }
 
     /* Downloads */
     .downloads-row { display: flex; flex-wrap: wrap; gap: 10px; margin: 16px 0; }
@@ -130,6 +131,12 @@ function mean(arr) {
   const nums = arr.filter(v => v !== null && v !== undefined && v !== 'DBG' && !isNaN(Number(v)));
   return nums.length ? nums.reduce((a, b) => a + Number(b), 0) / nums.length : null;
 }
+function sdArr(arr) {
+  const nums = arr.filter(v => v !== null && v !== undefined && v !== 'DBG' && !isNaN(Number(v))).map(Number);
+  if (nums.length < 2) return null;
+  const m = nums.reduce((a,b) => a+b, 0) / nums.length;
+  return Math.sqrt(nums.reduce((a,b) => a + (b-m)**2, 0) / (nums.length - 1));
+}
 
 function pct(correct, total) {
   return total > 0 ? (correct / total * 100) : null;
@@ -141,12 +148,16 @@ function accSubset(trials, filterFn) {
   return valid.length ? pct(valid.filter(t => t.chose_true_optimal === true).length, valid.length) : null;
 }
 
-function getVisRankingStr(answers) {
+function getVisRanks(answers) {
   const entries = Object.entries(answers)
     .filter(([k]) => k !== 'help_element')
     .map(([k, v]) => ({ label: hebrewVisToEn(k), rank: Number(v) }))
     .sort((a, b) => a.rank - b.rank);
-  return entries.map(e => e.label).join(' > ');
+  return {
+    rank1: entries[0]?.label ?? null,
+    rank2: entries[1]?.label ?? null,
+    rank3: entries[2]?.label ?? null,
+  };
 }
 
 // ── compute per-participant summary ───────────────────────────────────────────
@@ -154,10 +165,15 @@ function getVisRankingStr(answers) {
 function computeSummary(participantId, trials, questionnaires) {
   const main = trials.filter(t => t.stage !== 'practice');
 
+  // model_index → OPT/SUB mapping (counterbalanced per participant)
+  const modelTypeByIndex = {};
+  main.forEach(t => { if (t.model_type && t.model_index != null) modelTypeByIndex[t.model_index] = t.model_type; });
+
   // Time
   const durations = main.map(t => (t.end_ts && t.start_ts) ? (t.end_ts - t.start_ts) : null).filter(d => d !== null);
   const totalTimeMs = durations.reduce((a, b) => a + b, 0);
   const avgTimeMs   = durations.length ? totalTimeMs / durations.length : null;
+  const sdTimeMs    = sdArr(durations);
 
   // Accuracy
   const totalAcc = accSubset(main, () => true);
@@ -178,8 +194,9 @@ function computeSummary(participantId, trials, questionnaires) {
     .filter(q => q.questionnaire_type === 'post_scenario' && q.answers && q.answers.confidence !== undefined && q.answers.confidence !== 'DBG')
     .map(q => q.answers.confidence);
   const avgConf = mean(confVals);
+  const sdConf  = sdArr(confVals);
 
-  // SA accuracy (scenario awareness questions)
+  // SA accuracy
   let saCorrect = 0, saTotal = 0;
   questionnaires
     .filter(q => q.questionnaire_type === 'post_scenario' && q.answers && q.answers.scenario_questions)
@@ -192,38 +209,48 @@ function computeSummary(participantId, trials, questionnaires) {
       });
     });
   const saAcc = saTotal ? pct(saCorrect, saTotal) : null;
+  const saSE  = (saAcc !== null && saTotal > 0) ? Math.sqrt((saAcc/100) * (1 - saAcc/100) / saTotal) * 100 : null;
 
-  // NASA TLX per model (avg across vis × dims)
+  // NASA TLX per model TYPE (OPT/SUB) using participant-specific index→type map
   const TLX_DIMS = ['mental_demand', 'time_demand', 'performance', 'effort', 'frustration'];
-  const tlxModel = (midx) => {
-    const qs = questionnaires.filter(q => q.questionnaire_type === 'nasa_tlx' && q.model_index === midx && q.answers);
-    if (!qs.length) return null;
+  const tlxByType = (mtype) => {
+    const indices = Object.entries(modelTypeByIndex).filter(([,t]) => t === mtype).map(([i]) => Number(i));
+    const qs = questionnaires.filter(q => q.questionnaire_type === 'nasa_tlx' && indices.includes(q.model_index) && q.answers);
     const vals = [];
     qs.forEach(q => TLX_DIMS.forEach(d => { const v = q.answers[d]; if (v !== null && v !== undefined && v !== 'DBG') vals.push(Number(v)); }));
-    return mean(vals);
+    return { m: mean(vals), sd: sdArr(vals) };
   };
-  const tlxA = tlxModel(0);
-  const tlxB = tlxModel(1);
+  const tlxOpt = tlxByType('OPT');
+  const tlxSub = tlxByType('SUB');
 
-  // Trust per model (avg raw)
-  const trustModel = (midx) => {
-    const qs = questionnaires.filter(q => q.questionnaire_type === 'model_summary' && q.model_index === midx && q.answers && q.answers.trust);
-    if (!qs.length) return null;
+  // Trust per model TYPE
+  const trustByType = (mtype) => {
+    const indices = Object.entries(modelTypeByIndex).filter(([,t]) => t === mtype).map(([i]) => Number(i));
+    const qs = questionnaires.filter(q => q.questionnaire_type === 'model_summary' && indices.includes(q.model_index) && q.answers && q.answers.trust);
     const vals = [];
     qs.forEach(q => Object.values(q.answers.trust).forEach(v => { if (v !== null && v !== undefined && v !== 'DBG') vals.push(Number(v)); }));
-    return mean(vals);
+    return { m: mean(vals), sd: sdArr(vals) };
   };
-  const trustA = trustModel(0);
-  const trustB = trustModel(1);
+  const trustOpt = trustByType('OPT');
+  const trustSub = trustByType('SUB');
 
-  // Visualization preferences
+  // Visualization preferences — split into 3 rank columns
   const vg = questionnaires.find(q => q.questionnaire_type === 'visualization_global' && q.answers);
-  const visRanking = vg ? getVisRankingStr(vg.answers) : null;
-  const prefArea   = vg ? prefAreaLabel(vg.answers.help_element) : null;
+  const { rank1: visRank1 = null, rank2: visRank2 = null, rank3: visRank3 = null } = vg ? getVisRanks(vg.answers) : {};
+  const prefArea = vg ? prefAreaLabel(vg.answers.help_element) : null;
 
-  // Model preference
+  // Model preference → OPT/SUB via index mapping
   const ms = questionnaires.find(q => q.questionnaire_type === 'model_selection' && q.answers);
-  const prefModel = ms ? translateModelPref(ms.answers.model_preference) : null;
+  let prefModelIdx = null, prefModelType = null, choseOptimal = null;
+  if (ms) {
+    const pref = String(ms.answers.model_preference || '');
+    if (/A|א/i.test(pref)) prefModelIdx = 0;
+    else if (/B|ב/i.test(pref)) prefModelIdx = 1;
+  }
+  if (prefModelIdx !== null && modelTypeByIndex[prefModelIdx]) {
+    prefModelType = modelTypeByIndex[prefModelIdx];
+    choseOptimal  = prefModelType === 'OPT';
+  }
 
   // Demographics
   const dq = questionnaires.find(q => q.questionnaire_type === 'demographics' && q.answers);
@@ -234,11 +261,16 @@ function computeSummary(participantId, trials, questionnaires) {
     trials: main.length,
     totalTimeSec: durations.length ? totalTimeMs / 1000 : null,
     avgTimeSec: avgTimeMs !== null ? avgTimeMs / 1000 : null,
+    sdTimeSec:  sdTimeMs  !== null ? sdTimeMs  / 1000 : null,
     totalAcc, accOPT, accSUB, accEasy, accHard,
     accVis0, accVis1, accVis2,
-    aiFollow, avgConf, saAcc,
-    tlxA, tlxB, trustA, trustB,
-    visRanking, prefArea, prefModel, demo
+    aiFollow, avgConf, sdConf, saAcc, saSE,
+    tlxOpt: tlxOpt.m, sdTlxOpt: tlxOpt.sd,
+    tlxSub: tlxSub.m, sdTlxSub: tlxSub.sd,
+    trustOpt: trustOpt.m, sdTrustOpt: trustOpt.sd,
+    trustSub: trustSub.m, sdTrustSub: trustSub.sd,
+    visRank1, visRank2, visRank3,
+    prefArea, prefModelType, choseOptimal, demo
   };
 }
 
@@ -287,6 +319,19 @@ function numTd(v, digits = 1) {
   const el = document.createElement('td');
   const f = fmtNum(v, digits);
   el.textContent = f.text;
+  if (f.cls) el.className = f.cls;
+  return el;
+}
+function msdTd(m, sd, digits = 1) {
+  const el = document.createElement('td');
+  if (m === null || m === undefined) { el.textContent = '--'; el.className = 'missing'; return el; }
+  el.textContent = Number(m).toFixed(digits) + (sd !== null && sd !== undefined ? ` (${Number(sd).toFixed(digits)})` : '');
+  return el;
+}
+function pctSeTd(pctVal, se) {
+  const el = document.createElement('td');
+  const f = fmtPct(pctVal);
+  el.textContent = f.text + (se !== null && se !== undefined ? ` (${Number(se).toFixed(1)}%)` : '');
   if (f.cls) el.className = f.cls;
   return el;
 }
@@ -427,28 +472,31 @@ function renderOverview(results) {
   summaryTab.appendChild(summaryTitle);
 
   const SUMMARY_COLS = [
-    { label: 'Participant',     tip: 'Participant ID' },
-    { label: 'Trials',          tip: 'Number of main (non-practice) trials' },
-    { label: 'Total Time (s)',   tip: 'Sum of trial durations in seconds' },
-    { label: 'Avg Time/Trial (s)', tip: 'Average time per trial in seconds' },
-    { label: 'Accuracy %',      tip: 'Overall % trials where participant chose the truly optimal route' },
-    { label: 'Acc OPT %',       tip: 'Accuracy when model_type=OPT (AI recommendation was correct)' },
-    { label: 'Acc SUB %',       tip: 'Accuracy when model_type=SUB (AI recommendation was suboptimal)' },
-    { label: 'Acc Easy %',      tip: 'Accuracy on Easy difficulty scenarios' },
-    { label: 'Acc Hard %',      tip: 'Accuracy on Hard difficulty scenarios' },
-    { label: 'Acc Stacked %',   tip: 'Accuracy when vis_index=0 (Stacked bars)' },
-    { label: 'Acc Radar %',     tip: 'Accuracy when vis_index=1 (Radar chart)' },
-    { label: 'Acc HeatMap %',   tip: 'Accuracy when vis_index=2 (Heat map)' },
-    { label: 'AI Follow %',     tip: 'Rate of following AI recommendation (followed_ai=true)' },
-    { label: 'Avg Confidence',  tip: 'Average post-trial confidence rating (-10 to +10)' },
-    { label: 'SA Acc %',        tip: 'Situational awareness: % correct on scenario knowledge questions' },
-    { label: 'TLX Model A',     tip: 'Avg NASA-TLX score for Model A (all dims, all vis, -10 to +10)' },
-    { label: 'TLX Model B',     tip: 'Avg NASA-TLX score for Model B (all dims, all vis, -10 to +10)' },
-    { label: 'Trust Model A',   tip: 'Avg raw trust score for Model A (trust1–12, 1–7 scale)' },
-    { label: 'Trust Model B',   tip: 'Avg raw trust score for Model B (trust1–12, 1–7 scale)' },
-    { label: 'Vis Ranking',     tip: 'Visualization preference ranking (most → least preferred)' },
-    { label: 'Pref. Area',      tip: 'Most helpful UI screen area' },
-    { label: 'Pref. Model',     tip: 'Preferred AI model (model_selection)' },
+    { label: 'Participant',          tip: 'Participant ID' },
+    { label: 'Trials',               tip: 'Number of main (non-practice) trials' },
+    { label: 'Total Time (s)',        tip: 'Sum of trial durations in seconds' },
+    { label: 'Avg Time/Trial (s)',    tip: 'Average time per trial in seconds (SD)' },
+    { label: 'Correct Trials (%)',   tip: 'Overall % trials where participant chose the truly optimal route' },
+    { label: 'Acc OPT %',            tip: 'Accuracy when model_type=OPT (AI recommendation was correct)' },
+    { label: 'Acc SUB %',            tip: 'Accuracy when model_type=SUB (AI recommendation was suboptimal)' },
+    { label: 'Acc Easy %',           tip: 'Accuracy on Easy difficulty scenarios' },
+    { label: 'Acc Hard %',           tip: 'Accuracy on Hard difficulty scenarios' },
+    { label: 'Acc Stacked %',        tip: 'Accuracy when vis_index=0 (Stacked bars)' },
+    { label: 'Acc Radar %',          tip: 'Accuracy when vis_index=1 (Radar chart)' },
+    { label: 'Acc HeatMap %',        tip: 'Accuracy when vis_index=2 (Heat map)' },
+    { label: 'AI Follow %',          tip: 'Rate of following AI recommendation (followed_ai=true)' },
+    { label: 'Avg Confidence',       tip: 'Average post-trial confidence rating (-10 to +10), M (SD)' },
+    { label: 'SA Acc %',             tip: 'Situational awareness: % correct on scenario questions (SE%)' },
+    { label: 'TLX OPT',             tip: 'Avg NASA-TLX for Optimal model, M (SD), -10 to +10' },
+    { label: 'TLX SUB',             tip: 'Avg NASA-TLX for Suboptimal model, M (SD), -10 to +10' },
+    { label: 'Trust OPT',           tip: 'Avg TIAS trust for Optimal model, M (SD), 1–7 scale' },
+    { label: 'Trust SUB',           tip: 'Avg TIAS trust for Suboptimal model, M (SD), 1–7 scale' },
+    { label: 'Vis 1',               tip: 'Most preferred visualization type' },
+    { label: 'Vis 2',               tip: 'Second preferred visualization type' },
+    { label: 'Vis 3',               tip: 'Least preferred visualization type' },
+    { label: 'Pref. Area',          tip: 'Most helpful UI screen area' },
+    { label: 'Model Choice',        tip: 'Preferred AI model: OPT or SUB (green = OPT chosen)' },
+    { label: 'Chose Optimal?',      tip: 'Did the participant prefer the optimal AI model?' },
   ];
 
   const summaryTable = document.createElement('table');
@@ -467,7 +515,7 @@ function renderOverview(results) {
     tr.appendChild(td(s.participantId, 'left'));
     tr.appendChild(td(s.trials));
     tr.appendChild(numTd(s.totalTimeSec, 0));
-    tr.appendChild(numTd(s.avgTimeSec, 1));
+    tr.appendChild(msdTd(s.avgTimeSec, s.sdTimeSec, 1));
     tr.appendChild(pctTd(s.totalAcc));
     tr.appendChild(pctTd(s.accOPT));
     tr.appendChild(pctTd(s.accSUB));
@@ -477,18 +525,26 @@ function renderOverview(results) {
     tr.appendChild(pctTd(s.accVis1));
     tr.appendChild(pctTd(s.accVis2));
     tr.appendChild(pctTd(s.aiFollow));
-    tr.appendChild(numTd(s.avgConf, 1));
-    tr.appendChild(pctTd(s.saAcc));
-    tr.appendChild(numTd(s.tlxA, 1));
-    tr.appendChild(numTd(s.tlxB, 1));
-    tr.appendChild(numTd(s.trustA, 2));
-    tr.appendChild(numTd(s.trustB, 2));
-    const visEl = document.createElement('td');
-    if (s.visRanking) { visEl.textContent = s.visRanking; visEl.title = s.visRanking; }
-    else { visEl.textContent = '--'; visEl.className = 'missing'; }
-    tr.appendChild(visEl);
+    tr.appendChild(msdTd(s.avgConf, s.sdConf, 1));
+    tr.appendChild(pctSeTd(s.saAcc, s.saSE));
+    tr.appendChild(msdTd(s.tlxOpt, s.sdTlxOpt, 1));
+    tr.appendChild(msdTd(s.tlxSub, s.sdTlxSub, 1));
+    tr.appendChild(msdTd(s.trustOpt, s.sdTrustOpt, 2));
+    tr.appendChild(msdTd(s.trustSub, s.sdTrustSub, 2));
+    tr.appendChild(s.visRank1 ? td(s.visRank1) : td(null));
+    tr.appendChild(s.visRank2 ? td(s.visRank2) : td(null));
+    tr.appendChild(s.visRank3 ? td(s.visRank3) : td(null));
     tr.appendChild(s.prefArea ? td(s.prefArea) : td(null));
-    tr.appendChild(s.prefModel ? td(s.prefModel) : td(null));
+    // Model Choice — OPT/SUB, green when OPT
+    const mcEl = document.createElement('td');
+    if (s.prefModelType) { mcEl.textContent = s.prefModelType; if (s.prefModelType === 'OPT') mcEl.className = 'cell-green'; }
+    else { mcEl.textContent = '--'; mcEl.className = 'missing'; }
+    tr.appendChild(mcEl);
+    // Chose Optimal?
+    const coEl = document.createElement('td');
+    if (s.choseOptimal !== null && s.choseOptimal !== undefined) { coEl.textContent = s.choseOptimal ? 'Yes' : 'No'; if (s.choseOptimal) coEl.className = 'cell-green'; }
+    else { coEl.textContent = '--'; coEl.className = 'missing'; }
+    tr.appendChild(coEl);
   });
 
   const summaryWrap = document.createElement('div');
