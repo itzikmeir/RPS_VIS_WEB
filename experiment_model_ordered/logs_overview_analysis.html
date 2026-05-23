@@ -545,7 +545,6 @@ function renderOverview(results) {
   const demoStatsGrid = document.createElement('div');
   demoStatsGrid.className = 'stats-grid';
   [
-    ['With Demographics', `${withDemo.length} / ${allSummaries.length}`],
     ['Avg Age', avgAge !== null ? `${avgAge.toFixed(1)} (${minAge}–${maxAge})` : 'N/A'],
     ['Gender', genderSummary || 'N/A'],
     ['Top Education', topMode('education')],
