@@ -31,6 +31,7 @@
     .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(175px, 1fr)); gap: 12px; margin: 0 0 20px 0; }
     .stat-card { background: #f8fafd; padding: 16px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); text-align: center; border: 1px solid #e3eaf4; }
     .stat-value { font-size: 26px; font-weight: 700; color: #1976d2; margin: 6px 0; }
+    .stat-sd { font-size: 11px; color: #888; margin: 2px 0; }
     .stat-label { font-size: 12px; color: #666; }
 
     /* Table */
@@ -56,6 +57,18 @@
     .section-title { font-size: 15px; font-weight: 700; color: #333; margin: 20px 0 8px 0; border-bottom: 1px solid #e0e0e0; padding-bottom: 6px; }
     .legend { font-size: 12px; color: #777; margin-bottom: 8px; }
     .legend span { display: inline-block; width: 14px; height: 14px; border-radius: 3px; vertical-align: middle; margin-right: 4px; }
+    .btn-green { background: #388e3c; }
+    .btn-green:hover:not(:disabled) { background: #2e7d32; }
+    .btn-orange { background: #f57c00; }
+    .btn-orange:hover:not(:disabled) { background: #e65100; }
+
+    @media print {
+      .input-section, .downloads-row, .tabs { display: none !important; }
+      .tab-content { display: block !important; }
+      body { background: white; padding: 0; }
+      .container { box-shadow: none; padding: 10px; }
+      th { position: static; }
+    }
   </style>
 </head>
 <body>
@@ -270,7 +283,8 @@ function computeSummary(participantId, trials, questionnaires) {
     trustOpt: trustOpt.m, sdTrustOpt: trustOpt.sd,
     trustSub: trustSub.m, sdTrustSub: trustSub.sd,
     visRank1, visRank2, visRank3,
-    prefArea, prefModelType, choseOptimal, demo
+    prefArea, prefModelType, choseOptimal, demo,
+    modelTypeByIndex
   };
 }
 
@@ -431,19 +445,29 @@ function renderOverview(results) {
   allQuestionnaires.filter(q => q.questionnaire_type === 'nasa_tlx' && q.answers).forEach(q => TLX_DIMS.forEach(d => { const v = q.answers[d]; if (v !== null && v !== undefined && v !== 'DBG') tlxAll.push(Number(v)); }));
   const overallTLX = mean(tlxAll);
 
+  // cross-participant SD for stat cards
+  const sdAccCard  = sdArr(allSummaries.map(s => s.totalAcc).filter(v => v !== null));
+  const sdFollowCard = sdArr(allSummaries.map(s => s.aiFollow).filter(v => v !== null));
+  const sdConfCard = sdArr(allSummaries.map(s => s.avgConf).filter(v => v !== null));
+  const perPaxTLX  = allSummaries.map(s => {
+    const vals = [s.tlxOpt, s.tlxSub].filter(v => v !== null && v !== undefined);
+    return vals.length ? vals.reduce((a,b) => a+b, 0) / vals.length : null;
+  }).filter(v => v !== null);
+  const sdTLXCard  = sdArr(perPaxTLX);
+
   const statsGrid = document.createElement('div');
   statsGrid.className = 'stats-grid';
   [
-    ['Participants', valid.length],
-    ['Main Trials', mainTrials.length],
-    ['Overall Accuracy', overallCorrect !== null ? overallCorrect.toFixed(1) + '%' : 'N/A'],
-    ['AI Follow Rate', overallFollow !== null ? overallFollow.toFixed(1) + '%' : 'N/A'],
-    ['Avg Confidence', overallConf !== null ? overallConf.toFixed(1) : 'N/A'],
-    ['Avg TLX (all)', overallTLX !== null ? overallTLX.toFixed(1) : 'N/A'],
-  ].forEach(([label, value]) => {
+    ['Participants',    valid.length,                                                                    null],
+    ['Main Trials',     mainTrials.length,                                                              null],
+    ['Overall Accuracy',overallCorrect !== null ? overallCorrect.toFixed(1) + '%' : 'N/A',             sdAccCard !== null   ? 'SD = ' + sdAccCard.toFixed(1) + '%'   : null],
+    ['AI Follow Rate',  overallFollow  !== null ? overallFollow.toFixed(1)  + '%' : 'N/A',             sdFollowCard !== null ? 'SD = ' + sdFollowCard.toFixed(1) + '%' : null],
+    ['Avg Confidence',  overallConf    !== null ? overallConf.toFixed(1)         : 'N/A',              sdConfCard !== null  ? 'SD = ' + sdConfCard.toFixed(1)         : null],
+    ['Avg TLX (all)',   overallTLX     !== null ? overallTLX.toFixed(1)          : 'N/A',              sdTLXCard  !== null  ? 'SD = ' + sdTLXCard.toFixed(1)          : null],
+  ].forEach(([label, value, sdLine]) => {
     const card = document.createElement('div');
     card.className = 'stat-card';
-    card.innerHTML = `<div class="stat-value">${value}</div><div class="stat-label">${label}</div>`;
+    card.innerHTML = `<div class="stat-value">${value}</div>${sdLine ? `<div class="stat-sd">${sdLine}</div>` : ''}<div class="stat-label">${label}</div>`;
     statsGrid.appendChild(card);
   });
   summaryTab.appendChild(statsGrid);
@@ -453,6 +477,13 @@ function renderOverview(results) {
   downloadsRow.className = 'downloads-row';
   addDownloadBtn(downloadsRow, 'Download Questionnaires CSV', () => buildQuestionnairesCsv(allQuestionnaires, allTrials), 'questionnaires_model_ordered.csv');
   addDownloadBtn(downloadsRow, 'Download Trials CSV', () => buildTrialsCsv(allTrials), 'trials_model_ordered.csv');
+  addDownloadBtn(downloadsRow, 'Download All Data CSV', () => buildSummaryCsv(allSummaries), 'all_data_model_ordered.csv', 'btn-green');
+  addDownloadBtn(downloadsRow, 'Download Full Dataset CSV', () => buildFullDatasetCsv(allTrials, allQuestionnaires, allSummaries), 'full_dataset_model_ordered.csv', 'btn-green');
+  const pdfBtn = document.createElement('button');
+  pdfBtn.textContent = 'Download PDF';
+  pdfBtn.className = 'btn-orange';
+  pdfBtn.onclick = () => window.print();
+  downloadsRow.appendChild(pdfBtn);
   summaryTab.appendChild(downloadsRow);
 
   // legend
@@ -669,9 +700,10 @@ function renderOverview(results) {
 
 // ── download helpers ───────────────────────────────────────────────────────────
 
-function addDownloadBtn(parent, label, csvFn, filename) {
+function addDownloadBtn(parent, label, csvFn, filename, extraClass) {
   const btn = document.createElement('button');
   btn.textContent = label;
+  if (extraClass) btn.className = extraClass;
   btn.onclick = () => {
     const csv = csvFn();
     if (!csv) { alert('No data to export.'); return; }
@@ -766,6 +798,147 @@ function buildQuestionnairesCsv(questionnaires, trials) {
     Object.entries(ans).forEach(([k, v]) => push(base, lt, q.questionnaire_type, k, v, ''));
   });
 
+  return rows.map(csvLine).join('\n');
+}
+
+function buildFullDatasetCsv(trials, questionnaires, summaries) {
+  if (!trials || !trials.length) return '';
+
+  // demo lookup by participant
+  const demoMap = {};
+  summaries.forEach(s => { if (s.demo) demoMap[s.participantId] = s.demo; });
+
+  // post_scenario lookup: trial_id → {confidence, sa_correct, sa_total}
+  const psById  = {};  // keyed by trial_id
+  const psByKey = {};  // keyed by pid_modelIndex_visIndex_trialIndex (fallback)
+  questionnaires.filter(q => q.questionnaire_type === 'post_scenario' && q.answers).forEach(q => {
+    const conf = (q.answers.confidence !== undefined && q.answers.confidence !== 'DBG') ? Number(q.answers.confidence) : null;
+    let saCorrect = 0, saTotal = 0;
+    if (q.answers.scenario_questions) {
+      Object.values(q.answers.scenario_questions).forEach(sq => {
+        if (sq && sq.is_correct !== undefined && sq.is_correct !== null) {
+          saTotal++;
+          if (sq.is_correct === true) saCorrect++;
+        }
+      });
+    }
+    const entry = { conf, saCorrect: saTotal ? saCorrect : null, saTotal: saTotal || null };
+    if (q.trial_id) psById[q.trial_id] = entry;
+    const k = `${q.participant_id}_${q.model_index}_${q.vis_index}_${q.trial_index}`;
+    psByKey[k] = entry;
+  });
+
+  // NASA-TLX lookup: pid_modelIndex_visIndex → {mental_demand, time_demand, performance, effort, frustration}
+  const tlxMap = {};
+  questionnaires.filter(q => q.questionnaire_type === 'nasa_tlx' && q.answers).forEach(q => {
+    const k = `${q.participant_id}_${q.model_index}_${q.vis_index}`;
+    tlxMap[k] = q.answers;
+  });
+
+  // TIAS lookup: pid_modelIndex → trust answers (one per model, no vis_index)
+  const tiasMap = {};
+  questionnaires.filter(q => q.questionnaire_type === 'model_summary' && q.answers && q.answers.trust).forEach(q => {
+    const k = `${q.participant_id}_${q.model_index}`;
+    tiasMap[k] = q.answers.trust;
+  });
+
+  const TLX_DIMS = ['mental_demand','time_demand','performance','effort','frustration'];
+  const TIAS_ITEMS = ['trust1','trust2','trust3','trust4','trust5','trust6','trust7','trust8','trust9','trust10','trust11','trust12'];
+  const VIS_NAMES = { '0': 'Stacked', '1': 'Radar', '2': 'HeatMap' };
+  const fmt = (v, digits = 1) => (v !== null && v !== undefined) ? Number(v).toFixed(digits) : '';
+
+  const header = [
+    'participant_id','stage','trial_index','scenario_id','difficulty',
+    'model_index','model_type','vis_index','vis_name',
+    'true_route','ai_route','user_route',
+    'rec_correct','followed_ai','chose_true_optimal',
+    'start_ts','end_ts','duration_s',
+    'confidence','sa_correct','sa_total',
+    'tlx_mean','tlx_mental_demand','tlx_time_demand','tlx_performance','tlx_effort','tlx_frustration',
+    'tias_mean','tias_trust1','tias_trust2','tias_trust3','tias_trust4','tias_trust5','tias_trust6',
+    'tias_trust7','tias_trust8','tias_trust9','tias_trust10','tias_trust11','tias_trust12',
+    'age','gender','native_language','education','field',
+    'navigation_use','tech_skill','viz_literacy'
+  ];
+
+  const rows = [header];
+  trials.forEach(t => {
+    const pid = t.participant_id || '';
+    const dur = (t.end_ts && t.start_ts) ? ((t.end_ts - t.start_ts) / 1000).toFixed(2) : '';
+    const psKey = `${pid}_${t.model_index}_${t.vis_index}_${t.trial_index}`;
+    const ps = (t.trial_id && psById[t.trial_id]) || psByKey[psKey] || {};
+    const demo = demoMap[pid] || {};
+
+    const tlx = tlxMap[`${pid}_${t.model_index}_${t.vis_index}`] || {};
+    const tlxDims = TLX_DIMS.map(d => tlx[d] !== undefined && tlx[d] !== null && tlx[d] !== 'DBG' ? Number(tlx[d]).toFixed(1) : '');
+    const tlxVals = tlxDims.map(Number).filter((v, i) => tlxDims[i] !== '');
+    const tlxMean = tlxVals.length ? (tlxVals.reduce((a,b) => a+b, 0) / tlxVals.length).toFixed(2) : '';
+
+    const tias = tiasMap[`${pid}_${t.model_index}`] || {};
+    const tiasDims = TIAS_ITEMS.map(k => tias[k] !== undefined && tias[k] !== null && tias[k] !== 'DBG' ? Number(tias[k]).toFixed(0) : '');
+    const tiasVals = tiasDims.map(Number).filter((v, i) => tiasDims[i] !== '');
+    const tiasMean = tiasVals.length ? (tiasVals.reduce((a,b) => a+b, 0) / tiasVals.length).toFixed(2) : '';
+
+    rows.push([
+      pid, t.stage ?? '', t.trial_index ?? '', t.scenario_id ?? '', t.difficulty ?? '',
+      t.model_index ?? '', t.model_type ?? '',
+      t.vis_index ?? '', VIS_NAMES[String(t.vis_index)] ?? '',
+      t.true_route || t.correct_route || '',
+      t.ai_route || t.ai_recommended_route || '',
+      t.user_route ?? '',
+      t.rec_correct ?? '', t.followed_ai ?? '', t.chose_true_optimal ?? '',
+      t.start_ts ?? '', t.end_ts ?? '', dur,
+      ps.conf !== undefined && ps.conf !== null ? fmt(ps.conf) : '',
+      ps.saCorrect !== null && ps.saCorrect !== undefined ? ps.saCorrect : '',
+      ps.saTotal  !== null && ps.saTotal  !== undefined ? ps.saTotal  : '',
+      tlxMean, ...tlxDims,
+      tiasMean, ...tiasDims,
+      demo.age ?? '', demo.gender ?? '', demo.native_language ?? '',
+      demo.education ?? '', demo.field ?? '',
+      demo.navigation_use ?? '', demo.tech_skill ?? '', demo.viz_literacy ?? ''
+    ]);
+  });
+  return rows.map(csvLine).join('\n');
+}
+
+function buildSummaryCsv(summaries) {
+  if (!summaries || !summaries.length) return '';
+  const header = [
+    'participant_id','trials',
+    'total_time_s','avg_time_trial_s','sd_time_s',
+    'correct_pct','acc_opt_pct','acc_sub_pct','acc_easy_pct','acc_hard_pct',
+    'acc_stacked_pct','acc_radar_pct','acc_heatmap_pct',
+    'ai_follow_pct',
+    'avg_confidence','sd_confidence',
+    'sa_acc_pct','sa_se_pct',
+    'tlx_opt','sd_tlx_opt','tlx_sub','sd_tlx_sub',
+    'trust_opt','sd_trust_opt','trust_sub','sd_trust_sub',
+    'vis_rank1','vis_rank2','vis_rank3','pref_area',
+    'model_choice','chose_optimal',
+    'age','gender','native_language','education','field',
+    'navigation_use','tech_skill','viz_literacy'
+  ];
+  const fmt = (v, digits = 1) => (v !== null && v !== undefined) ? Number(v).toFixed(digits) : '';
+  const rows = [header];
+  summaries.forEach(s => {
+    rows.push([
+      s.participantId, s.trials,
+      fmt(s.totalTimeSec, 0), fmt(s.avgTimeSec, 2), fmt(s.sdTimeSec, 2),
+      fmt(s.totalAcc), fmt(s.accOPT), fmt(s.accSUB), fmt(s.accEasy), fmt(s.accHard),
+      fmt(s.accVis0), fmt(s.accVis1), fmt(s.accVis2),
+      fmt(s.aiFollow),
+      fmt(s.avgConf), fmt(s.sdConf),
+      fmt(s.saAcc), fmt(s.saSE),
+      fmt(s.tlxOpt), fmt(s.sdTlxOpt), fmt(s.tlxSub), fmt(s.sdTlxSub),
+      fmt(s.trustOpt, 2), fmt(s.sdTrustOpt, 2), fmt(s.trustSub, 2), fmt(s.sdTrustSub, 2),
+      s.visRank1 ?? '', s.visRank2 ?? '', s.visRank3 ?? '', s.prefArea ?? '',
+      s.prefModelType ?? '',
+      s.choseOptimal !== null && s.choseOptimal !== undefined ? (s.choseOptimal ? 'Yes' : 'No') : '',
+      s.demo?.age ?? '', s.demo?.gender ?? '', s.demo?.native_language ?? '',
+      s.demo?.education ?? '', s.demo?.field ?? '',
+      s.demo?.navigation_use ?? '', s.demo?.tech_skill ?? '', s.demo?.viz_literacy ?? ''
+    ]);
+  });
   return rows.map(csvLine).join('\n');
 }
 </script>

@@ -12,6 +12,8 @@ from typing import Dict, Tuple
 
 import pandas as pd
 
+from route_utils import normalize_route_hebrew
+
 # Scripts live in python_scripts/; project root is parent
 ROOT_DIR = Path(__file__).resolve().parent.parent
 INPUT_EXCEL = ROOT_DIR / "Model_Ordered_experiment" / "models_rec_long.xlsx"
@@ -69,8 +71,21 @@ def build_recommendation_map() -> Dict[Tuple[str, str], Dict[str, str]]:
             continue
 
         rec_correct = None if is_nan(row.get("Rec_Correct")) else str(row.get("Rec_Correct")).strip()
-        correct_answer = None if is_nan(row.get("Correct_Answer")) else str(row.get("Correct_Answer")).strip()
-        system_rec = None if is_nan(row.get("System_Recommendation")) else str(row.get("System_Recommendation")).strip()
+        # Normalize to the canonical "א׳"/"ב׳"/"ג׳" (Hebrew geresh) spelling app.js
+        # expects for its strict string-equality checks. Excel round-trips are
+        # prone to turning the geresh into a straight apostrophe or dropping it
+        # entirely (e.g. "ג" vs "ג'" vs "ג׳") which silently breaks scoring.
+        correct_answer = normalize_route_hebrew(row.get("Correct_Answer"))
+        system_rec = normalize_route_hebrew(row.get("System_Recommendation"))
+
+        if correct_answer is None and not is_nan(row.get("Correct_Answer")):
+            print(f"[WARN] Unrecognized Correct_Answer '{row.get('Correct_Answer')}' for {pid}/{scenario_id} – left as-is.")
+        if system_rec is None and not is_nan(row.get("System_Recommendation")):
+            print(f"[WARN] Unrecognized System_Recommendation '{row.get('System_Recommendation')}' for {pid}/{scenario_id} – left as-is.")
+        if rec_correct == "כן" and correct_answer and system_rec and correct_answer != system_rec:
+            print(f"[WARN] Rec_Correct=כן but Correct_Answer != System_Recommendation for {pid}/{scenario_id}.")
+        if rec_correct == "לא" and correct_answer and system_rec and correct_answer == system_rec:
+            print(f"[WARN] Rec_Correct=לא but Correct_Answer == System_Recommendation for {pid}/{scenario_id} (recommendation isn't actually wrong).")
 
         mapping[(pid, scenario_id)] = {
             "rec_correct": rec_correct,

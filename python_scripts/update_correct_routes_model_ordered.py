@@ -12,6 +12,8 @@ from typing import Dict
 
 import pandas as pd
 
+from route_utils import normalize_route_hebrew
+
 # Scripts live in python_scripts/; project root is parent
 ROOT_DIR = Path(__file__).resolve().parent.parent
 INPUT_EXCEL = ROOT_DIR / "SCN_Questions_catalog.xlsx"
@@ -63,8 +65,9 @@ def _fill_map(df, mapping: Dict[str, str], id_col: str) -> None:
         if is_nan(correct_raw):
             continue
 
-        correct_route = str(correct_raw).strip()
+        correct_route = normalize_route_hebrew(correct_raw)
         if not correct_route:
+            print(f"[WARN] Unrecognized CORRECT_ROUTE '{correct_raw}' – skipping row.")
             continue
 
         base_id = row.get(id_col)

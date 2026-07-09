@@ -19,6 +19,8 @@
     button { padding: 10px 20px; border-radius: 6px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; background: #1976d2; color: #fff; transition: background 0.2s; }
     button:hover:not(:disabled) { background: #1565c0; }
     button:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-download { background: #2e7d32; }
+    .btn-download:hover:not(:disabled) { background: #1b5e20; }
     .error { color: #c62828; margin-top: 10px; padding: 10px; background: #ffebee; border-radius: 6px; display: none; }
     .error.show { display: block; }
     .participant-header { background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); padding: 20px; border-radius: 8px; margin-bottom: 30px; }
@@ -81,6 +83,7 @@
         <label for="participantId">Participant ID:</label>
         <input type="text" id="participantId" placeholder="P001" />
         <button id="loadBtn">Load Log Results</button>
+        <button id="downloadCsvBtn" class="btn-download" disabled>&#11015; Download CSV</button>
       </div>
       <div id="error" class="error"></div>
     </div>
@@ -89,9 +92,27 @@
 
   <script>
     const loadBtn = document.getElementById('loadBtn');
+    const downloadCsvBtn = document.getElementById('downloadCsvBtn');
     const pidInput = document.getElementById('participantId');
     const errorBox = document.getElementById('error');
     const resultsBox = document.getElementById('results');
+    let currentLogData = null;
+    let currentPid = null;
+
+    downloadCsvBtn.addEventListener('click', () => {
+      if (!currentLogData || !currentPid) return;
+      const csv = buildFullCsv(currentLogData, currentPid);
+      if (!csv) { alert('No data to export.'); return; }
+      const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${currentPid}_full_data.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    });
 
     loadBtn.addEventListener('click', () => {
       const raw = pidInput.value.trim();
@@ -124,11 +145,17 @@
           const scheduleRes = await fetch(`participants_json/${pid}.json`, { cache: "no-store" });
           if (scheduleRes.ok) schedule = await scheduleRes.json();
         } catch (e) { console.warn("Could not load participant schedule:", e); }
+        currentLogData = data;
+        currentPid = pid;
+        downloadCsvBtn.disabled = false;
         renderResults(data, pid, schedule);
       } catch (e) {
         console.error(e);
         showError("Error loading or parsing log file. See console for details.");
         resultsBox.innerHTML = '';
+        currentLogData = null;
+        currentPid = null;
+        downloadCsvBtn.disabled = true;
       } finally { loadBtn.disabled = false; }
     }
 
@@ -748,6 +775,141 @@
         return /[",\n]/.test(str) ? '"' + str.replace(/"/g, '""') + '"' : str;
       };
       return rows.map(row => row.map(escapeCell).join(',')).join('\n');
+    }
+
+    function buildFullCsv(logData, pid) {
+      const pages = logData.pages || [];
+      const trials = logData.trials || [];
+      const questionnaires = logData.questionnaires || [];
+
+      const ROUTE_MAP  = { "א׳": "Route_A", "ב׳": "Route_B", "ג׳": "Route_C" };
+      const VIS_MAP    = { "עמודות נערמות": "stacked_bars", "עמודות מוערמות": "stacked_bars", "רדאר": "radar", "מפת חום": "heatmap" };
+      const RTEXT_MAP  = { "מסלול א": "Route_A", "מסלול ב": "Route_B", "מסלול ג": "Route_C", "לא יודע/ת": "dont_know" };
+      const SCN_VIS    = { "S": "stacked_bars", "R": "radar", "H": "heatmap" };
+      const GENDER_MAP = { "נקבה": "female", "זכר": "male", "אחר": "other", "אחר/ת": "other", "לא מעוניין/ת לציין": "prefer_not_to_say" };
+      const LANG_MAP   = { "עברית": "Hebrew", "ערבית": "Arabic", "אנגלית": "English", "רוסית": "Russian", "אמהרית": "Amharic", "צרפתית": "French", "ספרדית": "Spanish" };
+      const EDU_MAP    = { "תואר ראשון": "bachelor", "תואר שני": "master", "תואר שלישי": "doctorate", "תיכון": "high_school", "תעודת הנדסאי/טכנאי": "technician_diploma", "אחר": "other" };
+
+      const tr = heb => ROUTE_MAP[heb] || heb || '';
+      const trText = text => {
+        if (!text) return '';
+        return text.split(',').map(p => RTEXT_MAP[p.trim()] || p.trim()).join(' | ');
+      };
+      const vKey = (mi, vi) => `${mi}_${vi}`;
+      const val = v => (v != null) ? v : '';
+
+      // Build vis and model-type maps from pages
+      const visNameMap = {}, modelTypeMap = {};
+      pages.forEach(p => {
+        const m = p.metadata || {};
+        if (p.page_type === 'vis_intro' && m.model_index != null)
+          visNameMap[vKey(m.model_index, m.vis_index)] = VIS_MAP[m.visualization] || m.visualization || '';
+        else if (p.page_type === 'model_intro' && m.model_index != null)
+          modelTypeMap[m.model_index] = m.model_type || '';
+      });
+
+      // Build questionnaire lookups
+      const postScQ = {}, nasaQ = {}, modelSumQ = {};
+      let modelSelAns = null, visGlobalAns = null, demoAns = null;
+      questionnaires.forEach(q => {
+        const qt = q.questionnaire_type;
+        if (qt === 'post_scenario' && q.trial_id) postScQ[q.trial_id] = q;
+        else if (qt === 'nasa_tlx')          nasaQ[vKey(q.model_index, q.vis_index)] = q.answers || {};
+        else if (qt === 'model_summary')     modelSumQ[q.model_index] = q.answers || {};
+        else if (qt === 'model_selection')   modelSelAns = q.answers || {};
+        else if (qt === 'visualization_global') visGlobalAns = q.answers || {};
+        else if (qt === 'demographics')      demoAns = q.answers || {};
+      });
+
+      const prefRaw = (modelSelAns && modelSelAns.model_preference) || '';
+      const modelPref = prefRaw.includes('A') ? 'model_A_M0' : prefRaw.includes('B') ? 'model_B_M1' : prefRaw;
+
+      const vg = visGlobalAns || {};
+      const visRankStacked = val(vg["עמודות מוערמות"] ?? vg["עמודות נערמות"]);
+      const visRankRadar   = val(vg["רדאר"]);
+      const visRankHeatmap = val(vg["מפת חום"]);
+      const visHelpOpt     = (vg.help_element || '')[0] || '';
+
+      const demo     = demoAns || {};
+      const demoGender = GENDER_MAP[demo.gender] || demo.gender || '';
+      const demoLang   = LANG_MAP[demo.native_language]  || demo.native_language  || '';
+      const demoEdu    = EDU_MAP[demo.education]         || demo.education         || '';
+
+      const headers = [
+        "participant_id","stage","model_index","model_type","vis_index","visualization",
+        "trial_index","scenario_id","scenario_vis_type","difficulty",
+        "true_route","ai_route","ai_was_correct","user_route","followed_ai","chose_true_optimal",
+        "trial_duration_sec","questionnaire_duration_sec",
+        "q_confidence","q_mental_workload",
+        "q_sa1_answer","q_sa1_correct_answer","q_sa1_is_correct",
+        "q_sa2_answer","q_sa2_correct_answer","q_sa2_is_correct",
+        "nasa_mental_demand","nasa_time_demand","nasa_performance","nasa_effort","nasa_frustration",
+        "model_trust1","model_trust2","model_trust3","model_trust4","model_trust5","model_trust6",
+        "model_trust7","model_trust8","model_trust9","model_trust10","model_trust11","model_trust12",
+        "model_preference",
+        "vis_rank_stacked_bars","vis_rank_radar","vis_rank_heatmap","vis_help_element_option",
+        "demo_age","demo_gender","demo_native_language","demo_education","demo_field",
+        "demo_navigation_use","demo_tech_skill","demo_viz_literacy"
+      ];
+
+      const rows = [headers];
+      trials.forEach(trial => {
+        const mi = trial.model_index, vi = trial.vis_index;
+        const vk = vKey(mi, vi);
+        const scenId = trial.scenario_id || '';
+        const scnSfx = scenId.split('_').pop();
+        const trueRt = tr(trial.true_route), aiRt = tr(trial.ai_route), userRt = tr(trial.user_route);
+        const trialDur = (trial.start_ts != null && trial.end_ts != null)
+          ? ((trial.end_ts - trial.start_ts) / 1000).toFixed(2) : '';
+        const modelType = trial.model_type || modelTypeMap[mi] || '';
+        const visName   = (mi != null && vi != null) ? (visNameMap[vk] || '') : '';
+
+        const pqRec  = postScQ[trial.trial_id] || {};
+        const pqAns  = pqRec.answers || {};
+        const pqCorr = pqRec.correct || {};
+        const pqDur  = (pqRec.enter_ts != null && pqRec.exit_ts != null)
+          ? ((pqRec.exit_ts - pqRec.enter_ts) / 1000).toFixed(2) : '';
+        const sq = pqAns.scenario_questions || {};
+        const sa1 = sq.sa_1 || {}, sa2 = sq.sa_2 || {};
+
+        const nasa  = nasaQ[vk] || {};
+        const trust = (modelSumQ[mi] || {}).trust || {};
+
+        rows.push([
+          trial.participant_id || pid, trial.stage || '',
+          mi != null ? mi : '', modelType,
+          vi != null ? vi : '', visName,
+          val(trial.trial_index), scenId,
+          SCN_VIS[scnSfx] || '',
+          trial.difficulty === 'E' ? 'easy' : trial.difficulty === 'H' ? 'hard' : (trial.difficulty || ''),
+          trueRt, aiRt,
+          (trueRt && aiRt) ? (trueRt === aiRt) : '',
+          userRt,
+          val(trial.followed_ai), val(trial.chose_true_optimal),
+          trialDur, pqDur,
+          val(pqAns.confidence), val(pqAns.mental_workload),
+          RTEXT_MAP[sa1.answer_text] || sa1.answer_text || '',
+          trText(pqCorr.Q1),
+          val(sa1.is_correct),
+          RTEXT_MAP[sa2.answer_text] || sa2.answer_text || '',
+          trText(pqCorr.Q2),
+          val(sa2.is_correct),
+          val(nasa.mental_demand), val(nasa.time_demand), val(nasa.performance), val(nasa.effort), val(nasa.frustration),
+          val(trust.trust1),  val(trust.trust2),  val(trust.trust3),  val(trust.trust4),
+          val(trust.trust5),  val(trust.trust6),  val(trust.trust7),  val(trust.trust8),
+          val(trust.trust9),  val(trust.trust10), val(trust.trust11), val(trust.trust12),
+          modelPref,
+          visRankStacked, visRankRadar, visRankHeatmap, visHelpOpt,
+          val(demo.age), demoGender, demoLang, demoEdu, demo.field || '',
+          val(demo.navigation_use), val(demo.tech_skill), val(demo.viz_literacy)
+        ]);
+      });
+
+      const esc = cell => {
+        const s = (cell == null) ? '' : String(cell);
+        return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+      };
+      return rows.map(row => row.map(esc).join(',')).join('\n');
     }
 
     function escapeHtml(str) {
