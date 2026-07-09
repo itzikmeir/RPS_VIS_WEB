@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>דאשבורד בדיקה בזמן אמת</title>
+<style>
+  :root {
+    --accent:     #2a78d6;
+    --accent-dk:  #1f5fa8;
+    --accent-bg:  #eaf1fb;
+    --good:       #0ca30c;
+    --good-bg:    #e6f7e6;
+    --critical:   #d03b3b;
+    --critical-bg:#fdecea;
+    --warn:       #a8720a;
+    --warn-bg:    #fbf0dd;
+    --model-opt:  #2a78d6;
+    --model-sub:  #1baf7a;
+    --bg:         #eef0f3;
+    --card:       #ffffff;
+    --ink:        #1c1c1c;
+    --ink-mut:    #66686d;
+    --ink-faint:  #a3a5aa;
+    --border:     #e1e4ea;
+    --row-alt:    #f7f8fa;
+    --pending-bg: #e7e9ed;
+    --pill-bg:    #eceef1;
+    --thead-bg:   #f2f4f7;
+    --thead-ink:  #4a4c50;
+    --track-bg:   #e3e6ea;
+    color-scheme: light;
+  }
+  :root[data-theme="dark"] {
+    --accent:     #4c93e8;
+    --accent-dk:  #7fb4f2;
+    --accent-bg:  #17324f;
+    --good:       #3ecf3e;
+    --good-bg:    #123a17;
+    --critical:   #f16464;
+    --critical-bg:#3d1414;
+    --warn:       #e0aa42;
+    --warn-bg:    #3a2c0f;
+    --model-opt:  #4c93e8;
+    --model-sub:  #35c793;
+    --bg:         #14161a;
+    --card:       #1c1f24;
+    --ink:        #e8e9eb;
+    --ink-mut:    #9a9da3;
+    --ink-faint:  #6b6e74;
+    --border:     #2c2f35;
+    --row-alt:    #22252b;
+    --pending-bg: #2a2d33;
+    --pill-bg:    #24272d;
+    --thead-bg:   #21242a;
+    --thead-ink:  #c7c9cd;
+    --track-bg:   #2c2f36;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    margin: 0; padding: 18px; background: var(--bg); color: var(--ink);
+    overflow: hidden;
+  }
+  .container { max-width: 1920px; margin: 0 auto; height: 100%; display: flex; flex-direction: column; }
+
+  .app-header { display: flex; align-items: center; gap: 10px; padding: 4px 2px 10px 2px; flex: 0 0 auto; }
+  .app-logo { font-size: 19px; line-height: 1; }
+  .app-header h1 { margin: 0; color: var(--ink); font-size: 15px; font-weight: 700; }
+  .app-header .spacer { flex: 1; }
+
+  .settings-wrap { position: relative; }
+  .settings-menu { display: none; position: absolute; top: calc(100% + 6px); left: 0; background: var(--card);
+    border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 4px 14px rgba(0,0,0,0.15); padding: 10px 12px;
+    min-width: 190px; z-index: 50; }
+  .settings-menu.open { display: block; }
+  .settings-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 12.5px; color: var(--ink-mut); }
+
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); padding: 14px 16px; }
+  .section-title { font-size: 13px; font-weight: 700; color: var(--ink); margin: 0 0 8px 0; }
+
+  /* Buttons - muted outline style; color only via border/text, never a loud solid fill */
+  .btn { padding: 7px 16px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; font-weight: 700;
+    cursor: pointer; background: var(--card); color: var(--ink); transition: background .15s, opacity .15s, border-color .15s; white-space: nowrap; }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
+  .btn-ghost { border-color: var(--border); color: var(--ink-mut); }
+  .btn-ghost:hover:not(:disabled) { background: var(--row-alt); }
+  /* Monochrome controls - stop/pause/clear share one neutral look */
+  .btn-mono { border-color: var(--ink-faint); color: var(--ink); }
+  .btn-mono:hover:not(:disabled) { background: var(--row-alt); }
+  /* Start is the one emphasized action: solid ink fill so it's unmistakably in focus */
+  .btn-start { background: var(--ink); border-color: var(--ink); color: var(--card); }
+  .btn-start:hover:not(:disabled) { opacity: .85; }
+  .btn-start:disabled { background: var(--ink-faint); border-color: var(--ink-faint); color: var(--card); }
+
+  /* Segmented toggle control - subtle: a tinted wash + colored text on the active
+     segment, never a loud solid fill (matches the muted button philosophy above) */
+  .segmented { display: inline-flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+  .segmented button { border: none; background: var(--card); color: var(--ink-mut); font-size: 11.5px; font-weight: 600;
+    padding: 5px 11px; cursor: pointer; border-inline-start: 1px solid var(--border); }
+  .segmented button:first-child { border-inline-start: none; }
+  .segmented button.active { background: var(--accent-bg); color: var(--accent-dk); font-weight: 700; }
+  .segmented button:not(.active):hover { background: var(--row-alt); }
+
+  .status-pill { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 999px;
+    font-size: 12.5px; font-weight: 700; background: var(--pill-bg); color: var(--ink-mut); }
+  .status-pill.running  { background: var(--accent-bg); color: var(--accent); }
+  .status-pill.paused   { background: var(--warn-bg); color: var(--warn); }
+  .status-pill.done     { background: var(--good-bg); color: var(--good); }
+  .status-pill.error    { background: var(--critical-bg); color: var(--critical); }
+  .status-pill .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+  .status-pill.running .dot { animation: pulse 1.1s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .25; } }
+
+  /* ── Top row: compact dashboard + summary chart (fixed, never scrolls) ── */
+  .top-grid { display: grid; grid-template-columns: 1.1fr 1fr; gap: 14px; margin-bottom: 10px; align-items: stretch; flex: 0 0 auto; }
+  @media (max-width: 980px) { .top-grid { grid-template-columns: 1fr; } }
+  .top-grid .card { padding: 10px 14px; }
+
+  .mini-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .mini-tile { background: var(--row-alt); border: 1px solid var(--border); border-radius: 7px; padding: 6px 6px; text-align: center; }
+  .mini-value { font-size: 16px; font-weight: 800; color: var(--accent-dk); line-height: 1.15; }
+  .mini-value.good { color: var(--good); }
+  .mini-value.critical { color: var(--critical); }
+  .mini-label { font-size: 10.5px; color: var(--ink-mut); margin-top: 1px; }
+
+  .progress-block { margin-top: 6px; }
+  .progress-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+  .progress-row:last-child { margin-bottom: 0; }
+  .progress-tag { font-size: 10.5px; color: var(--ink-mut); width: 66px; flex-shrink: 0; }
+  .progress-track { flex: 1; height: 7px; border-radius: 4px; background: var(--track-bg); overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--accent); width: 0%; transition: width .3s; }
+  .progress-fill.batch { background: var(--model-sub); }
+  .progress-num { font-size: 10.5px; color: var(--ink-mut); width: 44px; text-align: left; flex-shrink: 0; }
+  .current-label { margin-top: 6px; font-size: 11.5px; color: var(--ink-mut); min-height: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* Chart: legend + view toggles sit in a side column so the chart itself is short and wide */
+  .chart-card-body { display: flex; gap: 12px; align-items: stretch; }
+  .chart-side { display: flex; flex-direction: column; gap: 6px; flex: 0 0 118px; justify-content: center; }
+  .chart-side .segmented { display: flex; }
+  .chart-side .segmented button { flex: 1; padding: 5px 4px; }
+  .chart-wrap { flex: 1 1 auto; min-width: 0; overflow-x: auto; }
+  .chart-wrap svg { display: block; max-width: 100%; height: auto; margin: 0 auto; }
+  .legend-col { display: flex; flex-direction: column; gap: 4px; margin-top: 2px; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--ink-mut); }
+  .legend-swatch { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+
+  /* ── Main row: matrix + detail panel — the only part of the page that scrolls ── */
+  .main-grid { display: grid; grid-template-columns: 2fr 1fr; grid-template-rows: 1fr; gap: 14px; align-items: stretch; margin-bottom: 10px; flex: 1 1 auto; min-height: 0; }
+  @media (max-width: 1100px) { .main-grid { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; } }
+  .main-grid > .card { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+
+  .matrix-wrap { overflow: auto; flex: 1 1 auto; min-height: 0; border: 1px solid var(--border); border-radius: 7px; }
+  #matrixTable { width: 100%; border-collapse: collapse; font-size: 11.5px; white-space: nowrap; }
+  #matrixTable thead th { position: sticky; top: 0; background: var(--thead-bg); padding: 6px 5px; border-bottom: 1px solid var(--border);
+    font-weight: 700; color: var(--thead-ink); text-align: center; z-index: 2; }
+  #matrixTable thead th.col-num { font-weight: 500; color: var(--ink-faint); font-size: 10px; }
+  #matrixTable tbody td { padding: 4px; border-bottom: 1px solid var(--border); text-align: center; }
+  #matrixTable tbody tr:nth-child(even) { background: var(--row-alt); }
+  #matrixTable tbody tr.focused { background: var(--accent-bg) !important; box-shadow: inset 3px 0 0 var(--accent); }
+  #matrixTable tbody tr.focused td { font-weight: 700; }
+  #matrixTable tbody tr.focused .pid-cell { color: var(--accent-dk); }
+  #matrixTable tbody tr:hover { background: var(--row-alt); cursor: pointer; }
+  .pid-cell { font-weight: 700; font-size: 12px; }
+  .model-tag { display: inline-block; padding: 1px 7px; border: 1px solid; border-radius: 999px; font-size: 10.5px; font-weight: 700; }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; background: var(--ink-faint); }
+  .status-dot.queued  { background: var(--ink-faint); }
+  .status-dot.running { background: var(--accent); animation: pulse 1.1s infinite; }
+  .status-dot.done     { background: var(--good); }
+  .status-dot.error, .status-dot.stopped { background: var(--critical); }
+  .cell-box { width: 14px; height: 14px; border-radius: 3px; margin: 0 auto; background: var(--pending-bg); }
+  .cell-box.good { background: var(--good); }
+  .cell-box.bad { background: var(--critical); }
+  .cell-box.current { box-shadow: 0 0 0 2px var(--accent); }
+  .sum-cell { font-weight: 700; font-variant-numeric: tabular-nums; }
+  .sum-cell.good { color: var(--good); }
+  .sum-cell.critical { color: var(--critical); }
+  .matrix-empty { padding: 20px; text-align: center; color: var(--ink-mut); font-size: 12.5px; }
+
+  .detail-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; gap: 8px; }
+  .detail-pid { font-weight: 800; font-size: 14px; color: var(--ink); }
+  .detail-follow { font-size: 11px; color: var(--accent); cursor: pointer; text-decoration: underline; margin-inline-start: 8px; }
+  .detail-table-wrap { flex: 1 1 auto; min-height: 0; overflow-y: auto; border: 1px solid var(--border); border-radius: 7px; }
+  #detailChartWrap.chart-wrap { flex: 1 1 auto; min-height: 0; display: flex; align-items: center; justify-content: center; overflow-x: auto; }
+  #detailTable { width: 100%; border-collapse: collapse; font-size: 11px; }
+  #detailTable thead th { position: sticky; top: 0; background: var(--thead-bg); padding: 5px 4px; border-bottom: 1px solid var(--border);
+    font-weight: 700; color: var(--thead-ink); text-align: center; }
+  #detailTable tbody td { padding: 4px; border-bottom: 1px solid var(--border); text-align: center; white-space: nowrap; }
+  #detailTable tbody tr:nth-child(even) { background: var(--row-alt); }
+  #detailTable tbody tr.current { background: var(--accent-bg) !important; box-shadow: inset 3px 0 0 var(--accent); }
+  #detailTable tbody tr.pending td { color: var(--ink-faint); }
+  .badge { display: inline-flex; align-items: center; gap: 3px; font-weight: 700; padding: 1px 7px; border-radius: 999px; font-size: 10.5px; }
+  .badge.good { background: var(--good-bg); color: var(--good); }
+  .badge.critical { background: var(--critical-bg); color: var(--critical); }
+  .badge.wait { background: var(--pending-bg); color: var(--ink-faint); font-weight: 500; }
+  .badge.running { background: var(--accent-bg); color: var(--accent); }
+  .empty-note { padding: 20px; text-align: center; color: var(--ink-mut); font-size: 12.5px; }
+
+  /* ── Bottom control bar — pinned to the bottom of the viewport, never scrolls ── */
+  .bottom-bar { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; flex: 0 0 auto; }
+  .bottom-bar .field-inline { display: flex; align-items: center; gap: 6px; }
+  .bottom-bar label { font-size: 12px; font-weight: 600; color: var(--ink-mut); }
+  .bottom-bar input[type="number"] { padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; width: 64px;
+    background: var(--card); color: var(--ink); }
+  .bottom-bar .spacer { flex: 1; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="app-header">
+    <span class="app-logo">🧭</span>
+    <h1>דאשבורד בדיקה בזמן אמת — הרצת ניסוי אוטומטית</h1>
+    <span class="spacer"></span>
+    <div class="settings-wrap">
+      <button id="settingsBtn" class="btn btn-mono" title="הגדרות">⚙ הגדרות</button>
+      <div id="settingsMenu" class="settings-menu">
+        <div class="section-title" style="margin:0 0 8px 0">הגדרות</div>
+        <div class="settings-row">
+          <span>תצוגה</span>
+          <div class="segmented" id="themeToggle">
+            <button data-val="light" class="active">☀ בהיר</button>
+            <button data-val="dark">🌙 כהה</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="top-grid">
+    <div class="card">
+      <div class="mini-stats">
+        <div class="mini-tile"><div class="mini-value" id="miniSelected">0</div><div class="mini-label">נבחרו</div></div>
+        <div class="mini-tile"><div class="mini-value" id="miniDone">0/0</div><div class="mini-label">נבדקים הושלמו</div></div>
+        <div class="mini-tile"><div class="mini-value good" id="miniPct">–</div><div class="mini-label">% נכון כולל</div></div>
+        <div class="mini-tile"><div class="mini-value" id="miniIncorrect">0</div><div class="mini-label">סה״כ שגויות</div></div>
+        <div class="mini-tile"><div class="mini-value" id="miniOptPct" style="color:var(--model-opt)">–</div><div class="mini-label">דיוק OPT</div></div>
+        <div class="mini-tile"><div class="mini-value" id="miniSubPct" style="color:var(--model-sub)">–</div><div class="mini-label">דיוק SUB</div></div>
+      </div>
+      <div class="progress-block">
+        <div class="progress-row">
+          <span class="progress-tag">נבדק נוכחי</span>
+          <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+          <span class="progress-num" id="progressNum">0/0</span>
+        </div>
+        <div class="progress-row">
+          <span class="progress-tag">אצווה</span>
+          <div class="progress-track"><div class="progress-fill batch" id="batchProgressFill"></div></div>
+          <span class="progress-num" id="batchProgressNum">0/0</span>
+        </div>
+      </div>
+      <div class="current-label" id="currentLabel"></div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">גרף מסכם — כל הנבדקים</div>
+      <div class="chart-card-body">
+        <div class="chart-side">
+          <div class="segmented" id="topViewToggle">
+            <button data-val="model" class="active">לפי מודל</button>
+            <button data-val="participant">לפי נבדק</button>
+          </div>
+          <div class="segmented" id="topAggToggle">
+            <button data-val="cumulative" class="active">מצטבר</button>
+            <button data-val="average">ממוצע</button>
+          </div>
+          <div class="legend-col" id="topChartLegend"></div>
+        </div>
+        <div class="chart-wrap" id="topChartWrap"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="main-grid">
+    <div class="card">
+      <div class="section-title" style="display:flex; align-items:center; justify-content:space-between;">
+        <span>נבדקים ותוצאות</span>
+        <button id="selectAllBtn" class="btn btn-ghost" style="padding:5px 12px; font-size:12px;">בחר הכל</button>
+      </div>
+      <div class="matrix-wrap">
+        <table id="matrixTable">
+          <thead><tr id="matrixHeadRow"></tr></thead>
+          <tbody id="matrixBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="detail-toolbar">
+        <span><span class="detail-pid" id="detailPidLabel">–</span><span class="detail-follow" id="followLink" style="display:none">↻ עקוב אחרי הריצה</span></span>
+        <div class="segmented" id="detailViewToggle">
+          <button data-val="table" class="active">טבלה</button>
+          <button data-val="chart">גרף</button>
+        </div>
+      </div>
+      <div id="detailTableWrap" class="detail-table-wrap">
+        <table id="detailTable">
+          <thead><tr><th>#</th><th>שלב</th><th>תרחיש</th><th>סטטוס</th></tr></thead>
+          <tbody id="detailTableBody"></tbody>
+        </table>
+      </div>
+      <div id="detailChartWrap" class="chart-wrap" style="display:none"></div>
+    </div>
+  </div>
+
+  <div class="card bottom-bar">
+    <span class="spacer"></span>
+    <span id="statusPill" class="status-pill"><span class="dot"></span><span id="statusText">ממתין</span></span>
+    <div class="field-inline">
+      <label for="delayInput">שהייה למסך (שנ׳)</label>
+      <input type="number" id="delayInput" value="1" min="0.1" step="0.1" />
+    </div>
+    <button id="stopBtn" class="btn btn-mono" disabled>■ עצור לגמרי</button>
+    <button id="pauseBtn" class="btn btn-mono" disabled>⏸ השהה</button>
+    <button id="startBtn" class="btn btn-start">◀ התחל</button>
+    <button id="clearDataBtn" class="btn btn-mono">🗑 הסר נתונים</button>
+  </div>
+</div>
+
+<script>
+const GOOD = '#0ca30c', CRITICAL = '#d03b3b';
+const MODEL_COLOR = { OPT: '#2a78d6', SUB: '#1baf7a' };
+function cssVar(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+const GROUP_HE = { Practice: 'תרגול', OPT: 'OPT', SUB: 'SUB' };
+// Practice trials are always correct by design (guaranteed-correct warm-up scenarios) -
+// mixing them into correct/incorrect comparisons would dilute the OPT vs SUB signal,
+// so every correctness metric/chart here is OPT/SUB only. The detail table still shows
+// Practice rows for context, just not counted.
+const EXPERIMENT_GROUPS = ['OPT', 'SUB'];
+
+const el = id => document.getElementById(id);
+
+let allParticipants = [];
+let scheduleCache = {};        // pid -> full rows[] (incl. Practice) from /api/schedule
+let participantMeta = {};      // pid -> { checked, status: 'queued'|'running'|'done'|'error'|'stopped' }
+let focusedPid = null;
+let autoFollow = true;
+let detailView = 'table';      // 'table' | 'chart'
+let topView = 'model';         // 'model' | 'participant'
+let topAgg = 'cumulative';     // 'cumulative' | 'average'
+let currentStatus = null;
+let pollTimer = null;
+
+// ── Theme (settings menu / dark mode) ─────────────────────────────────────────
+
+const THEME_KEY = 'rpsDashboardTheme';
+
+function applyTheme(theme, { rerender = true } = {}) {
+  document.documentElement.setAttribute('data-theme', theme);
+  document.querySelectorAll('#themeToggle button').forEach(b => b.classList.toggle('active', b.dataset.val === theme));
+  if (rerender) { renderTopChart(); renderDetail(); }
+}
+applyTheme(localStorage.getItem(THEME_KEY) || 'light', { rerender: false });
+
+el('settingsBtn').addEventListener('click', (e) => {
+  e.stopPropagation();
+  el('settingsMenu').classList.toggle('open');
+});
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('#settingsMenu') && !e.target.closest('#settingsBtn')) el('settingsMenu').classList.remove('open');
+});
+el('themeToggle').addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-val]');
+  if (!btn) return;
+  localStorage.setItem(THEME_KEY, btn.dataset.val);
+  applyTheme(btn.dataset.val);
+});
+
+async function api(path, opts) {
+  const res = await fetch(path, opts);
+  const text = await res.text();
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    throw new Error(`השרת החזיר תגובה שאינה JSON עבור ${path} (סטטוס ${res.status}): ${text.slice(0, 300) || '(ריק)'}`);
+  }
+}
+
+// ── Data loading ────────────────────────────────────────────────────────────
+
+async function loadParticipants() {
+  try {
+    const data = await api('/api/participants');
+    if (!data.ok) throw new Error(data.error || 'שגיאה לא ידועה');
+    allParticipants = data.participants || [];
+    allParticipants.forEach(pid => { participantMeta[pid] = { checked: false, status: 'queued' }; });
+    if (!allParticipants.length) {
+      el('matrixBody').innerHTML = `<tr><td class="matrix-empty">לא נמצאו קובצי נבדקים בתיקייה:<br>${data.dir || '?'}</td></tr>`;
+      return;
+    }
+    await Promise.all(allParticipants.map(async pid => {
+      try {
+        const sdata = await api(`/api/schedule?pid=${encodeURIComponent(pid)}`);
+        scheduleCache[pid] = sdata.ok ? sdata.rows : [];
+      } catch (e) {
+        scheduleCache[pid] = [];
+      }
+    }));
+  } catch (e) {
+    el('matrixBody').innerHTML = `<tr><td class="matrix-empty">שגיאה בטעינת רשימת הנבדקים: ${e.message}<br>ודא שהשרת (dashboard_server.py) רץ ושהעמוד נטען מתוכו (http://127.0.0.1:8765), לא כקובץ מקומי.</td></tr>`;
+  }
+}
+
+function experimentRows(pid) {
+  return (scheduleCache[pid] || []).filter(r => EXPERIMENT_GROUPS.includes(r.group_label));
+}
+
+function rowState(row, currentIndex) {
+  if (currentIndex == null || currentIndex < 0) return 'pending';
+  if (currentIndex < row.step_index_start) return 'pending';
+  if (currentIndex > row.step_index_end) return 'done';
+  return 'current';
+}
+
+// currentIndex for a participant: their own live step index if they're the one
+// currently running; Infinity if their run has ended (done/error/stopped); -1 (all pending) otherwise.
+function liveIndexFor(pid) {
+  const meta = participantMeta[pid] || {};
+  if (currentStatus && currentStatus.pid === pid && currentStatus.running) return currentStatus.index;
+  if (['done', 'error', 'stopped'].includes(meta.status)) return Infinity;
+  return -1;
+}
+
+function tallyFor(pid) {
+  const t = { OPT: { correct: 0, incorrect: 0 }, SUB: { correct: 0, incorrect: 0 } };
+  const idx = liveIndexFor(pid);
+  experimentRows(pid).forEach(r => {
+    const st = rowState(r, idx);
+    if (st === 'pending') return;
+    t[r.group_label][r.rec_is_correct ? 'correct' : 'incorrect']++;
+  });
+  return t;
+}
+
+// ── Matrix (right panel) ─────────────────────────────────────────────────────
+
+function matrixColumnCount() {
+  return Math.max(1, ...allParticipants.map(pid => experimentRows(pid).length));
+}
+
+// Which model type (OPT/SUB) this participant saw first vs second - the
+// counterbalancing order, in run sequence.
+function modelOrderFor(pid) {
+  const seen = [];
+  experimentRows(pid).forEach(r => { if (r.model_type && !seen.includes(r.model_type)) seen.push(r.model_type); });
+  return { first: seen[0] || null, second: seen[1] || null };
+}
+
+function modelTag(mt) {
+  if (!mt) return `<span class="badge wait">–</span>`;
+  const color = MODEL_COLOR[mt];
+  return `<span class="model-tag" style="color:${color}; border-color:${color}">${mt}</span>`;
+}
+
+// Column i's header should show the real run order (the same "#" the left detail
+// panel shows for that trial), not just the position within the OPT/SUB-only array -
+// practice trials shift the two out of sync otherwise.
+function orderLabelAt(i) {
+  for (const pid of allParticipants) {
+    const r = experimentRows(pid)[i];
+    if (r && r.order != null) return r.order;
+  }
+  return i + 1;
+}
+
+function renderMatrixHead() {
+  const n = matrixColumnCount();
+  let html = `<th style="min-width:26px"></th><th style="min-width:52px">נבדק</th><th style="min-width:30px">מצב</th>`
+    + `<th style="min-width:46px">מודל 1</th><th style="min-width:46px">מודל 2</th>`;
+  for (let i = 0; i < n; i++) html += `<th class="col-num">${orderLabelAt(i)}</th>`;
+  html += `<th style="min-width:40px">נבדקו</th><th style="min-width:34px">נכון</th><th style="min-width:34px">שגוי</th>`;
+  el('matrixHeadRow').innerHTML = html;
+}
+
+function renderMatrix() {
+  if (!allParticipants.length) return;
+  const n = matrixColumnCount();
+  const body = el('matrixBody');
+  const running = !!(currentStatus && currentStatus.running);
+  body.innerHTML = allParticipants.map(pid => {
+    const rows = experimentRows(pid);
+    const idx = liveIndexFor(pid);
+    const meta = participantMeta[pid] || {};
+    const mo = modelOrderFor(pid);
+    let tested = 0, correct = 0, incorrect = 0;
+    let cells = '';
+    for (let i = 0; i < n; i++) {
+      const r = rows[i];
+      if (!r) { cells += `<td><div class="cell-box"></div></td>`; continue; }
+      const st = rowState(r, idx);
+      if (st === 'pending') { cells += `<td><div class="cell-box" title="#${r.order}"></div></td>`; continue; }
+      tested++;
+      const cls = r.rec_is_correct ? 'good' : 'bad';
+      if (r.rec_is_correct) correct++; else incorrect++;
+      const curCls = st === 'current' ? ' current' : '';
+      cells += `<td><div class="cell-box ${cls}${curCls}" title="#${r.order} ${r.scenario_id} (${r.model_type||''}): ${r.rec_is_correct?'נכון':'שגוי'}"></div></td>`;
+    }
+    const statusDot = `<span class="status-dot ${meta.status}" title="${meta.status}"></span>`;
+    return `<tr class="${focusedPid === pid ? 'focused' : ''}" data-pid="${pid}">
+      <td><input type="checkbox" class="pid-cb" value="${pid}" ${meta.checked ? 'checked' : ''} ${running ? 'disabled' : ''} /></td>
+      <td class="pid-cell">${pid}</td>
+      <td>${statusDot}</td>
+      <td>${modelTag(mo.first)}</td>
+      <td>${modelTag(mo.second)}</td>
+      ${cells}
+      <td>${tested}/${rows.length}</td>
+      <td class="sum-cell good">${correct}</td>
+      <td class="sum-cell critical">${incorrect}</td>
+    </tr>`;
+  }).join('');
+}
+
+el('matrixBody').addEventListener('change', (e) => {
+  if (e.target.classList.contains('pid-cb')) {
+    participantMeta[e.target.value].checked = e.target.checked;
+    updateMiniSelected();
+  }
+});
+el('matrixBody').addEventListener('click', (e) => {
+  const tr = e.target.closest('tr[data-pid]');
+  if (!tr || e.target.classList.contains('pid-cb')) return;
+  focusedPid = tr.dataset.pid;
+  autoFollow = false;
+  renderMatrix();
+  renderDetail();
+});
+
+el('selectAllBtn').addEventListener('click', () => {
+  const allSelected = allParticipants.length > 0 && allParticipants.every(pid => participantMeta[pid].checked);
+  allParticipants.forEach(pid => { participantMeta[pid].checked = !allSelected; });
+  renderMatrix();
+  updateMiniSelected();
+});
+
+function updateMiniSelected() {
+  const n = allParticipants.filter(pid => participantMeta[pid].checked).length;
+  el('miniSelected').textContent = n;
+  el('selectAllBtn').textContent = (n > 0 && n === allParticipants.length) ? 'בטל הכל' : 'בחר הכל';
+}
+
+function getSelectedPids() {
+  return allParticipants.filter(pid => participantMeta[pid].checked);
+}
+
+// ── Detail panel (left) ───────────────────────────────────────────────────────
+
+function renderDetail() {
+  const pid = focusedPid;
+  el('detailPidLabel').textContent = pid || '–';
+  el('followLink').style.display = (!autoFollow && currentStatus && currentStatus.running) ? 'inline' : 'none';
+  if (!pid) {
+    el('detailTableBody').innerHTML = `<tr><td colspan="4" class="empty-note">בחר נבדק מהטבלה או התחל הרצה</td></tr>`;
+    el('detailChartWrap').innerHTML = '';
+    return;
+  }
+  const rows = scheduleCache[pid] || [];
+  const idx = liveIndexFor(pid);
+
+  if (detailView === 'table') {
+    if (!rows.length) {
+      el('detailTableBody').innerHTML = `<tr><td colspan="4" class="empty-note">אין תוכנית טעונה</td></tr>`;
+    } else {
+      el('detailTableBody').innerHTML = rows.map(r => {
+        const st = rowState(r, idx === Infinity ? Infinity : idx);
+        const recBadge = (st === 'pending')
+          ? `<span class="badge wait">ממתין</span>`
+          : (r.rec_is_correct ? `<span class="badge good">✓</span>` : `<span class="badge critical">✗</span>`);
+        const statusCell = st === 'current' ? `<span class="badge running">▶</span> ${recBadge}` : recBadge;
+        return `<tr class="${st}">
+          <td>${r.order}</td>
+          <td>${GROUP_HE[r.group_label] || r.group_label || '–'}</td>
+          <td>${r.scenario_id || '–'}</td>
+          <td>${statusCell}</td>
+        </tr>`;
+      }).join('');
+    }
+  } else {
+    const t = tallyFor(pid);
+    renderGroupedBarChart({
+      groups: EXPERIMENT_GROUPS,
+      seriesKeys: ['correct', 'incorrect'],
+      seriesColors: { correct: GOOD, incorrect: CRITICAL },
+      values: t,
+      wrapId: 'detailChartWrap',
+      isPercent: false,
+      groupLabel: g => g,
+    });
+  }
+}
+
+el('followLink').addEventListener('click', () => {
+  autoFollow = true;
+  if (currentStatus && currentStatus.pid) focusedPid = currentStatus.pid;
+  renderMatrix();
+  renderDetail();
+});
+
+document.getElementById('detailViewToggle').addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-val]');
+  if (!btn) return;
+  detailView = btn.dataset.val;
+  document.querySelectorAll('#detailViewToggle button').forEach(b => b.classList.toggle('active', b === btn));
+  el('detailTableWrap').style.display = detailView === 'table' ? '' : 'none';
+  el('detailChartWrap').style.display = detailView === 'chart' ? '' : 'none';
+  renderDetail();
+});
+
+// ── Generic grouped bar chart (used by both detail + top summary charts) ─────
+
+function roundedTopRectPath(x, top, w, h, r) {
+  if (h <= 0.5) return '';
+  r = Math.min(r, w / 2, h);
+  return `M${x},${top + h} L${x},${top + r} Q${x},${top} ${x + r},${top} `
+       + `L${x + w - r},${top} Q${x + w},${top} ${x + w},${top + r} L${x + w},${top + h} Z`;
+}
+
+function renderGroupedBarChart({ groups, seriesKeys, seriesColors, values, wrapId, isPercent, groupLabel, height = 200 }) {
+  const wrap = el(wrapId);
+  if (!groups.length) { wrap.innerHTML = `<div class="empty-note">אין נתונים עדיין</div>`; return; }
+
+  const allVals = groups.flatMap(g => seriesKeys.map(s => (values[g] && values[g][s]) || 0));
+  const maxVal = isPercent ? 100 : Math.max(1, ...allVals);
+  const niceMax = isPercent ? 100 : (Math.ceil(maxVal / 5) * 5 || 5);
+
+  const padL = 28, padR = 8, padT = 14, padB = 30;
+  // Size each group's column to fill the actual available width (so a 2-bar
+  // chart doesn't render tiny in a wide card, and a 30-bar chart doesn't
+  // force-stretch into something huge) - clamped to a sane range and left to
+  // scroll horizontally past that.
+  const availableW = wrap.clientWidth || 360;
+  const groupW = Math.max(56, Math.min(130, Math.floor((availableW - padL - padR) / groups.length)));
+  const barW = Math.min(30, (groupW - 8) / seriesKeys.length);
+  const plotW = groups.length * groupW;
+  const W = padL + plotW + padR, H = height;
+  const plotH = H - padT - padB;
+  const gap = 3;
+
+  const gridColor = cssVar('--border'), inkMut = cssVar('--ink-mut'), ink = cssVar('--ink');
+  let gridlines = '';
+  for (let i = 0; i <= 4; i++) {
+    const v = (niceMax / 4) * i;
+    const y = padT + plotH - (v / niceMax) * plotH;
+    gridlines += `<line x1="${padL}" y1="${y}" x2="${W - padR}" y2="${y}" stroke="${gridColor}" stroke-width="1"/>`;
+    gridlines += `<text x="${padL - 5}" y="${y + 3}" font-size="8.5" fill="${inkMut}" text-anchor="end">${Math.round(v)}${isPercent ? '%' : ''}</text>`;
+  }
+
+  let bars = '';
+  groups.forEach((g, gi) => {
+    const cx = padL + gi * groupW + groupW / 2;
+    const startX = cx - (seriesKeys.length * barW + (seriesKeys.length - 1) * gap) / 2;
+    seriesKeys.forEach((s, si) => {
+      const val = (values[g] && values[g][s]) || 0;
+      const h = (val / niceMax) * plotH;
+      const x = startX + si * (barW + gap);
+      const path = roundedTopRectPath(x, padT + plotH - h, barW, h, 3);
+      const color = seriesColors[s];
+      if (path) {
+        bars += `<path d="${path}" fill="${color}"><title>${groupLabel(g)} · ${s}: ${val}${isPercent ? '%' : ''}</title></path>`;
+      }
+      if (val > 0) {
+        bars += `<text x="${x + barW / 2}" y="${padT + plotH - h - 4}" font-size="9" font-weight="700" fill="${color}" text-anchor="middle">${val}${isPercent ? '%' : ''}</text>`;
+      }
+    });
+    bars += `<text x="${cx}" y="${padT + plotH + 15}" font-size="10" fill="${ink}" text-anchor="middle">${groupLabel(g)}</text>`;
+  });
+
+  wrap.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMinYMid meet">
+    <line x1="${padL}" y1="${padT + plotH}" x2="${W - padR}" y2="${padT + plotH}" stroke="${inkMut}" stroke-width="1"/>
+    ${gridlines}
+    ${bars}
+  </svg>`;
+}
+
+// ── Top summary chart (all participants) ──────────────────────────────────────
+
+document.getElementById('topViewToggle').addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-val]');
+  if (!btn) return;
+  topView = btn.dataset.val;
+  document.querySelectorAll('#topViewToggle button').forEach(b => b.classList.toggle('active', b === btn));
+  renderTopChart();
+});
+document.getElementById('topAggToggle').addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-val]');
+  if (!btn) return;
+  topAgg = btn.dataset.val;
+  document.querySelectorAll('#topAggToggle button').forEach(b => b.classList.toggle('active', b === btn));
+  renderTopChart();
+});
+
+function participantsWithData() {
+  return allParticipants.filter(pid => liveIndexFor(pid) >= 0 || liveIndexFor(pid) === Infinity);
+}
+
+function renderTopChart() {
+  const pids = participantsWithData();
+  if (!pids.length) {
+    el('topChartWrap').innerHTML = `<div class="empty-note">התחל הרצה כדי לראות נתונים</div>`;
+    el('topChartLegend').innerHTML = '';
+    return;
+  }
+  const perPid = {};
+  pids.forEach(pid => { perPid[pid] = tallyFor(pid); });
+
+  if (topView === 'model') {
+    const values = {};
+    EXPERIMENT_GROUPS.forEach(g => {
+      if (topAgg === 'cumulative') {
+        let c = 0, i = 0;
+        pids.forEach(pid => { c += perPid[pid][g].correct; i += perPid[pid][g].incorrect; });
+        values[g] = { correct: c, incorrect: i };
+      } else {
+        const rates = pids.map(pid => perPid[pid][g])
+          .filter(v => v.correct + v.incorrect > 0)
+          .map(v => 100 * v.correct / (v.correct + v.incorrect));
+        const avg = rates.length ? rates.reduce((a, b) => a + b, 0) / rates.length : 0;
+        values[g] = { correct: Math.round(avg), incorrect: Math.round(100 - avg) };
+      }
+    });
+    renderGroupedBarChart({
+      groups: EXPERIMENT_GROUPS, seriesKeys: ['correct', 'incorrect'],
+      seriesColors: { correct: GOOD, incorrect: CRITICAL },
+      values, wrapId: 'topChartWrap', isPercent: topAgg === 'average',
+      groupLabel: g => g, height: 130,
+    });
+    el('topChartLegend').innerHTML = `
+      <span class="legend-item"><span class="legend-swatch" style="background:${GOOD}"></span>נכון</span>
+      <span class="legend-item"><span class="legend-swatch" style="background:${CRITICAL}"></span>שגוי</span>`;
+  } else {
+    const values = {};
+    pids.forEach(pid => {
+      const t = perPid[pid];
+      if (topAgg === 'cumulative') {
+        values[pid] = { OPT: t.OPT.correct, SUB: t.SUB.correct };
+      } else {
+        const optTotal = t.OPT.correct + t.OPT.incorrect, subTotal = t.SUB.correct + t.SUB.incorrect;
+        values[pid] = {
+          OPT: optTotal ? Math.round(100 * t.OPT.correct / optTotal) : 0,
+          SUB: subTotal ? Math.round(100 * t.SUB.correct / subTotal) : 0,
+        };
+      }
+    });
+    renderGroupedBarChart({
+      groups: pids, seriesKeys: ['OPT', 'SUB'],
+      seriesColors: { OPT: MODEL_COLOR.OPT, SUB: MODEL_COLOR.SUB },
+      values, wrapId: 'topChartWrap', isPercent: topAgg === 'average',
+      groupLabel: g => g, height: 130,
+    });
+    el('topChartLegend').innerHTML = `
+      <span class="legend-item"><span class="legend-swatch" style="background:${MODEL_COLOR.OPT}"></span>OPT ${topAgg==='cumulative'?'(נכון)':'(% נכון)'}</span>
+      <span class="legend-item"><span class="legend-swatch" style="background:${MODEL_COLOR.SUB}"></span>SUB ${topAgg==='cumulative'?'(נכון)':'(% נכון)'}</span>`;
+  }
+}
+
+// ── Status polling / mini-dashboard ───────────────────────────────────────────
+
+function setStatusPill(text, cls) {
+  const pill = el('statusPill');
+  pill.className = 'status-pill' + (cls ? ' ' + cls : '');
+  el('statusText').textContent = text;
+}
+
+function updateMiniDashboard(batch) {
+  const pids = batch.pids || [];
+  const results = batch.results || {};
+  const doneCount = pids.filter(p => results[p]).length;
+  el('miniDone').textContent = `${doneCount}/${pids.length}`;
+  const bPct = pids.length ? (doneCount / pids.length) * 100 : 0;
+  el('batchProgressFill').style.width = bPct + '%';
+  el('batchProgressNum').textContent = `${doneCount}/${pids.length}`;
+
+  let correct = 0, incorrect = 0;
+  const byGroup = { OPT: { correct: 0, incorrect: 0 }, SUB: { correct: 0, incorrect: 0 } };
+  participantsWithData().forEach(pid => {
+    const t = tallyFor(pid);
+    EXPERIMENT_GROUPS.forEach(g => {
+      correct += t[g].correct; incorrect += t[g].incorrect;
+      byGroup[g].correct += t[g].correct; byGroup[g].incorrect += t[g].incorrect;
+    });
+  });
+  el('miniPct').textContent = (correct + incorrect) > 0 ? Math.round(100 * correct / (correct + incorrect)) + '%' : '–';
+  el('miniIncorrect').textContent = incorrect;
+  const optTotal = byGroup.OPT.correct + byGroup.OPT.incorrect;
+  const subTotal = byGroup.SUB.correct + byGroup.SUB.incorrect;
+  el('miniOptPct').textContent = optTotal ? Math.round(100 * byGroup.OPT.correct / optTotal) + '%' : '–';
+  el('miniSubPct').textContent = subTotal ? Math.round(100 * byGroup.SUB.correct / subTotal) + '%' : '–';
+}
+
+async function refreshStatus() {
+  const st = await api('/api/status');
+  currentStatus = st;
+  const batch = st.batch || { pids: [], index: -1, results: {} };
+
+  // Sync matrix status dots from batch results / running pid
+  allParticipants.forEach(pid => {
+    if (batch.results && batch.results[pid]) participantMeta[pid].status = batch.results[pid];
+    else if (st.running && st.pid === pid) participantMeta[pid].status = 'running';
+    else if ((batch.pids || []).includes(pid) && !batch.results[pid]) participantMeta[pid].status = 'queued';
+  });
+
+  if (autoFollow && st.pid) focusedPid = st.pid;
+
+  const running = !!st.running;
+  const paused = !!st.paused;
+  el('startBtn').disabled = running;
+  el('pauseBtn').disabled = !running;
+  el('pauseBtn').textContent = paused ? '◀ המשך' : '⏸ השהה';
+  el('stopBtn').disabled = !running;
+  el('selectAllBtn').disabled = running;
+  el('clearDataBtn').disabled = running;
+
+  if (st.error) setStatusPill('שגיאה: ' + st.error, 'error');
+  else if (paused) setStatusPill('בהשהיה', 'paused');
+  else if (running) setStatusPill('רץ...', 'running');
+  else if (st.done) setStatusPill('הושלם', 'done');
+  else if (st.stopped) setStatusPill('נעצר', '');
+  else setStatusPill('ממתין', '');
+
+  el('currentLabel').textContent = st.label || '';
+  const total = st.total || 0;
+  const idx = typeof st.index === 'number' ? st.index : -1;
+  const pct = total > 0 ? Math.max(0, Math.min(100, ((idx + 1) / total) * 100)) : 0;
+  el('progressFill').style.width = pct + '%';
+  el('progressNum').textContent = `${Math.max(0, idx + 1)}/${total}`;
+
+  renderMatrix();
+  renderDetail();
+  updateMiniDashboard(batch);
+  renderTopChart();
+}
+
+// ── Controls ───────────────────────────────────────────────────────────────
+
+el('startBtn').addEventListener('click', async () => {
+  const pids = getSelectedPids();
+  if (!pids.length) { alert('בחר לפחות נבדק אחד'); return; }
+  const delay = el('delayInput').value;
+  el('startBtn').disabled = true;
+  autoFollow = true;
+  const res = await api('/api/start', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ pids, delay }),
+  });
+  if (!res.ok) {
+    alert(res.error || 'לא ניתן להתחיל הרצה');
+    el('startBtn').disabled = false;
+    return;
+  }
+  el('pauseBtn').disabled = false;
+  el('stopBtn').disabled = false;
+});
+
+el('pauseBtn').addEventListener('click', async () => {
+  const paused = el('pauseBtn').textContent.includes('המשך');
+  el('pauseBtn').disabled = true;
+  await api(paused ? '/api/resume' : '/api/pause', { method: 'POST' });
+  el('pauseBtn').disabled = false;
+});
+
+el('stopBtn').addEventListener('click', async () => {
+  el('stopBtn').disabled = true;
+  await api('/api/stop', { method: 'POST' });
+  el('startBtn').disabled = false;
+  el('pauseBtn').disabled = true;
+});
+
+el('clearDataBtn').addEventListener('click', async () => {
+  if (!confirm('לנקות את כל תוצאות הריצה הנוכחיות מהדאשבורד? הפעולה לא תמחק קבצי נבדקים.')) return;
+  el('clearDataBtn').disabled = true;
+  const res = await api('/api/clear', { method: 'POST' });
+  el('clearDataBtn').disabled = false;
+  if (!res.ok) { alert(res.error || 'לא ניתן לנקות נתונים'); return; }
+  allParticipants.forEach(pid => { participantMeta[pid] = { checked: false, status: 'queued' }; });
+  focusedPid = null;
+  autoFollow = true;
+  updateMiniSelected();
+  await refreshStatus();
+});
+
+(async function init() {
+  await loadParticipants();
+  renderMatrixHead();
+  renderMatrix();
+  updateMiniSelected();
+  renderDetail();
+  await refreshStatus();
+  pollTimer = setInterval(refreshStatus, 700);
+})();
+</script>
+</body>
+</html>
