@@ -81,8 +81,11 @@
   .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); padding: 14px 16px; }
   .section-title { font-size: 13px; font-weight: 700; color: var(--ink); margin: 0 0 8px 0; }
 
-  /* Buttons - muted outline style; color only via border/text, never a loud solid fill */
-  .btn { padding: 7px 16px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; font-weight: 700;
+  /* Buttons - muted outline style; color only via border/text, never a loud solid fill.
+     Fixed height (rather than padding + line-height) so every button - including ones
+     with different glyphs like "■" - renders at exactly the same height. */
+  .btn { height: 34px; padding: 0 16px; display: inline-flex; align-items: center; justify-content: center;
+    border: 1px solid var(--border); border-radius: 6px; font-size: 13px; font-weight: 700;
     cursor: pointer; background: var(--card); color: var(--ink); transition: background .15s, opacity .15s, border-color .15s; white-space: nowrap; }
   .btn:disabled { opacity: .4; cursor: not-allowed; }
   .btn-ghost { border-color: var(--border); color: var(--ink-mut); }
@@ -107,8 +110,12 @@
   .segmented button.active { background: var(--accent-bg); color: var(--accent-dk); font-weight: 700; }
   .segmented button:not(.active):hover { background: var(--row-alt); }
 
-  .status-pill { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 999px;
-    font-size: 12.5px; font-weight: 700; background: var(--pill-bg); color: var(--ink-mut); }
+  /* Fixed-width slot so a longer/shorter status message never bumps neighboring
+     controls; the pill fills the whole slot so there's no empty gap either. */
+  .status-slot { width: 120px; flex-shrink: 0; }
+  .status-pill { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 5px 12px; border-radius: 999px;
+    font-size: 12.5px; font-weight: 700; background: var(--pill-bg); color: var(--ink-mut); width: 100%; overflow: hidden; }
+  #statusText { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
   .status-pill.running  { background: var(--accent-bg); color: var(--accent); }
   .status-pill.paused   { background: var(--warn-bg); color: var(--warn); }
   .status-pill.done     { background: var(--good-bg); color: var(--good); }
@@ -310,7 +317,9 @@
     </div>
     <button id="startPauseBtn" class="btn btn-start">◀ התחל</button>
     <button id="stopBtn" class="btn btn-danger" disabled>■ עצור לגמרי</button>
-    <span id="statusPill" class="status-pill"><span class="dot"></span><span id="statusText">ממתין</span></span>
+    <div class="status-slot">
+      <span id="statusPill" class="status-pill"><span class="dot"></span><span id="statusText">ממתין</span></span>
+    </div>
     <div class="bottom-progress">
       <div class="progress-row">
         <span class="progress-tag">נבדק</span>
@@ -790,6 +799,7 @@ function renderTopChart() {
 function setStatusPill(text, cls) {
   const pill = el('statusPill');
   pill.className = 'status-pill' + (cls ? ' ' + cls : '');
+  pill.title = text;
   el('statusText').textContent = text;
 }
 
