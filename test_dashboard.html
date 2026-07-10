@@ -148,7 +148,7 @@
   .legend-swatch { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
 
   /* ── Main row: matrix + detail panel — the only part of the page that scrolls ── */
-  .main-grid { display: grid; grid-template-columns: 2fr 1fr; grid-template-rows: 1fr; gap: 14px; align-items: stretch; margin-bottom: 10px; flex: 1 1 auto; min-height: 0; }
+  .main-grid { display: grid; grid-template-columns: 2.6fr 1fr; grid-template-rows: 1fr; gap: 14px; align-items: stretch; margin-bottom: 10px; flex: 1 1 auto; min-height: 0; }
   @media (max-width: 1100px) { .main-grid { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; } }
   .main-grid > .card { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
 
@@ -173,6 +173,7 @@
   .cell-box { width: 14px; height: 14px; border-radius: 3px; margin: 0 auto; background: var(--pending-bg); }
   .cell-box.good { background: var(--good); }
   .cell-box.bad { background: var(--critical); }
+  .cell-box.practice { background: var(--ink-faint); }
   .cell-box.current { box-shadow: 0 0 0 2px var(--accent); }
   .sum-cell { font-weight: 700; font-variant-numeric: tabular-nums; }
   .sum-cell.good { color: var(--good); }
@@ -296,7 +297,7 @@
       </div>
       <div id="detailTableWrap" class="detail-table-wrap">
         <table id="detailTable">
-          <thead><tr><th>#</th><th>שלב</th><th>תרחיש</th><th>סטטוס</th></tr></thead>
+          <thead><tr><th>#</th><th>שלב</th><th>תרחיש</th><th>ויזואליזציה</th><th>סטטוס</th></tr></thead>
           <tbody id="detailTableBody"></tbody>
         </table>
       </div>
@@ -435,8 +436,34 @@ function tallyFor(pid) {
 
 // ── Matrix (right panel) ─────────────────────────────────────────────────────
 
+// Each scenario_id encodes a fixed scenario NUMBER (e.g. "SCN_009_H" -> 9) that's
+// stable across participants, even though every participant runs through the
+// scenarios in their own randomized order. Columns are keyed by that number - not
+// by run position - so column k means "scenario k" for every row, matching the
+// real scenario numbers the left detail panel shows in its תרחיש column.
+function scenarioNumber(scenarioId) {
+  const m = /(\d+)/.exec(String(scenarioId || ''));
+  return m ? parseInt(m[1], 10) : null;
+}
+
 function matrixColumnCount() {
-  return Math.max(1, ...allParticipants.map(pid => experimentRows(pid).length));
+  let max = 1;
+  allParticipants.forEach(pid => {
+    (scheduleCache[pid] || []).forEach(r => {
+      const num = scenarioNumber(r.scenario_id);
+      if (num && num > max) max = num;
+    });
+  });
+  return max;
+}
+
+function rowsByScenarioNumber(pid) {
+  const map = {};
+  (scheduleCache[pid] || []).forEach(r => {
+    const num = scenarioNumber(r.scenario_id);
+    if (num != null) map[num] = r;
+  });
+  return map;
 }
 
 // Which model type (OPT/SUB) this participant saw first vs second - the
@@ -453,22 +480,11 @@ function modelTag(mt) {
   return `<span class="model-tag" style="color:${color}; border-color:${color}">${mt}</span>`;
 }
 
-// Column i's header should show the real run order (the same "#" the left detail
-// panel shows for that trial), not just the position within the OPT/SUB-only array -
-// practice trials shift the two out of sync otherwise.
-function orderLabelAt(i) {
-  for (const pid of allParticipants) {
-    const r = experimentRows(pid)[i];
-    if (r && r.order != null) return r.order;
-  }
-  return i + 1;
-}
-
 function renderMatrixHead() {
   const n = matrixColumnCount();
   let html = `<th style="min-width:26px"></th><th style="min-width:52px">נבדק</th><th style="min-width:30px">מצב</th>`
     + `<th style="min-width:46px">מודל 1</th><th style="min-width:46px">מודל 2</th>`;
-  for (let i = 0; i < n; i++) html += `<th class="col-num">${orderLabelAt(i)}</th>`;
+  for (let k = 1; k <= n; k++) html += `<th class="col-num">${k}</th>`;
   html += `<th style="min-width:40px">נבדקו</th><th style="min-width:34px">נכון</th><th style="min-width:34px">שגוי</th>`;
   el('matrixHeadRow').innerHTML = html;
 }
@@ -479,17 +495,22 @@ function renderMatrix() {
   const body = el('matrixBody');
   const running = !!(currentStatus && currentStatus.running);
   body.innerHTML = allParticipants.map(pid => {
-    const rows = experimentRows(pid);
+    const byNum = rowsByScenarioNumber(pid);
+    const total = experimentRows(pid).length;
     const idx = liveIndexFor(pid);
     const meta = participantMeta[pid] || {};
     const mo = modelOrderFor(pid);
     let tested = 0, correct = 0, incorrect = 0;
     let cells = '';
-    for (let i = 0; i < n; i++) {
-      const r = rows[i];
+    for (let k = 1; k <= n; k++) {
+      const r = byNum[k];
       if (!r) { cells += `<td><div class="cell-box"></div></td>`; continue; }
+      if (r.group_label === 'Practice') {
+        cells += `<td><div class="cell-box practice" title="#${r.order} ${r.scenario_id} (תרגול)"></div></td>`;
+        continue;
+      }
       const st = rowState(r, idx);
-      if (st === 'pending') { cells += `<td><div class="cell-box" title="#${r.order}"></div></td>`; continue; }
+      if (st === 'pending') { cells += `<td><div class="cell-box" title="#${r.order} ${r.scenario_id}"></div></td>`; continue; }
       tested++;
       const cls = r.rec_is_correct ? 'good' : 'bad';
       if (r.rec_is_correct) correct++; else incorrect++;
@@ -504,7 +525,7 @@ function renderMatrix() {
       <td>${modelTag(mo.first)}</td>
       <td>${modelTag(mo.second)}</td>
       ${cells}
-      <td>${tested}/${rows.length}</td>
+      <td>${tested}/${total}</td>
       <td class="sum-cell good">${correct}</td>
       <td class="sum-cell critical">${incorrect}</td>
     </tr>`;
@@ -550,7 +571,7 @@ function renderDetail() {
   el('detailPidLabel').textContent = pid || '–';
   el('followLink').style.display = (!autoFollow && currentStatus && currentStatus.running) ? 'inline' : 'none';
   if (!pid) {
-    el('detailTableBody').innerHTML = `<tr><td colspan="4" class="empty-note">בחר נבדק מהטבלה או התחל הרצה</td></tr>`;
+    el('detailTableBody').innerHTML = `<tr><td colspan="5" class="empty-note">בחר נבדק מהטבלה או התחל הרצה</td></tr>`;
     el('detailChartWrap').innerHTML = '';
     return;
   }
@@ -559,7 +580,7 @@ function renderDetail() {
 
   if (detailView === 'table') {
     if (!rows.length) {
-      el('detailTableBody').innerHTML = `<tr><td colspan="4" class="empty-note">אין תוכנית טעונה</td></tr>`;
+      el('detailTableBody').innerHTML = `<tr><td colspan="5" class="empty-note">אין תוכנית טעונה</td></tr>`;
     } else {
       el('detailTableBody').innerHTML = rows.map(r => {
         const st = rowState(r, idx === Infinity ? Infinity : idx);
@@ -571,6 +592,7 @@ function renderDetail() {
           <td>${r.order}</td>
           <td>${GROUP_HE[r.group_label] || r.group_label || '–'}</td>
           <td>${r.scenario_id || '–'}</td>
+          <td>${r.visualization || '–'}</td>
           <td>${statusCell}</td>
         </tr>`;
       }).join('');
