@@ -87,13 +87,16 @@
   .btn:disabled { opacity: .4; cursor: not-allowed; }
   .btn-ghost { border-color: var(--border); color: var(--ink-mut); }
   .btn-ghost:hover:not(:disabled) { background: var(--row-alt); }
-  /* Monochrome controls - stop/pause/clear share one neutral look */
+  /* Monochrome controls - clear-data shares this neutral look */
   .btn-mono { border-color: var(--ink-faint); color: var(--ink); }
   .btn-mono:hover:not(:disabled) { background: var(--row-alt); }
-  /* Start is the one emphasized action: solid ink fill so it's unmistakably in focus */
+  /* Start/Resume is the one emphasized action: solid ink fill so it's unmistakably in focus */
   .btn-start { background: var(--ink); border-color: var(--ink); color: var(--card); }
   .btn-start:hover:not(:disabled) { opacity: .85; }
   .btn-start:disabled { background: var(--ink-faint); border-color: var(--ink-faint); color: var(--card); }
+  /* Full stop is destructive and irreversible - it's the one button that keeps a warning color */
+  .btn-danger { border-color: var(--critical); color: var(--critical); }
+  .btn-danger:hover:not(:disabled) { background: var(--critical-bg); }
 
   /* Segmented toggle control - subtle: a tinted wash + colored text on the active
      segment, never a loud solid fill (matches the muted button philosophy above) */
@@ -119,22 +122,26 @@
   @media (max-width: 980px) { .top-grid { grid-template-columns: 1fr; } }
   .top-grid .card { padding: 10px 14px; }
 
-  .mini-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
-  .mini-tile { background: var(--row-alt); border: 1px solid var(--border); border-radius: 7px; padding: 6px 6px; text-align: center; }
-  .mini-value { font-size: 16px; font-weight: 800; color: var(--accent-dk); line-height: 1.15; }
+  /* Stats card: content is short (no progress bars anymore, those live in the
+     bottom bar) so center it to use the card's full stretched height instead of
+     leaving empty space under it. */
+  .stats-card { display: flex; flex-direction: column; justify-content: center; gap: 10px; }
+  .mini-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .mini-tile { background: var(--row-alt); border: 1px solid var(--border); border-radius: 7px; padding: 10px 6px; text-align: center; }
+  .mini-value { font-size: 19px; font-weight: 800; color: var(--accent-dk); line-height: 1.15; }
   .mini-value.good { color: var(--good); }
   .mini-value.critical { color: var(--critical); }
-  .mini-label { font-size: 10.5px; color: var(--ink-mut); margin-top: 1px; }
+  .mini-label { font-size: 10.5px; color: var(--ink-mut); margin-top: 2px; }
+  .current-label { font-size: 11.5px; color: var(--ink-mut); min-height: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: center; }
 
-  .progress-block { margin-top: 6px; }
-  .progress-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
-  .progress-row:last-child { margin-bottom: 0; }
-  .progress-tag { font-size: 10.5px; color: var(--ink-mut); width: 66px; flex-shrink: 0; }
-  .progress-track { flex: 1; height: 7px; border-radius: 4px; background: var(--track-bg); overflow: hidden; }
+  /* Global/local progress bars - stretch to fill the bar, so Clear Data lands at the far edge */
+  .bottom-progress { display: flex; flex-direction: column; gap: 3px; flex: 1 1 auto; min-width: 160px; max-width: 800px; }
+  .progress-row { display: flex; align-items: center; gap: 6px; }
+  .progress-tag { font-size: 10px; color: var(--ink-mut); width: 38px; flex-shrink: 0; }
+  .progress-track { flex: 1; height: 6px; border-radius: 4px; background: var(--track-bg); overflow: hidden; }
   .progress-fill { height: 100%; background: var(--accent); width: 0%; transition: width .3s; }
   .progress-fill.batch { background: var(--model-sub); }
-  .progress-num { font-size: 10.5px; color: var(--ink-mut); width: 44px; text-align: left; flex-shrink: 0; }
-  .current-label { margin-top: 6px; font-size: 11.5px; color: var(--ink-mut); min-height: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .progress-num { font-size: 10px; color: var(--ink-mut); width: 38px; text-align: left; flex-shrink: 0; }
 
   /* Chart: legend + view toggles sit in a side column so the chart itself is short and wide */
   .chart-card-body { display: flex; gap: 12px; align-items: stretch; }
@@ -180,6 +187,10 @@
   .sum-cell.critical { color: var(--critical); }
   .matrix-empty { padding: 20px; text-align: center; color: var(--ink-mut); font-size: 12.5px; }
 
+  /* Subtle blue frame on the left detail panel while a participant row is selected */
+  #detailCard { transition: border-color .15s, box-shadow .15s; }
+  #detailCard.selected { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-bg); }
+
   .detail-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; gap: 8px; }
   .detail-pid { font-weight: 800; font-size: 14px; color: var(--ink); }
   .detail-follow { font-size: 11px; color: var(--accent); cursor: pointer; text-decoration: underline; margin-inline-start: 8px; }
@@ -205,7 +216,6 @@
   .bottom-bar label { font-size: 12px; font-weight: 600; color: var(--ink-mut); }
   .bottom-bar input[type="number"] { padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; width: 64px;
     background: var(--card); color: var(--ink); }
-  .bottom-bar .spacer { flex: 1; }
 </style>
 </head>
 <body>
@@ -230,7 +240,7 @@
   </div>
 
   <div class="top-grid">
-    <div class="card">
+    <div class="card stats-card">
       <div class="mini-stats">
         <div class="mini-tile"><div class="mini-value" id="miniSelected">0</div><div class="mini-label">נבחרו</div></div>
         <div class="mini-tile"><div class="mini-value" id="miniDone">0/0</div><div class="mini-label">נבדקים הושלמו</div></div>
@@ -238,18 +248,6 @@
         <div class="mini-tile"><div class="mini-value" id="miniIncorrect">0</div><div class="mini-label">סה״כ שגויות</div></div>
         <div class="mini-tile"><div class="mini-value" id="miniOptPct" style="color:var(--model-opt)">–</div><div class="mini-label">דיוק OPT</div></div>
         <div class="mini-tile"><div class="mini-value" id="miniSubPct" style="color:var(--model-sub)">–</div><div class="mini-label">דיוק SUB</div></div>
-      </div>
-      <div class="progress-block">
-        <div class="progress-row">
-          <span class="progress-tag">נבדק נוכחי</span>
-          <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
-          <span class="progress-num" id="progressNum">0/0</span>
-        </div>
-        <div class="progress-row">
-          <span class="progress-tag">אצווה</span>
-          <div class="progress-track"><div class="progress-fill batch" id="batchProgressFill"></div></div>
-          <span class="progress-num" id="batchProgressNum">0/0</span>
-        </div>
       </div>
       <div class="current-label" id="currentLabel"></div>
     </div>
@@ -287,7 +285,7 @@
       </div>
     </div>
 
-    <div class="card">
+    <div class="card" id="detailCard">
       <div class="detail-toolbar">
         <span><span class="detail-pid" id="detailPidLabel">–</span><span class="detail-follow" id="followLink" style="display:none">↻ עקוב אחרי הריצה</span></span>
         <div class="segmented" id="detailViewToggle">
@@ -306,15 +304,25 @@
   </div>
 
   <div class="card bottom-bar">
-    <span class="spacer"></span>
-    <span id="statusPill" class="status-pill"><span class="dot"></span><span id="statusText">ממתין</span></span>
     <div class="field-inline">
       <label for="delayInput">שהייה למסך (שנ׳)</label>
       <input type="number" id="delayInput" value="1" min="0.1" step="0.1" />
     </div>
-    <button id="stopBtn" class="btn btn-mono" disabled>■ עצור לגמרי</button>
-    <button id="pauseBtn" class="btn btn-mono" disabled>⏸ השהה</button>
-    <button id="startBtn" class="btn btn-start">◀ התחל</button>
+    <button id="startPauseBtn" class="btn btn-start">◀ התחל</button>
+    <button id="stopBtn" class="btn btn-danger" disabled>■ עצור לגמרי</button>
+    <span id="statusPill" class="status-pill"><span class="dot"></span><span id="statusText">ממתין</span></span>
+    <div class="bottom-progress">
+      <div class="progress-row">
+        <span class="progress-tag">נבדק</span>
+        <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+        <span class="progress-num" id="progressNum">0/0</span>
+      </div>
+      <div class="progress-row">
+        <span class="progress-tag">אצווה</span>
+        <div class="progress-track"><div class="progress-fill batch" id="batchProgressFill"></div></div>
+        <span class="progress-num" id="batchProgressNum">0/0</span>
+      </div>
+    </div>
     <button id="clearDataBtn" class="btn btn-mono">🗑 הסר נתונים</button>
   </div>
 </div>
@@ -541,7 +549,8 @@ el('matrixBody').addEventListener('change', (e) => {
 el('matrixBody').addEventListener('click', (e) => {
   const tr = e.target.closest('tr[data-pid]');
   if (!tr || e.target.classList.contains('pid-cb')) return;
-  focusedPid = tr.dataset.pid;
+  const pid = tr.dataset.pid;
+  focusedPid = (focusedPid === pid) ? null : pid; // click again to deselect
   autoFollow = false;
   renderMatrix();
   renderDetail();
@@ -570,8 +579,9 @@ function renderDetail() {
   const pid = focusedPid;
   el('detailPidLabel').textContent = pid || '–';
   el('followLink').style.display = (!autoFollow && currentStatus && currentStatus.running) ? 'inline' : 'none';
+  el('detailCard').classList.toggle('selected', !!pid);
   if (!pid) {
-    el('detailTableBody').innerHTML = `<tr><td colspan="5" class="empty-note">בחר נבדק מהטבלה או התחל הרצה</td></tr>`;
+    el('detailTableBody').innerHTML = `<tr><td colspan="5" class="empty-note">יש לבחור שורה כדי להציג פרטים</td></tr>`;
     el('detailChartWrap').innerHTML = '';
     return;
   }
@@ -825,9 +835,7 @@ async function refreshStatus() {
 
   const running = !!st.running;
   const paused = !!st.paused;
-  el('startBtn').disabled = running;
-  el('pauseBtn').disabled = !running;
-  el('pauseBtn').textContent = paused ? '◀ המשך' : '⏸ השהה';
+  el('startPauseBtn').textContent = running ? (paused ? '◀ המשך' : '⏸ השהה') : '◀ התחל';
   el('stopBtn').disabled = !running;
   el('selectAllBtn').disabled = running;
   el('clearDataBtn').disabled = running;
@@ -854,37 +862,39 @@ async function refreshStatus() {
 
 // ── Controls ───────────────────────────────────────────────────────────────
 
-el('startBtn').addEventListener('click', async () => {
+// Single button that does the right thing for whatever state the run is in:
+// idle -> start, running -> pause, paused -> resume.
+el('startPauseBtn').addEventListener('click', async () => {
+  const st = currentStatus || {};
+  const btn = el('startPauseBtn');
+  if (st.running) {
+    const paused = !!st.paused;
+    btn.disabled = true;
+    await api(paused ? '/api/resume' : '/api/pause', { method: 'POST' });
+    btn.disabled = false;
+    return;
+  }
   const pids = getSelectedPids();
   if (!pids.length) { alert('בחר לפחות נבדק אחד'); return; }
   const delay = el('delayInput').value;
-  el('startBtn').disabled = true;
+  btn.disabled = true;
   autoFollow = true;
   const res = await api('/api/start', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ pids, delay }),
   });
-  if (!res.ok) {
-    alert(res.error || 'לא ניתן להתחיל הרצה');
-    el('startBtn').disabled = false;
-    return;
-  }
-  el('pauseBtn').disabled = false;
+  btn.disabled = false;
+  if (!res.ok) { alert(res.error || 'לא ניתן להתחיל הרצה'); return; }
   el('stopBtn').disabled = false;
 });
 
-el('pauseBtn').addEventListener('click', async () => {
-  const paused = el('pauseBtn').textContent.includes('המשך');
-  el('pauseBtn').disabled = true;
-  await api(paused ? '/api/resume' : '/api/pause', { method: 'POST' });
-  el('pauseBtn').disabled = false;
-});
-
 el('stopBtn').addEventListener('click', async () => {
+  const msg = 'לעצור את ההרצה לגמרי?\n\n'
+    + 'פעולה זו תפסיק מיידית את הנבדק הרץ כרגע ותבטל את כל התור שנשאר - '
+    + 'לא ניתן לחדש הרצה שנעצרה. אם רק רוצים להפסיק זמנית, יש להשתמש בכפתור השהה במקום.';
+  if (!confirm(msg)) return;
   el('stopBtn').disabled = true;
   await api('/api/stop', { method: 'POST' });
-  el('startBtn').disabled = false;
-  el('pauseBtn').disabled = true;
 });
 
 el('clearDataBtn').addEventListener('click', async () => {
@@ -894,7 +904,7 @@ el('clearDataBtn').addEventListener('click', async () => {
   el('clearDataBtn').disabled = false;
   if (!res.ok) { alert(res.error || 'לא ניתן לנקות נתונים'); return; }
   allParticipants.forEach(pid => { participantMeta[pid] = { checked: false, status: 'queued' }; });
-  focusedPid = null;
+  focusedPid = allParticipants[0] || null;
   autoFollow = true;
   updateMiniSelected();
   await refreshStatus();
@@ -902,6 +912,7 @@ el('clearDataBtn').addEventListener('click', async () => {
 
 (async function init() {
   await loadParticipants();
+  focusedPid = allParticipants[0] || null;
   renderMatrixHead();
   renderMatrix();
   updateMiniSelected();
