@@ -57,6 +57,41 @@
     --track-bg:   #2c2f36;
     color-scheme: dark;
   }
+  /* High-contrast: true black, no hue anywhere - good/critical/warn/accent/model all
+     collapse to white so nothing depends on color perception; meaning comes from text,
+     borders and (for the matrix cells, which had no text) a ✓/✗ overlay added below. */
+  :root[data-theme="contrast"] {
+    --accent:     #ffffff;
+    --accent-dk:  #ffffff;
+    --accent-bg:  #000000;
+    --good:       #ffffff;
+    --good-bg:    #000000;
+    --critical:   #ffffff;
+    --critical-bg:#000000;
+    --warn:       #ffffff;
+    --warn-bg:    #000000;
+    --model-opt:  #ffffff;
+    --model-sub:  #ffffff;
+    --bg:         #000000;
+    --card:       #000000;
+    --ink:        #ffffff;
+    --ink-mut:    #cfcfcf;
+    --ink-faint:  #8a8a8a;
+    --border:     #ffffff;
+    --row-alt:    #141414;
+    --pending-bg: #333333;
+    --pill-bg:    #000000;
+    --thead-bg:   #000000;
+    --thead-ink:  #ffffff;
+    --track-bg:   #333333;
+    color-scheme: dark;
+  }
+  :root[data-theme="contrast"] .card,
+  :root[data-theme="contrast"] .status-pill,
+  :root[data-theme="contrast"] .badge,
+  :root[data-theme="contrast"] .model-tag { border-width: 1.5px; }
+  :root[data-theme="contrast"] .status-pill,
+  :root[data-theme="contrast"] .badge { border: 1.5px solid var(--border); }
   * { box-sizing: border-box; }
   html, body { height: 100%; }
   body {
@@ -74,11 +109,13 @@
   .settings-wrap { position: relative; }
   .settings-menu { display: none; position: absolute; top: calc(100% + 6px); left: 0; background: var(--card);
     border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 4px 14px rgba(0,0,0,0.15); padding: 10px 12px;
-    min-width: 190px; z-index: 50; }
+    min-width: 220px; z-index: 50; }
   .settings-menu.open { display: block; }
-  .settings-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 12.5px; color: var(--ink-mut); }
+  .settings-row { display: flex; flex-direction: column; align-items: stretch; gap: 6px; font-size: 12.5px; color: var(--ink-mut); }
+  .settings-row .segmented { align-self: stretch; }
+  .settings-row .segmented button { flex: 1; }
 
-  .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); padding: 14px 16px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); padding: 16px; }
   .section-title { font-size: 13px; font-weight: 700; color: var(--ink); margin: 0 0 8px 0; }
 
   /* Buttons - muted outline style; color only via border/text, never a loud solid fill.
@@ -133,21 +170,21 @@
   /* ── Top row: compact dashboard + summary chart (fixed, never scrolls) ── */
   .top-grid { display: grid; grid-template-columns: 1.1fr 1fr; gap: 14px; margin-bottom: 10px; align-items: stretch; flex: 0 0 auto; }
   @media (max-width: 980px) { .top-grid { grid-template-columns: 1fr; } }
-  .top-grid .card { padding: 10px 14px; }
+  .top-grid .card { padding: 12px; }
 
   /* Stats card: content is short (no progress bars anymore, those live in the
      bottom bar) so center it to use the card's full stretched height instead of
      leaving empty space under it. */
   .stats-card { display: flex; flex-direction: column; justify-content: center; gap: 10px; }
   .mini-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-  .mini-tile { background: var(--row-alt); border: 1px solid var(--border); border-radius: 7px; padding: 10px 6px; text-align: center; }
+  .mini-tile { background: var(--row-alt); border: 1px solid var(--border); border-radius: 7px; padding: 8px; text-align: center; }
   .mini-value { font-size: 19px; font-weight: 800; color: var(--accent-dk); line-height: 1.15; }
   .mini-value.good { color: var(--good); }
   .mini-value.critical { color: var(--critical); }
   .mini-label { font-size: 10.5px; color: var(--ink-mut); margin-top: 2px; }
 
   /* Global/local progress bars - stretch to fill the bar, so Clear Data lands at the far edge */
-  .bottom-progress { display: flex; flex-direction: column; gap: 3px; flex: 1 1 auto; min-width: 160px; max-width: 800px; }
+  .bottom-progress { display: flex; flex-direction: column; gap: 3px; flex: 1 1 auto; min-width: 160px; }
   .progress-row { display: flex; align-items: center; gap: 6px; }
   .progress-tag { font-size: 10px; color: var(--ink-mut); width: 38px; flex-shrink: 0; }
   .progress-track { flex: 1; height: 6px; border-radius: 4px; background: var(--track-bg); overflow: hidden; }
@@ -157,12 +194,19 @@
 
   /* Chart: legend + view toggles sit in a side column so the chart itself is short and wide */
   .chart-card-body { display: flex; gap: 12px; align-items: stretch; }
-  .chart-side { display: flex; flex-direction: column; gap: 6px; flex: 0 0 118px; justify-content: center; }
+  .chart-side { display: flex; flex-direction: column; gap: 6px; flex: 0 0 132px; justify-content: center; }
   .chart-side .segmented { display: flex; }
   .chart-side .segmented button { flex: 1; padding: 5px 4px; }
+  /* The view-by toggle has 3 options now (model/participant/visualization) - stack them
+     so long labels like "לפי ויזואליזציה" get the full column width instead of a cramped third. */
+  #topViewToggle { flex-direction: column; }
+  #topViewToggle button { flex: none; border-inline-start: none; border-block-start: 1px solid var(--border); }
+  #topViewToggle button:first-child { border-block-start: none; }
   .chart-wrap { flex: 1 1 auto; min-width: 0; overflow-x: auto; }
   .chart-wrap svg { display: block; max-width: 100%; height: auto; margin: 0 auto; }
-  .legend-col { display: flex; flex-direction: column; gap: 4px; margin-top: 2px; }
+  /* Legend sits in its own flanking column (not stacked under the toggles) - keeps the
+     toggle column short so the top row stays compact even with a 3-option toggle. */
+  .legend-col { display: flex; flex-direction: column; gap: 6px; justify-content: center; flex: 0 0 80px; }
   .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--ink-mut); }
   .legend-swatch { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
 
@@ -189,20 +233,35 @@
   .status-dot.running { background: var(--accent); animation: pulse 1.1s infinite; }
   .status-dot.done     { background: var(--good); }
   .status-dot.error, .status-dot.stopped { background: var(--critical); }
-  .cell-box { width: 14px; height: 14px; border-radius: 3px; margin: 0 auto; background: var(--pending-bg); }
+  .cell-box { width: 14px; height: 14px; border-radius: 3px; margin: 0 auto; background: var(--pending-bg); position: relative; }
   .cell-box.good { background: var(--good); }
   .cell-box.bad { background: var(--critical); }
   .cell-box.practice { background: var(--ink-faint); }
   .cell-box.current { box-shadow: 0 0 0 2px var(--accent); }
+  /* Contrast mode has no color to tell good/bad apart, so overlay a symbol on the box */
+  :root[data-theme="contrast"] .cell-box.good::after,
+  :root[data-theme="contrast"] .cell-box.bad::after,
+  :root[data-theme="contrast"] .cell-box.practice::after {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 900; line-height: 1; color: #000000;
+  }
+  :root[data-theme="contrast"] .cell-box.good::after { content: "✓"; }
+  :root[data-theme="contrast"] .cell-box.bad::after { content: "✗"; }
+  :root[data-theme="contrast"] .cell-box.practice::after { content: "•"; }
   .sum-cell { font-weight: 700; font-variant-numeric: tabular-nums; }
   .sum-cell.good { color: var(--good); }
   .sum-cell.critical { color: var(--critical); }
   .matrix-empty { padding: 20px; text-align: center; color: var(--ink-mut); font-size: 12.5px; }
 
   /* Subtle blue frame on the left detail panel while a participant row is selected */
-  #detailCard { transition: border-color .15s, box-shadow .15s; }
+  #detailCard { transition: border-color .15s, box-shadow .15s, border-width .15s; }
   #detailCard.selected { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-bg); }
+  /* Contrast mode has no accent hue to glow with - a thicker border reads instead */
+  :root[data-theme="contrast"] #detailCard.selected { border-width: 3px; box-shadow: none; }
 
+  /* Match header-row height on both sides of the main row so the two tables'
+     thead start at the same Y, regardless of what controls sit in each header. */
+  .main-grid .section-title, .detail-toolbar { min-height: 34px; }
   .detail-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; gap: 8px; }
   .detail-pid { font-weight: 800; font-size: 14px; color: var(--ink); }
   .detail-follow { font-size: 11px; color: var(--accent); cursor: pointer; text-decoration: underline; margin-inline-start: 8px; }
@@ -245,6 +304,7 @@
           <div class="segmented" id="themeToggle">
             <button data-val="light" class="active">☀ בהיר</button>
             <button data-val="dark">🌙 כהה</button>
+            <button data-val="contrast">◐ ניגודיות</button>
           </div>
         </div>
       </div>
@@ -270,14 +330,15 @@
           <div class="segmented" id="topViewToggle">
             <button data-val="model" class="active">לפי מודל</button>
             <button data-val="participant">לפי נבדק</button>
+            <button data-val="visualization">לפי ויזואליזציה</button>
           </div>
           <div class="segmented" id="topAggToggle">
             <button data-val="cumulative" class="active">מצטבר</button>
             <button data-val="average">ממוצע</button>
           </div>
-          <div class="legend-col" id="topChartLegend"></div>
         </div>
         <div class="chart-wrap" id="topChartWrap"></div>
+        <div class="legend-col" id="topChartLegend"></div>
       </div>
     </div>
   </div>
@@ -342,9 +403,12 @@
 </div>
 
 <script>
-const GOOD = '#0ca30c', CRITICAL = '#d03b3b';
-const MODEL_COLOR = { OPT: '#2a78d6', SUB: '#1baf7a' };
 function cssVar(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+// Read live from CSS variables (not hardcoded hex) so charts/tags go colorless too
+// under the high-contrast theme, instead of staying hardcoded green/red/blue.
+function GOOD() { return cssVar('--good'); }
+function CRITICAL() { return cssVar('--critical'); }
+function MODEL_COLOR(mt) { return mt === 'OPT' ? cssVar('--model-opt') : cssVar('--model-sub'); }
 const GROUP_HE = { Practice: 'תרגול', OPT: 'OPT', SUB: 'SUB' };
 // Practice trials are always correct by design (guaranteed-correct warm-up scenarios) -
 // mixing them into correct/incorrect comparisons would dilute the OPT vs SUB signal,
@@ -372,7 +436,7 @@ const THEME_KEY = 'rpsDashboardTheme';
 function applyTheme(theme, { rerender = true } = {}) {
   document.documentElement.setAttribute('data-theme', theme);
   document.querySelectorAll('#themeToggle button').forEach(b => b.classList.toggle('active', b.dataset.val === theme));
-  if (rerender) { renderTopChart(); renderDetail(); }
+  if (rerender) { renderMatrix(); renderTopChart(); renderDetail(); }
 }
 applyTheme(localStorage.getItem(THEME_KEY) || 'light', { rerender: false });
 
@@ -456,6 +520,22 @@ function tallyFor(pid) {
   return t;
 }
 
+const VIS_GROUPS = ['עמודות נערמות', 'רדאר', 'מפת חום'];
+const VIS_SHORT_LABEL = { 'עמודות נערמות': 'עמודות', 'רדאר': 'רדאר', 'מפת חום': 'מפת חום' };
+
+function tallyByVisFor(pid) {
+  const t = {};
+  VIS_GROUPS.forEach(v => { t[v] = { correct: 0, incorrect: 0 }; });
+  const idx = liveIndexFor(pid);
+  experimentRows(pid).forEach(r => {
+    const st = rowState(r, idx);
+    if (st === 'pending') return;
+    if (!t[r.visualization]) t[r.visualization] = { correct: 0, incorrect: 0 };
+    t[r.visualization][r.rec_is_correct ? 'correct' : 'incorrect']++;
+  });
+  return t;
+}
+
 // ── Matrix (right panel) ─────────────────────────────────────────────────────
 
 // Each scenario_id encodes a fixed scenario NUMBER (e.g. "SCN_009_H" -> 9) that's
@@ -498,7 +578,7 @@ function modelOrderFor(pid) {
 
 function modelTag(mt) {
   if (!mt) return `<span class="badge wait">–</span>`;
-  const color = MODEL_COLOR[mt];
+  const color = MODEL_COLOR(mt);
   return `<span class="model-tag" style="color:${color}; border-color:${color}">${mt}</span>`;
 }
 
@@ -620,13 +700,17 @@ function renderDetail() {
           <td>${statusCell}</td>
         </tr>`;
       }).join('');
+      // Keep the running step in view as the schedule advances, without yanking the
+      // scroll position around if it's already visible (block:'nearest').
+      const curRow = el('detailTableBody').querySelector('tr.current');
+      if (curRow) curRow.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     }
   } else {
     const t = tallyFor(pid);
     renderGroupedBarChart({
       groups: EXPERIMENT_GROUPS,
       seriesKeys: ['correct', 'incorrect'],
-      seriesColors: { correct: GOOD, incorrect: CRITICAL },
+      seriesColors: { correct: GOOD(), incorrect: CRITICAL() },
       values: t,
       wrapId: 'detailChartWrap',
       isPercent: false,
@@ -766,14 +850,14 @@ function renderTopChart() {
     });
     renderGroupedBarChart({
       groups: EXPERIMENT_GROUPS, seriesKeys: ['correct', 'incorrect'],
-      seriesColors: { correct: GOOD, incorrect: CRITICAL },
+      seriesColors: { correct: GOOD(), incorrect: CRITICAL() },
       values, wrapId: 'topChartWrap', isPercent: topAgg === 'average',
       groupLabel: g => g, height: 130,
     });
     el('topChartLegend').innerHTML = `
-      <span class="legend-item"><span class="legend-swatch" style="background:${GOOD}"></span>נכון</span>
-      <span class="legend-item"><span class="legend-swatch" style="background:${CRITICAL}"></span>שגוי</span>`;
-  } else {
+      <span class="legend-item"><span class="legend-swatch" style="background:${GOOD()}"></span>נכון</span>
+      <span class="legend-item"><span class="legend-swatch" style="background:${CRITICAL()}"></span>שגוי</span>`;
+  } else if (topView === 'participant') {
     const values = {};
     pids.forEach(pid => {
       const t = perPid[pid];
@@ -789,13 +873,39 @@ function renderTopChart() {
     });
     renderGroupedBarChart({
       groups: pids, seriesKeys: ['OPT', 'SUB'],
-      seriesColors: { OPT: MODEL_COLOR.OPT, SUB: MODEL_COLOR.SUB },
+      seriesColors: { OPT: MODEL_COLOR('OPT'), SUB: MODEL_COLOR('SUB') },
       values, wrapId: 'topChartWrap', isPercent: topAgg === 'average',
       groupLabel: g => g, height: 130,
     });
     el('topChartLegend').innerHTML = `
-      <span class="legend-item"><span class="legend-swatch" style="background:${MODEL_COLOR.OPT}"></span>OPT ${topAgg==='cumulative'?'(נכון)':'(% נכון)'}</span>
-      <span class="legend-item"><span class="legend-swatch" style="background:${MODEL_COLOR.SUB}"></span>SUB ${topAgg==='cumulative'?'(נכון)':'(% נכון)'}</span>`;
+      <span class="legend-item"><span class="legend-swatch" style="background:${MODEL_COLOR('OPT')}"></span>OPT ${topAgg==='cumulative'?'(נכון)':'(% נכון)'}</span>
+      <span class="legend-item"><span class="legend-swatch" style="background:${MODEL_COLOR('SUB')}"></span>SUB ${topAgg==='cumulative'?'(נכון)':'(% נכון)'}</span>`;
+  } else {
+    const perPidVis = {};
+    pids.forEach(pid => { perPidVis[pid] = tallyByVisFor(pid); });
+    const values = {};
+    VIS_GROUPS.forEach(v => {
+      if (topAgg === 'cumulative') {
+        let c = 0, i = 0;
+        pids.forEach(pid => { c += perPidVis[pid][v].correct; i += perPidVis[pid][v].incorrect; });
+        values[v] = { correct: c, incorrect: i };
+      } else {
+        const rates = pids.map(pid => perPidVis[pid][v])
+          .filter(x => x.correct + x.incorrect > 0)
+          .map(x => 100 * x.correct / (x.correct + x.incorrect));
+        const avg = rates.length ? rates.reduce((a, b) => a + b, 0) / rates.length : 0;
+        values[v] = { correct: Math.round(avg), incorrect: Math.round(100 - avg) };
+      }
+    });
+    renderGroupedBarChart({
+      groups: VIS_GROUPS, seriesKeys: ['correct', 'incorrect'],
+      seriesColors: { correct: GOOD(), incorrect: CRITICAL() },
+      values, wrapId: 'topChartWrap', isPercent: topAgg === 'average',
+      groupLabel: g => VIS_SHORT_LABEL[g] || g, height: 130,
+    });
+    el('topChartLegend').innerHTML = `
+      <span class="legend-item"><span class="legend-swatch" style="background:${GOOD()}"></span>נכון</span>
+      <span class="legend-item"><span class="legend-swatch" style="background:${CRITICAL()}"></span>שגוי</span>`;
   }
 }
 
