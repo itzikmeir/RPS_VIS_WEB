@@ -15,18 +15,25 @@ Serves test_dashboard.html plus a small JSON API that:
   - exposes live progress + batch queue status for the dashboard to poll
     (GET /api/status)
 
+Also serves the rest of the project as plain static files (falls through to
+SimpleHTTPRequestHandler), so the real experiment app can be opened from this
+same origin - e.g. http://127.0.0.1:8765/experiment_model_ordered/index.html.
+That's what lets test_dashboard.html's "live monitor" tab read the experiment's
+localStorage while you run it manually: same origin, same storage.
+
 Usage:
   python dashboard_server.py               # http://127.0.0.1:8765
   python dashboard_server.py --port 8800 --no-browser
 """
 import argparse
+import functools
 import json
 import subprocess
 import sys
 import threading
 import time
 import webbrowser
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse, parse_qs
 
@@ -104,6 +111,12 @@ def _build_schedule_rows(pid: str) -> list:
                 "correct_route": step.get("correct_route"),
                 "ai_recommended_route": step.get("ai_recommended_route"),
                 "rec_is_correct": step.get("rec_is_correct"),
+                # Index fields (not used by the automated-run matrix, but needed by the
+                # live monitor to match a schedule row to a logged trial from the real
+                # experiment app, which keys its trial log by these same indices).
+                "model_index": step.get("mi"),
+                "vis_index": step.get("vi"),
+                "trial_index": step.get("ti") if stage != "practice" else step.get("pi"),
             }
         else:
             groups[key]["step_index_end"] = idx
@@ -178,7 +191,12 @@ def _queue_watcher():
                 _launch(_batch["pids"][next_idx], _batch.get("delay", 1.0))
 
 
-class Handler(BaseHTTPRequestHandler):
+class Handler(SimpleHTTPRequestHandler):
+    """Serves the QA dashboard + its API, and (via the SimpleHTTPRequestHandler
+    fallback below) the rest of the project as plain static files - notably
+    experiment_model_ordered/, so the real experiment app and the dashboard's
+    live-monitor tab share one origin and can both see the same localStorage."""
+
     def log_message(self, *_args):
         pass  # quiet - avoid noisy polling logs
 
@@ -224,7 +242,7 @@ class Handler(BaseHTTPRequestHandler):
                                   "results": dict(_batch["results"])}
             self._send_json(data)
         else:
-            self._send_json({"error": "not found"}, status=404)
+            super().do_GET()  # static files: experiment_model_ordered/*, style.css, etc.
 
     def do_POST(self):
         parsed = urlparse(self.path)
@@ -335,7 +353,7 @@ def main():
     _write_control({"paused": False})
     threading.Thread(target=_queue_watcher, daemon=True).start()
 
-    server = ThreadingHTTPServer(("127.0.0.1", args.port), Handler)
+    server = ThreadingHTTPServer(("127.0.0.1", args.port), functools.partial(Handler, directory=str(ROOT)))
     url = f"http://127.0.0.1:{args.port}/"
     print(f"\nLive test dashboard running at {url}")
     print(f"Participants dir: {PARTICIPANTS_DIR} (exists: {PARTICIPANTS_DIR.is_dir()})")

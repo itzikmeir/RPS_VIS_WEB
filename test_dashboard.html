@@ -287,14 +287,42 @@
   .bottom-bar label { font-size: 12px; font-weight: 600; color: var(--ink-mut); }
   .bottom-bar input[type="number"] { padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; width: 64px;
     background: var(--card); color: var(--ink); }
+
+  /* ── Live monitor tab: manual run, plan vs actual ─────────────────────── */
+  #autoModeContent { display: contents; }
+  #monitorModeContent { flex-direction: column; gap: 14px; }
+  .mini-stats.cols-4 { grid-template-columns: repeat(4, 1fr); }
+  .monitor-toolbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .monitor-toolbar label { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--ink-mut); }
+  .monitor-toolbar select { padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--card);
+    color: var(--ink); font-size: 13px; min-width: 210px; }
+  .monitor-toolbar select.invalid { border-color: var(--critical); box-shadow: 0 0 0 2px var(--critical-bg); }
+  .monitor-error-badge { display: none; }
+  .monitor-error-badge.show { display: inline-flex; }
+  .monitor-hint { font-size: 11.5px; color: var(--ink-mut); }
+  .monitor-table-card { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; padding: 0; overflow: hidden; }
+  .monitor-table-wrap { flex: 1 1 auto; min-height: 0; overflow: auto; border: 1px solid var(--border); border-radius: 7px; margin: 16px; }
+  #monitorTable { width: 100%; border-collapse: collapse; font-size: 11.5px; white-space: nowrap; }
+  #monitorTable thead th { position: sticky; top: 0; background: var(--thead-bg); padding: 7px 6px; border-bottom: 1px solid var(--border);
+    font-weight: 700; color: var(--thead-ink); text-align: center; z-index: 2; }
+  #monitorTable tbody td { padding: 5px 6px; border-bottom: 1px solid var(--border); text-align: center; }
+  #monitorTable tbody tr:nth-child(even) td { background: var(--row-alt); }
+  #monitorTable tbody tr.current td { background: var(--accent-bg) !important; box-shadow: inset 3px 0 0 var(--accent); font-weight: 700; }
+  .mon-ok { color: var(--good); }
+  .mon-bad { color: var(--critical); font-weight: 700; background: var(--critical-bg); border-radius: 4px; padding: 1px 4px; }
+  .mon-wait { color: var(--ink-faint); }
 </style>
 </head>
 <body>
 <div class="container">
   <div class="app-header">
     <span class="app-logo">🧭</span>
-    <h1>דאשבורד בדיקה בזמן אמת — הרצת ניסוי אוטומטית</h1>
+    <h1>דאשבורד בדיקה בזמן אמת — תכנון מול ביצוע</h1>
     <span class="spacer"></span>
+    <div class="segmented" id="modeToggle">
+      <button data-val="auto" class="active">🤖 הרצה אוטומטית</button>
+      <button data-val="monitor">👁 מוניטור חי</button>
+    </div>
     <div class="settings-wrap">
       <button id="settingsBtn" class="btn btn-mono" title="הגדרות">⚙ הגדרות</button>
       <div id="settingsMenu" class="settings-menu">
@@ -311,6 +339,7 @@
     </div>
   </div>
 
+  <div id="autoModeContent">
   <div class="top-grid">
     <div class="card stats-card">
       <div class="mini-stats">
@@ -374,8 +403,33 @@
       <div id="detailChartWrap" class="chart-wrap" style="display:none"></div>
     </div>
   </div>
+  </div>
 
-  <div class="card bottom-bar">
+  <div id="monitorModeContent" style="display:none;">
+    <div class="card">
+      <div class="monitor-toolbar">
+        <label for="monitorPidSelect">נבדק:
+          <select id="monitorPidSelect"></select>
+        </label>
+        <span class="badge critical monitor-error-badge" id="monitorPidError">⚠ לא נמצא תכנון לנבדק זה</span>
+        <button id="monitorRefreshBtn" class="btn btn-ghost">רענן רשימה</button>
+        <a href="experiment_model_ordered/index.html" target="_blank"><button type="button" class="btn btn-ghost">פתח את הניסוי בכרטיסייה חדשה</button></a>
+        <span class="monitor-hint" id="monitorLastSaved"></span>
+      </div>
+      <div class="mini-stats cols-4" id="monitorStatsGrid" style="margin-top:12px;"></div>
+    </div>
+
+    <div class="card monitor-table-card">
+      <div class="monitor-table-wrap">
+        <table id="monitorTable">
+          <thead><tr id="monitorHeadRow"></tr></thead>
+          <tbody id="monitorBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="card bottom-bar" id="bottomBar">
     <div class="field-inline">
       <label for="delayInput">שהייה למסך (שנ׳)</label>
       <input type="number" id="delayInput" value="1" min="0.1" step="0.1" />
@@ -428,6 +482,23 @@ let topView = 'model';         // 'model' | 'participant'
 let topAgg = 'cumulative';     // 'cumulative' | 'average'
 let currentStatus = null;
 let pollTimer = null;
+let mode = 'auto';              // 'auto' (automated batch run) | 'monitor' (live plan-vs-actual)
+
+// ── Mode toggle (automated run vs. live monitor) ──────────────────────────────
+
+function setMode(newMode) {
+  mode = newMode;
+  document.querySelectorAll('#modeToggle button').forEach(b => b.classList.toggle('active', b.dataset.val === mode));
+  el('autoModeContent').style.display = mode === 'auto' ? 'contents' : 'none';
+  el('bottomBar').style.display = mode === 'auto' ? '' : 'none';
+  el('monitorModeContent').style.display = mode === 'monitor' ? 'flex' : 'none';
+  if (mode === 'monitor') { renderMonitorHead(); refreshMonitor(); }
+}
+el('modeToggle').addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-val]');
+  if (!btn || btn.dataset.val === mode) return;
+  setMode(btn.dataset.val);
+});
 
 // ── Theme (settings menu / dark mode) ─────────────────────────────────────────
 
@@ -676,7 +747,7 @@ function renderDetail() {
   el('detailCard').classList.toggle('selected', !!pid);
   if (!pid) {
     el('detailTableBody').innerHTML = `<tr><td colspan="5" class="empty-note">יש לבחור שורה כדי להציג פרטים</td></tr>`;
-    el('detailChartWrap').innerHTML = '';
+    el('detailChartWrap').innerHTML = `<div class="empty-note">יש לבחור שורה כדי להציג פרטים</div>`;
     return;
   }
   const rows = scheduleCache[pid] || [];
@@ -1036,6 +1107,234 @@ el('clearDataBtn').addEventListener('click', async () => {
   await refreshStatus();
 });
 
+// ── Live monitor (manual run: plan vs actual) ─────────────────────────────────
+// Watches the real experiment app's localStorage (shared origin, see dashboard_server.py)
+// while you click through it yourself, comparing each trial against the schedule.
+
+const STORAGE_KEY_PREFIX = 'experiment_model_ordered_log_';
+const MONITOR_COLS = ['#', 'שלב', 'תרחיש', 'ויזואליזציה', 'מסלול נכון', 'מסלול AI', 'המלצה תקינה?',
+                       'בחירת הנבדק', 'עקב AI?', 'בחר נכון?', 'שאלות הבנה', "משך (שנ')", 'סטטוס'];
+let monitorPid = null;
+
+function planKeyFor(row) {
+  return row.stage === 'practice' ? `practice_${row.trial_index}` : `exp_${row.model_index}_${row.vis_index}_${row.trial_index}`;
+}
+function monitorActualKeyFor(t) {
+  return t.stage === 'practice' ? `practice_${t.trial_index}` : `exp_${t.model_index}_${t.vis_index}_${t.trial_index}`;
+}
+
+function listStorageParticipants() {
+  const ids = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith(STORAGE_KEY_PREFIX)) ids.push(key.slice(STORAGE_KEY_PREFIX.length));
+  }
+  return ids;
+}
+function loadMonitorSnapshot(pid) {
+  const raw = localStorage.getItem(STORAGE_KEY_PREFIX + pid);
+  if (!raw) return null;
+  try { return JSON.parse(raw); } catch (e) { return null; }
+}
+
+async function ensureScheduleFor(pid) {
+  if (scheduleCache[pid] && scheduleCache[pid].length) return scheduleCache[pid];
+  try {
+    const sdata = await api(`/api/schedule?pid=${encodeURIComponent(pid)}`);
+    scheduleCache[pid] = sdata.ok ? sdata.rows : [];
+  } catch (e) {
+    scheduleCache[pid] = [];
+  }
+  return scheduleCache[pid];
+}
+
+function renderMonitorHead() {
+  el('monitorHeadRow').innerHTML = MONITOR_COLS.map(c => `<th>${c}</th>`).join('');
+}
+
+function monitorCellDiff(planVal, actualVal) {
+  if (actualVal === undefined || actualVal === null) return `<span class="mon-wait">${planVal ?? '–'}</span>`;
+  if (planVal !== null && planVal !== undefined && actualVal !== planVal) {
+    return `<span class="mon-bad" title="מתוכנן: ${planVal}">${actualVal} ⚠</span>`;
+  }
+  return actualVal;
+}
+function monitorFmtBool(v) { return v === undefined || v === null ? '<span class="mon-wait">–</span>' : (v ? '✓' : '✗'); }
+
+function summarizeSA(q) {
+  const sq = q && q.answers && q.answers.scenario_questions;
+  if (!sq) return '<span class="mon-wait">–</span>';
+  const vals = Object.values(sq).filter(v => v && typeof v === 'object');
+  if (!vals.length) return '<span class="mon-wait">–</span>';
+  const correct = vals.filter(v => v.is_correct === true).length;
+  const cls = correct === vals.length ? 'mon-ok' : (correct === 0 ? 'mon-bad' : '');
+  return `<span class="${cls}">${correct}/${vals.length}</span>`;
+}
+
+function renderMonitorBody(planRows, actualByKey, qByKey, latestKey) {
+  el('monitorBody').innerHTML = planRows.map(p => {
+    const pKey = planKeyFor(p);
+    const a = actualByKey[pKey];
+    const q = qByKey[pKey];
+    const mismatches = [];
+
+    const scenarioCell = monitorCellDiff(p.scenario_id, a ? a.scenario_id : null);
+    const correctRouteCell = monitorCellDiff(p.correct_route, a ? a.true_route : null);
+    const aiRouteCell = monitorCellDiff(p.ai_recommended_route, a ? a.ai_route : null);
+    let recCorrectCell = '<span class="mon-wait">–</span>';
+    let userRouteCell = '<span class="mon-wait">–</span>';
+    let followedCell = '<span class="mon-wait">–</span>';
+    let choseCorrectCell = '<span class="mon-wait">–</span>';
+    let durationCell = '<span class="mon-wait">–</span>';
+    let statusHtml = `<span class="badge wait">ממתין</span>`;
+
+    if (a) {
+      if (a.scenario_id !== p.scenario_id) mismatches.push('תרחיש');
+      if (a.true_route !== p.correct_route) mismatches.push('מסלול נכון');
+      if (a.ai_route !== p.ai_recommended_route) mismatches.push('מסלול AI');
+
+      const actualRecCorrect = a.ai_route === a.true_route;
+      recCorrectCell = actualRecCorrect === p.rec_is_correct
+        ? (actualRecCorrect ? '<span class="mon-ok">✓ כן</span>' : '✓ לא')
+        : `<span class="mon-bad" title="מתוכנן: ${p.rec_is_correct ? 'כן' : 'לא'}">${actualRecCorrect ? 'כן' : 'לא'} ⚠</span>`;
+      if (actualRecCorrect !== p.rec_is_correct) mismatches.push('תקינות המלצה');
+
+      userRouteCell = a.user_route ?? '–';
+
+      const followedCheck = a.user_route === a.ai_route;
+      followedCell = a.followed_ai === followedCheck
+        ? monitorFmtBool(a.followed_ai)
+        : `<span class="mon-bad" title="חישוב עצמאי: ${followedCheck ? 'כן' : 'לא'}">${monitorFmtBool(a.followed_ai)} ⚠</span>`;
+      if (a.followed_ai !== followedCheck) mismatches.push('חישוב עקיבה אחרי AI');
+
+      const choseCheck = a.user_route === a.true_route;
+      choseCorrectCell = a.chose_true_optimal === choseCheck
+        ? monitorFmtBool(a.chose_true_optimal)
+        : `<span class="mon-bad" title="חישוב עצמאי: ${choseCheck ? 'כן' : 'לא'}">${monitorFmtBool(a.chose_true_optimal)} ⚠</span>`;
+      if (a.chose_true_optimal !== choseCheck) mismatches.push('חישוב בחירה נכונה');
+
+      if (a.start_ts && a.end_ts) durationCell = ((a.end_ts - a.start_ts) / 1000).toFixed(1);
+
+      statusHtml = mismatches.length
+        ? `<span class="badge critical" title="${mismatches.join(', ')}">✗ אי-התאמה</span>`
+        : `<span class="badge good">✓ תואם</span>`;
+    }
+
+    const isCurrent = pKey === latestKey;
+    return `<tr class="${isCurrent ? 'current' : ''}">
+      <td>${p.order}</td>
+      <td>${p.stage === 'practice' ? 'תרגול' : p.model_type}</td>
+      <td>${scenarioCell}</td>
+      <td>${p.visualization || '–'}</td>
+      <td>${correctRouteCell}</td>
+      <td>${aiRouteCell}</td>
+      <td>${recCorrectCell}</td>
+      <td>${userRouteCell}</td>
+      <td>${followedCell}</td>
+      <td>${choseCorrectCell}</td>
+      <td>${summarizeSA(q)}</td>
+      <td>${durationCell}</td>
+      <td>${statusHtml}</td>
+    </tr>`;
+  }).join('');
+
+  const curRow = el('monitorBody').querySelector('tr.current');
+  if (curRow) curRow.scrollIntoView({ block: 'center', behavior: 'smooth' });
+}
+
+function countMonitorMismatches(planRows, trials) {
+  const byKey = {};
+  trials.forEach(t => { byKey[monitorActualKeyFor(t)] = t; });
+  let count = 0;
+  planRows.forEach(p => {
+    const a = byKey[planKeyFor(p)];
+    if (!a) return;
+    if (a.scenario_id !== p.scenario_id || a.true_route !== p.correct_route || a.ai_route !== p.ai_recommended_route) { count++; return; }
+    if ((a.ai_route === a.true_route) !== p.rec_is_correct) { count++; return; }
+    if (a.followed_ai !== (a.user_route === a.ai_route)) { count++; return; }
+    if (a.chose_true_optimal !== (a.user_route === a.true_route)) { count++; return; }
+  });
+  return count;
+}
+
+function populateMonitorPidSelect() {
+  const ids = Array.from(new Set([...allParticipants, ...listStorageParticipants()]));
+  const withMeta = ids.map(id => ({ id, savedAt: (loadMonitorSnapshot(id) || {}).savedAt || 0 }))
+                       .sort((a, b) => b.savedAt - a.savedAt || a.id.localeCompare(b.id));
+  const sel = el('monitorPidSelect');
+  const prev = sel.value || monitorPid;
+  sel.innerHTML = withMeta.length
+    ? withMeta.map(x => `<option value="${x.id}">${x.id}${x.savedAt ? ` (עודכן לפני ${Math.round((Date.now() - x.savedAt) / 1000)} שנ׳)` : ''}</option>`).join('')
+    : `<option value="">אין נבדקים</option>`;
+  if (withMeta.some(x => x.id === prev)) sel.value = prev;
+  else if (withMeta.length) sel.value = withMeta[0].id;
+  monitorPid = sel.value || null;
+}
+
+el('monitorPidSelect').addEventListener('change', () => { monitorPid = el('monitorPidSelect').value || null; refreshMonitor(); });
+el('monitorRefreshBtn').addEventListener('click', () => { populateMonitorPidSelect(); refreshMonitor(); });
+
+// Guards against overlapping calls (e.g. a mode-switch and a select-change firing
+// within the same tick, or a poll tick landing mid-fetch): only the call started
+// most recently is allowed to paint its result, so a slow/stale response can never
+// overwrite a fresher one.
+let monitorRefreshToken = 0;
+
+async function refreshMonitor() {
+  if (mode !== 'monitor') return;
+  populateMonitorPidSelect();
+  const sel = el('monitorPidSelect');
+  const errBadge = el('monitorPidError');
+  const myToken = ++monitorRefreshToken;
+  const pid = monitorPid;
+
+  if (!pid) {
+    sel.classList.remove('invalid');
+    errBadge.classList.remove('show');
+    el('monitorBody').innerHTML = `<tr><td colspan="${MONITOR_COLS.length}" class="empty-note">אין עדיין נתונים שמורים. פתחו את הניסוי בכרטיסייה חדשה (מאותו שרת) והתחילו להריץ אותו.</td></tr>`;
+    el('monitorStatsGrid').innerHTML = '';
+    el('monitorLastSaved').textContent = '';
+    return;
+  }
+
+  const planRows = await ensureScheduleFor(pid);
+  if (myToken !== monitorRefreshToken) return; // a newer refresh already started - discard this one
+
+  if (!planRows.length) {
+    sel.classList.add('invalid');
+    errBadge.classList.add('show');
+    el('monitorBody').innerHTML = `<tr><td colspan="${MONITOR_COLS.length}" class="empty-note">לא נמצא תכנון (schedule) עבור נבדק "${pid}". ודאו שמזהה הנבדק נכון.</td></tr>`;
+    el('monitorStatsGrid').innerHTML = '';
+    el('monitorLastSaved').textContent = '';
+    return;
+  }
+  sel.classList.remove('invalid');
+  errBadge.classList.remove('show');
+
+  const snapshot = loadMonitorSnapshot(pid);
+  const trials = (snapshot && snapshot.logs && snapshot.logs.trials) || [];
+  const questionnaires = (snapshot && snapshot.logs && snapshot.logs.questionnaires) || [];
+
+  const actualByKey = {};
+  trials.forEach(t => { actualByKey[monitorActualKeyFor(t)] = t; });
+  const qByKey = {};
+  questionnaires.filter(q => q.questionnaire_type === 'post_scenario').forEach(q => { qByKey[monitorActualKeyFor(q)] = q; });
+  const latestKey = trials.length ? monitorActualKeyFor(trials[trials.length - 1]) : null;
+
+  renderMonitorBody(planRows, actualByKey, qByKey, latestKey);
+
+  const mismatchCount = countMonitorMismatches(planRows, trials);
+  el('monitorLastSaved').textContent = snapshot && snapshot.savedAt
+    ? `נשמר לאחרונה לפני ${Math.max(0, Math.round((Date.now() - snapshot.savedAt) / 1000))} שניות · שלב: ${snapshot.stage || '–'}`
+    : 'אין נתונים שמורים עדיין לנבדק זה';
+  el('monitorStatsGrid').innerHTML = `
+    <div class="mini-tile"><div class="mini-value">${pid}</div><div class="mini-label">נבדק</div></div>
+    <div class="mini-tile"><div class="mini-value">${trials.length}/${planRows.length}</div><div class="mini-label">ניסויים נרשמו</div></div>
+    <div class="mini-tile"><div class="mini-value">${questionnaires.length}</div><div class="mini-label">שאלונים נרשמו</div></div>
+    <div class="mini-tile"><div class="mini-value${mismatchCount > 0 ? ' critical' : ''}">${mismatchCount}</div><div class="mini-label">אי-התאמות</div></div>
+  `;
+}
+
 (async function init() {
   await loadParticipants();
   focusedPid = allParticipants[0] || null;
@@ -1045,6 +1344,7 @@ el('clearDataBtn').addEventListener('click', async () => {
   renderDetail();
   await refreshStatus();
   pollTimer = setInterval(refreshStatus, 700);
+  setInterval(refreshMonitor, 1000);
 })();
 </script>
 </body>
