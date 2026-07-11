@@ -78,9 +78,11 @@ RPS_VIS-main/
 │   ├── Models_Experiment_Order_Expanded.xlsx   # Master schedule (input to Python scripts)
 │   └── models_SCN_Questions_catalog.xlsx
 │
+├── docs/                                # Research/reference material (not runtime code)
+│   └── Experiment_Slides.pptx
+│
 ├── tests/                              # Automated test suite (pytest + playwright)
-├── visual_sanity_check.py              # Visual QA script for scenario rendering
-└── old_experiment_order_files_by_vis_type/  # Archived previous experiment version
+└── visual_sanity_check.py              # Visual QA script for scenario rendering
 ```
 
 ---
