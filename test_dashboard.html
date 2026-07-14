@@ -1267,9 +1267,17 @@ function renderMonitorBody(planRows, actualByKey, qByKey, latestKey) {
 
       if (a.start_ts && a.end_ts) durationCell = ((a.end_ts - a.start_ts) / 1000).toFixed(1);
 
-      statusHtml = mismatches.length
-        ? `<span class="badge critical" title="${mismatches.join(', ')}">✗ אי-התאמה</span>`
-        : `<span class="badge good">✓ תואם</span>`;
+      if (a.skipped) {
+        // Debug-mode skip (spacebar / numpad-9 on the trial page) - not a data
+        // mismatch, just a deliberate skip. Flag it distinctly, and make clear the
+        // route shown is the AI's recommendation (the skip's default), not a real choice.
+        userRouteCell = `${userRouteCell} <span class="mon-wait" title="דולג במצב דיבאג – זו המלצת ה-AI, לא בחירה אמיתית">(AI · דולג)</span>`;
+        statusHtml = `<span class="badge wait" title="${mismatches.length ? mismatches.join(', ') : 'דולג במצב דיבאג'}">⏭ דולג (דיבאג)</span>`;
+      } else {
+        statusHtml = mismatches.length
+          ? `<span class="badge critical" title="${mismatches.join(', ')}">✗ אי-התאמה</span>`
+          : `<span class="badge good">✓ תואם</span>`;
+      }
     }
 
     const isCurrent = pKey === latestKey;

@@ -523,6 +523,18 @@ function renderLoginPage(root) {
   videoStatus.style.cssText = "margin-top:6px;font-size:13px;";
   form.appendChild(videoStatus);
 
+  const videoStatusText = document.createElement("div");
+  videoStatus.appendChild(videoStatusText);
+
+  const videoProgressTrack = document.createElement("div");
+  videoProgressTrack.id = "videoPreloadProgressTrack";
+  videoProgressTrack.style.cssText = "margin-top:6px;height:10px;border-radius:999px;background:#e0e0e0;overflow:hidden;";
+  const videoProgressFill = document.createElement("div");
+  videoProgressFill.id = "videoPreloadProgressFill";
+  videoProgressFill.style.cssText = "height:100%;width:0%;background:#1976d2;border-radius:999px;transition:width 0.2s ease;";
+  videoProgressTrack.appendChild(videoProgressFill);
+  videoStatus.appendChild(videoProgressTrack);
+
   const buttonGroup = document.createElement("div");
   buttonGroup.className = "button-group";
 
@@ -532,19 +544,23 @@ function renderLoginPage(root) {
 
   subscribeVideoPreload((st) => {
     if (st.error) {
-      videoStatus.textContent = "⚠ טעינת סרטון ההדרכה מראש נכשלה — הוא ייטען כרגיל בהמשך הניסוי.";
-      videoStatus.style.color = "#c62828";
+      videoStatusText.textContent = "⚠ טעינת סרטון ההדרכה מראש נכשלה — הוא ייטען כרגיל בהמשך הניסוי.";
+      videoStatusText.style.color = "#c62828";
+      videoProgressTrack.style.display = "none";
       startBtn.disabled = false;
     } else if (st.done) {
-      videoStatus.textContent = "✓ סרטון ההדרכה נטען ומוכן.";
-      videoStatus.style.color = "#2e7d32";
+      videoStatusText.textContent = "✓ סרטון ההדרכה נטען ומוכן.";
+      videoStatusText.style.color = "#2e7d32";
+      videoProgressTrack.style.display = "none";
       startBtn.disabled = false;
     } else {
-      const pct = st.total ? Math.min(99, Math.round((st.loaded / st.total) * 100)) : null;
-      videoStatus.textContent = pct != null
+      const pct = st.total ? Math.min(99, Math.round((st.loaded / st.total) * 100)) : 0;
+      videoStatusText.textContent = st.total
         ? `⏳ טוען מראש את סרטון ההדרכה כדי שיפעל חלק בהמשך... ${pct}%`
         : "⏳ טוען מראש את סרטון ההדרכה כדי שיפעל חלק בהמשך...";
-      videoStatus.style.color = "#555";
+      videoStatusText.style.color = "#555";
+      videoProgressTrack.style.display = "block";
+      videoProgressFill.style.width = pct + "%";
       startBtn.disabled = true;
     }
   });
@@ -4776,7 +4792,10 @@ function forceSkipToNextPage() {
         }
       });
       
-      // Log trial with default/DBG values
+      // Log trial with default/DBG values. Field names match the normal (non-skipped)
+      // trial log exactly (ai_route/user_route/start_ts/end_ts, not ai_recommended_route/
+      // user_selected_route/enter_ts/exit_ts) so the live monitor can read it the same way;
+      // `skipped: true` lets it show a distinct "skipped" status instead of a mismatch.
       const trialKey = getCurrentTrialKey();
       const userRoute = convertRouteToHebrew(state.currentTrialSelectedRoute) || t.ai_recommended_route || "DBG";
       const trialLog = {
@@ -4789,12 +4808,16 @@ function forceSkipToNextPage() {
         scenario_id: t.scenario_id,
         difficulty: t.difficulty,
         true_route: t.correct_route,
-        ai_recommended_route: t.ai_recommended_route,
-        user_selected_route: userRoute,
+        ai_route: t.ai_recommended_route,
+        model_type: (state.stage === "experiment"
+                     ? state.schedule.models[state.modelIndex].model_type
+                     : null),
+        user_route: userRoute,
         followed_ai: userRoute === t.ai_recommended_route,
         chose_true_optimal: userRoute === t.correct_route,
-        enter_ts: state.currentPageEnterTs,
-        exit_ts: Date.now()
+        skipped: true,
+        start_ts: state.currentPageEnterTs,
+        end_ts: Date.now()
       };
       state.logs.trials.push(trialLog);
       persistToStorage();
