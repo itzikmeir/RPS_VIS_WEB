@@ -359,11 +359,25 @@ function renderLoginPage(root) {
   
   root.innerHTML = "";
   
+  const titleRow = document.createElement("div");
+  titleRow.style.cssText = "display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;";
+
   const title = document.createElement("h1");
   title.className = "page-title";
   title.textContent = "Experiment Login";
-  root.appendChild(title);
-  
+  title.style.marginBottom = "0";
+  titleRow.appendChild(title);
+
+  const helpBtn = document.createElement("button");
+  helpBtn.type = "button";
+  helpBtn.id = "helpBtn";
+  helpBtn.textContent = "❓ עזרה – איך מריצים את הניסוי";
+  helpBtn.style.cssText = "background:#eceff1;color:#263238;flex-shrink:0;";
+  helpBtn.onclick = () => showHelpModal();
+  titleRow.appendChild(helpBtn);
+
+  root.appendChild(titleRow);
+
   const form = document.createElement("div");
   
   const pidGroup = document.createElement("div");
@@ -653,6 +667,68 @@ function renderLoginPage(root) {
       startBtn.click();
     }
   });
+}
+
+function showHelpModal() {
+  const overlay = document.createElement("div");
+  overlay.id = "helpModalOverlay";
+  overlay.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px;";
+  overlay.dir = "rtl";
+
+  const box = document.createElement("div");
+  box.style.cssText = "background:#fff;padding:24px;border-radius:8px;max-width:640px;max-height:85vh;overflow-y:auto;box-shadow:0 4px 20px rgba(0,0,0,0.25);text-align:right;line-height:1.6;";
+  box.innerHTML = `
+    <h2 style="margin-top:0;color:#1976d2;">איך מריצים את הניסוי</h2>
+
+    <h3 style="color:#0d47a1;margin-bottom:6px;">1. פתיחת הניסוי</h3>
+    <p style="margin-top:0;">
+      <strong>אונליין (הכי פשוט – אין צורך בהתקנה):</strong><br>
+      פתחו בכל דפדפן מודרני (מומלץ Chrome):<br>
+      <a href="https://itzikmeir.github.io/RPS_VIS_WEB/" target="_blank" rel="noopener noreferrer">https://itzikmeir.github.io/RPS_VIS_WEB/</a>
+    </p>
+    <p>
+      <strong>מקומית (למשל בישיבה פנים אל פנים עם המשתתף):</strong><br>
+      פתחו את הקובץ <code>experiment_model_ordered/index.html</code> בדפדפן, או – מומלץ יותר –
+      הריצו משורת פקודה בתיקיית הפרויקט <code>python dashboard_server.py</code> ופתחו את הכתובת שתוצג
+      (בד"כ <code>http://127.0.0.1:8765</code>).
+    </p>
+
+    <h3 style="color:#0d47a1;margin-bottom:6px;">2. מה למלא בדף הכניסה</h3>
+    <ul style="padding-inline-start:20px;margin-top:0;">
+      <li><strong>מספר משתתף</strong> (למשל <code>P001</code>) – המזהה שהוקצה מראש למשתתף בקובץ התכנון של הניסוי.</li>
+      <li><strong>Debug mode</strong> – לבדיקות פנימיות בלבד (מדלג על שדות חובה). יש להשאיר לא מסומן בהרצה אמיתית.</li>
+      <li><strong>ניסוי מרוחק עם בדיקת מסך</strong> – יש לסמן כשהמשתתף לא נמצא פיזית איתכם; זה מוסיף שלב קצר של כיול/בדיקת מסך בתחילת הניסוי.</li>
+      <li><strong>פתח מסך ניטור בלשונית נפרדת</strong> – פותח לשונית נוספת שמציגה בזמן אמת את התקדמות המשתתף (איזה תרחיש מוצג כרגע, אילו תשובות נרשמו, והתאמה מול התכנון). עובד גם באתר האונליין וגם בהרצה מקומית.</li>
+    </ul>
+
+    <h3 style="color:#0d47a1;margin-bottom:6px;">3. במהלך הניסוי</h3>
+    <p style="margin-top:0;">
+      הניסוי אורך כשעה ואין בו הפסקות. יש לוודא מראש שהמשתתף פנוי, שהמסך/עכבר/כיסא מכוונים בנוחות, ושהטלפון מושתק.
+      מומלץ להתחיל הקלטת מסך לפני תחילת הניסוי.
+    </p>
+
+    <h3 style="color:#0d47a1;margin-bottom:6px;">4. בסיום הניסוי</h3>
+    <p style="margin-top:0;">
+      קובץ תוצאות ה-JSON מועלה אוטומטית לתיקיית Google Drive משותפת, ומוצע גם כקובץ להורדה מקומית – ללא צורך בפעולה נוספת מהמשתתף.
+    </p>
+
+    <p style="margin-top:20px;color:#666;font-size:13px;">
+      שאלות נוספות: איציק מאיר · itzikmeir@gmail.com
+    </p>
+  `;
+
+  const closeBtn = document.createElement("button");
+  closeBtn.type = "button";
+  closeBtn.textContent = "סגור";
+  closeBtn.style.cssText = "margin-top:8px;";
+  closeBtn.onclick = () => document.body.removeChild(overlay);
+  box.appendChild(closeBtn);
+
+  overlay.appendChild(box);
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay) document.body.removeChild(overlay);
+  });
+  document.body.appendChild(overlay);
 }
 
 // === Screen Environment Check (remote experiments only) ===
