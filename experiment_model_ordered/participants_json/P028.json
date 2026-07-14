@@ -43,8 +43,8 @@
       "slot": 4,
       "scenario_id": "SCN_032_R",
       "difficulty": "E",
-      "correct_route": "ב׳",
-      "ai_recommended_route": "ב׳",
+      "correct_route": "א׳",
+      "ai_recommended_route": "א׳",
       "correct_answers": {
         "Q1": "מסלול א",
         "Q2": "מסלול ג"
@@ -67,8 +67,8 @@
       "slot": 6,
       "scenario_id": "SCN_033_H",
       "difficulty": "E",
-      "correct_route": "ג׳",
-      "ai_recommended_route": "ג׳",
+      "correct_route": "ב׳",
+      "ai_recommended_route": "ב׳",
       "correct_answers": {
         "Q1": "מסלול ב",
         "Q2": "מסלול א"
@@ -91,7 +91,7 @@
               "scenario_id": "SCN_005_R",
               "difficulty": "E",
               "correct_route": "ג׳",
-              "ai_recommended_route": "ב׳",
+              "ai_recommended_route": "א׳",
               "correct_answers": {
                 "Q1": "מסלול א",
                 "Q2": "מסלול ב"
@@ -103,7 +103,7 @@
               "scenario_id": "SCN_013_R",
               "difficulty": "H",
               "correct_route": "ב׳",
-              "ai_recommended_route": "ג׳",
+              "ai_recommended_route": "א׳",
               "correct_answers": {
                 "Q1": "מסלול ב",
                 "Q2": "מסלול ב, מסלול ג"
@@ -144,8 +144,8 @@
               "slot": 1,
               "scenario_id": "SCN_021_H",
               "difficulty": "E",
-              "correct_route": "ג׳",
-              "ai_recommended_route": "ג׳",
+              "correct_route": "ב׳",
+              "ai_recommended_route": "ב׳",
               "correct_answers": {
                 "Q1": "מסלול ב",
                 "Q2": "מסלול א"
@@ -156,8 +156,8 @@
               "slot": 2,
               "scenario_id": "SCN_029_H",
               "difficulty": "H",
-              "correct_route": "ב׳",
-              "ai_recommended_route": "ב׳",
+              "correct_route": "א׳",
+              "ai_recommended_route": "א׳",
               "correct_answers": {
                 "Q1": "מסלול א, מסלול ג",
                 "Q2": "מסלול ג"
@@ -168,7 +168,7 @@
               "slot": 3,
               "scenario_id": "SCN_023_H",
               "difficulty": "E",
-              "correct_route": "ב׳",
+              "correct_route": "ג׳",
               "ai_recommended_route": "א׳",
               "correct_answers": {
                 "Q1": "מסלול ב",
@@ -198,8 +198,8 @@
               "slot": 1,
               "scenario_id": "SCN_019_S",
               "difficulty": "E",
-              "correct_route": "א׳",
-              "ai_recommended_route": "א׳",
+              "correct_route": "ג׳",
+              "ai_recommended_route": "ג׳",
               "correct_answers": {
                 "Q1": "מסלול ג",
                 "Q2": "מסלול ב, מסלול ג"
@@ -210,8 +210,8 @@
               "slot": 2,
               "scenario_id": "SCN_018_S",
               "difficulty": "H",
-              "correct_route": "ג׳",
-              "ai_recommended_route": "א׳",
+              "correct_route": "א׳",
+              "ai_recommended_route": "ב׳",
               "correct_answers": {
                 "Q1": "מסלול ג",
                 "Q2": "מסלול ב"
@@ -234,8 +234,8 @@
               "slot": 4,
               "scenario_id": "SCN_020_S",
               "difficulty": "H",
-              "correct_route": "ב׳",
-              "ai_recommended_route": "ב׳",
+              "correct_route": "ג׳",
+              "ai_recommended_route": "ג׳",
               "correct_answers": {
                 "Q1": "מסלול ג",
                 "Q2": "מסלול ג"
@@ -259,7 +259,7 @@
               "slot": 1,
               "scenario_id": "SCN_017_S",
               "difficulty": "E",
-              "correct_route": "ב׳",
+              "correct_route": "ג׳",
               "ai_recommended_route": "א׳",
               "correct_answers": {
                 "Q1": "מסלול א",
@@ -283,8 +283,8 @@
               "slot": 3,
               "scenario_id": "SCN_025_S",
               "difficulty": "E",
-              "correct_route": "א׳",
-              "ai_recommended_route": "א׳",
+              "correct_route": "ג׳",
+              "ai_recommended_route": "ג׳",
               "correct_answers": {
                 "Q1": "מסלול ג",
                 "Q2": "מסלול ג"
@@ -350,7 +350,7 @@
               "scenario_id": "SCN_007_R",
               "difficulty": "E",
               "correct_route": "ב׳",
-              "ai_recommended_route": "ג׳",
+              "ai_recommended_route": "א׳",
               "correct_answers": {
                 "Q1": "מסלול ג",
                 "Q2": "מסלול ב, מסלול ג"
@@ -391,8 +391,8 @@
               "slot": 1,
               "scenario_id": "SCN_026_H",
               "difficulty": "H",
-              "correct_route": "ב׳",
-              "ai_recommended_route": "ב׳",
+              "correct_route": "ג׳",
+              "ai_recommended_route": "ג׳",
               "correct_answers": {
                 "Q1": "מסלול ב",
                 "Q2": "מסלול ג"
@@ -403,8 +403,8 @@
               "slot": 2,
               "scenario_id": "SCN_030_H",
               "difficulty": "E",
-              "correct_route": "ג׳",
-              "ai_recommended_route": "א׳",
+              "correct_route": "א׳",
+              "ai_recommended_route": "ב׳",
               "correct_answers": {
                 "Q1": "מסלול ב, מסלול ג",
                 "Q2": "מסלול ב, מסלול ג"
@@ -415,8 +415,8 @@
               "slot": 3,
               "scenario_id": "SCN_028_H",
               "difficulty": "H",
-              "correct_route": "א׳",
-              "ai_recommended_route": "א׳",
+              "correct_route": "ג׳",
+              "ai_recommended_route": "ג׳",
               "correct_answers": {
                 "Q1": "מסלול א, מסלול ג",
                 "Q2": "מסלול א"
@@ -427,8 +427,8 @@
               "slot": 4,
               "scenario_id": "SCN_027_H",
               "difficulty": "E",
-              "correct_route": "ג׳",
-              "ai_recommended_route": "ג׳",
+              "correct_route": "ב׳",
+              "ai_recommended_route": "ב׳",
               "correct_answers": {
                 "Q1": "מסלול ג",
                 "Q2": "מסלול ב"
@@ -439,8 +439,8 @@
               "slot": 5,
               "scenario_id": "SCN_024_H",
               "difficulty": "H",
-              "correct_route": "ג׳",
-              "ai_recommended_route": "ג׳",
+              "correct_route": "ב׳",
+              "ai_recommended_route": "ב׳",
               "correct_answers": {
                 "Q1": "מסלול ב",
                 "Q2": "מסלול א, מסלול ב"
