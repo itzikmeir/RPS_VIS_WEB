@@ -1016,7 +1016,14 @@ function updateMiniDashboard(batch) {
 }
 
 async function refreshStatus() {
-  const st = await api('/api/status');
+  let st;
+  try {
+    st = await api('/api/status');
+  } catch (e) {
+    // No local dashboard_server.py API (e.g. hosted statically on GitHub Pages) -
+    // automated batch-run mode just stays idle; the live monitor doesn't need this.
+    return;
+  }
   currentStatus = st;
   const batch = st.batch || { pids: [], index: -1, results: {} };
 
@@ -1115,6 +1122,10 @@ const STORAGE_KEY_PREFIX = 'experiment_model_ordered_log_';
 const MONITOR_COLS = ['#', 'שלב', 'תרחיש', 'ויזואליזציה', 'מסלול נכון', 'מסלול AI', 'המלצה תקינה?',
                        'בחירת הנבדק', 'עקב AI?', 'בחר נכון?', 'שאלות הבנה', "משך (שנ')", 'סטטוס'];
 let monitorPid = null;
+// Pid requested via ?pid=... (e.g. opened from the experiment login page's "open
+// monitor" checkbox) - always kept in the dropdown even before any localStorage
+// data exists for it yet, so the tab lands on the right participant immediately.
+let requestedMonitorPid = null;
 
 function planKeyFor(row) {
   return row.stage === 'practice' ? `practice_${row.trial_index}` : `exp_${row.model_index}_${row.vis_index}_${row.trial_index}`;
@@ -1137,6 +1148,39 @@ function loadMonitorSnapshot(pid) {
   try { return JSON.parse(raw); } catch (e) { return null; }
 }
 
+// Flattens a raw participant schedule (experiment_model_ordered/participants_json/P00X.json)
+// into the same row shape /api/schedule returns. Used as a fallback when no local
+// dashboard_server.py is running (e.g. hosted statically on GitHub Pages) - the JSON file
+// itself is a plain static asset reachable the same way locally and online.
+function buildScheduleRowsFromRaw(schedule) {
+  const rows = [];
+  let order = 0;
+  const recIsCorrect = (raw) => raw == null ? null : String(raw).trim() === 'כן';
+  const pushRow = (fields) => rows.push(Object.assign({ order: ++order }, fields));
+
+  (schedule.practice || []).forEach((t, ti) => pushRow({
+    stage: 'practice', group_label: 'Practice', model_type: null, visualization: null,
+    scenario_id: t.scenario_id, difficulty: t.difficulty,
+    correct_route: t.correct_route, ai_recommended_route: t.ai_recommended_route,
+    rec_is_correct: recIsCorrect(t.rec_correct),
+    model_index: null, vis_index: null, trial_index: ti,
+  }));
+
+  (schedule.models || []).forEach((model, mi) => {
+    (model.visualizations || []).forEach((vis, vi) => {
+      (vis.trials || []).forEach((t, ti) => pushRow({
+        stage: 'experiment', group_label: model.model_type,
+        model_type: model.model_type, visualization: vis.visualization,
+        scenario_id: t.scenario_id, difficulty: t.difficulty,
+        correct_route: t.correct_route, ai_recommended_route: t.ai_recommended_route,
+        rec_is_correct: recIsCorrect(t.rec_correct),
+        model_index: mi, vis_index: vi, trial_index: ti,
+      }));
+    });
+  });
+  return rows;
+}
+
 async function ensureScheduleFor(pid) {
   if (scheduleCache[pid] && scheduleCache[pid].length) return scheduleCache[pid];
   try {
@@ -1144,6 +1188,14 @@ async function ensureScheduleFor(pid) {
     scheduleCache[pid] = sdata.ok ? sdata.rows : [];
   } catch (e) {
     scheduleCache[pid] = [];
+  }
+  if (!scheduleCache[pid].length) {
+    try {
+      const res = await fetch(`experiment_model_ordered/participants_json/${encodeURIComponent(pid)}.json`);
+      if (res.ok) scheduleCache[pid] = buildScheduleRowsFromRaw(await res.json());
+    } catch (e) {
+      // leave scheduleCache[pid] as [] - caller shows "no schedule found for this participant"
+    }
   }
   return scheduleCache[pid];
 }
@@ -1258,7 +1310,11 @@ function countMonitorMismatches(planRows, trials) {
 }
 
 function populateMonitorPidSelect() {
-  const ids = Array.from(new Set([...allParticipants, ...listStorageParticipants()]));
+  const ids = Array.from(new Set([
+    ...(requestedMonitorPid ? [requestedMonitorPid] : []),
+    ...allParticipants,
+    ...listStorageParticipants(),
+  ]));
   const withMeta = ids.map(id => ({ id, savedAt: (loadMonitorSnapshot(id) || {}).savedAt || 0 }))
                        .sort((a, b) => b.savedAt - a.savedAt || a.id.localeCompare(b.id));
   const sel = el('monitorPidSelect');
@@ -1345,6 +1401,14 @@ async function refreshMonitor() {
   await refreshStatus();
   pollTimer = setInterval(refreshStatus, 700);
   setInterval(refreshMonitor, 1000);
+
+  // Auto-open in monitor mode for a specific participant - used when this tab was
+  // launched from the experiment login page's "open monitor" checkbox, e.g.
+  // test_dashboard.html?mode=monitor&pid=P001. Works locally and on GitHub Pages.
+  const params = new URLSearchParams(location.search);
+  const urlPid = params.get('pid');
+  if (urlPid) { requestedMonitorPid = urlPid; monitorPid = urlPid; }
+  if (params.get('mode') === 'monitor') setMode('monitor');
 })();
 </script>
 </body>

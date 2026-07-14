@@ -406,6 +406,17 @@ function renderLoginPage(root) {
   remoteGroup.appendChild(remoteLabel);
   form.appendChild(remoteGroup);
 
+  const monitorGroup = document.createElement("div");
+  monitorGroup.className = "form-group";
+  const monitorLabel = document.createElement("label");
+  const monitorCheckbox = document.createElement("input");
+  monitorCheckbox.type = "checkbox";
+  monitorCheckbox.id = "openMonitorTab";
+  monitorLabel.appendChild(monitorCheckbox);
+  monitorLabel.appendChild(document.createTextNode(" פתח מסך ניטור בלשונית נפרדת (למעקב אחר התקדמות הניסוי)"));
+  monitorGroup.appendChild(monitorLabel);
+  form.appendChild(monitorGroup);
+
   // Experiment instructions for the experimenter and participant (Hebrew, multi-line)
   const instructions = document.createElement("div");
   instructions.className = "info-box";
@@ -470,6 +481,16 @@ function renderLoginPage(root) {
       state.questionsConfig = questionsConfig;
       state.scenarioQuestions = scenarioQuestions;
       state.isRemote = remoteCheckbox.checked;
+
+      // Opens the live monitor dashboard (test_dashboard.html, "monitor" mode) in its
+      // own tab, preselected to this participant. Works the same whether this page is
+      // running locally (served by dashboard_server.py) or on GitHub Pages: the monitor
+      // reads localStorage on the shared origin, and falls back to fetching the raw
+      // participants_json/*.json schedule directly when no local API server is present.
+      if (monitorCheckbox.checked) {
+        const monitorUrl = `../test_dashboard.html?mode=monitor&pid=${encodeURIComponent(id)}`;
+        window.open(monitorUrl, "_blank", "noopener");
+      }
 
       // Ensure new practice trials (one extra per visualization) are included
       // If the experimenter added SCN_031_S, SCN_032_R, SCN_033_H files
