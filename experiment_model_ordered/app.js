@@ -353,10 +353,61 @@ function getCurrentTrialKey() {
   }
 }
 
+// ── Intro video preload (background) ────────────────────────────────────────
+// The intro video (Videos/Introduction.mp4, ~85MB) used to only start
+// buffering once the participant reached its page mid-experiment, which
+// stalls badly over a slow/remote connection. Instead, fetch it as a Blob
+// starting the moment the login page renders - the earliest possible point -
+// so it has the most head start, and reuse that same Blob (zero extra
+// network time) when the video page is actually reached.
+const videoPreloadState = { loaded: 0, total: 0, done: false, error: null, blobUrl: null };
+const videoPreloadListeners = new Set();
+
+function subscribeVideoPreload(fn) {
+  videoPreloadListeners.add(fn);
+  fn(videoPreloadState);
+  return () => videoPreloadListeners.delete(fn);
+}
+
+function notifyVideoPreloadListeners() {
+  videoPreloadListeners.forEach(fn => fn(videoPreloadState));
+}
+
+let videoPreloadStarted = false;
+function startVideoPreload() {
+  if (videoPreloadStarted) return;
+  videoPreloadStarted = true;
+  (async () => {
+    try {
+      const res = await fetch(assetPath("Videos/Introduction.mp4"));
+      if (!res.ok || !res.body) throw new Error("Video preload request failed: " + res.status);
+      videoPreloadState.total = parseInt(res.headers.get("Content-Length") || "0", 10);
+      const reader = res.body.getReader();
+      const chunks = [];
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        chunks.push(value);
+        videoPreloadState.loaded += value.length;
+        notifyVideoPreloadListeners();
+      }
+      videoPreloadState.blobUrl = URL.createObjectURL(new Blob(chunks, { type: "video/mp4" }));
+    } catch (e) {
+      // Non-fatal: the video page falls back to streaming the file normally.
+      console.warn("Video preload failed, will stream normally when reached:", e);
+      videoPreloadState.error = e;
+    } finally {
+      videoPreloadState.done = true;
+      notifyVideoPreloadListeners();
+    }
+  })();
+}
+
 // Page renderers
 function renderLoginPage(root) {
   logPageEntry("LoginPage");
-  
+  startVideoPreload();
+
   root.innerHTML = "";
   
   const titleRow = document.createElement("div");
@@ -465,12 +516,39 @@ function renderLoginPage(root) {
   errorDiv.className = "error";
   errorDiv.style.display = "none";
   form.appendChild(errorDiv);
-  
+
+  const videoStatus = document.createElement("div");
+  videoStatus.id = "videoPreloadStatus";
+  videoStatus.dir = "rtl";
+  videoStatus.style.cssText = "margin-top:6px;font-size:13px;";
+  form.appendChild(videoStatus);
+
   const buttonGroup = document.createElement("div");
   buttonGroup.className = "button-group";
-  
+
   const startBtn = document.createElement("button");
   startBtn.textContent = "Start";
+  startBtn.disabled = true;
+
+  subscribeVideoPreload((st) => {
+    if (st.error) {
+      videoStatus.textContent = "⚠ טעינת סרטון ההדרכה מראש נכשלה — הוא ייטען כרגיל בהמשך הניסוי.";
+      videoStatus.style.color = "#c62828";
+      startBtn.disabled = false;
+    } else if (st.done) {
+      videoStatus.textContent = "✓ סרטון ההדרכה נטען ומוכן.";
+      videoStatus.style.color = "#2e7d32";
+      startBtn.disabled = false;
+    } else {
+      const pct = st.total ? Math.min(99, Math.round((st.loaded / st.total) * 100)) : null;
+      videoStatus.textContent = pct != null
+        ? `⏳ טוען מראש את סרטון ההדרכה כדי שיפעל חלק בהמשך... ${pct}%`
+        : "⏳ טוען מראש את סרטון ההדרכה כדי שיפעל חלק בהמשך...";
+      videoStatus.style.color = "#555";
+      startBtn.disabled = true;
+    }
+  });
+
   startBtn.onclick = async () => {
     const rawId = pidInput.value.trim();
     if (!rawId) {
@@ -1312,8 +1390,10 @@ function renderInfoPage(root, pageId) {
     video.style.height = "auto";
     video.style.display = "block";
 
+    // Reuse the Blob preloaded from the login page if it's ready (instant, no
+    // network wait); otherwise fall back to streaming the file normally.
     const source = document.createElement("source");
-    source.src = assetPath("Videos/Introduction.mp4");
+    source.src = videoPreloadState.blobUrl || assetPath("Videos/Introduction.mp4");
     source.type = "video/mp4";
     video.appendChild(source);
 

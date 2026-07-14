@@ -409,7 +409,13 @@ def run(pid: str = "P001", delay: float = 2.0, status_file=None, control_file=No
         page.on("console", lambda m: errors.append(m.text) if m.type == "error" else None)
 
         page.goto(url, wait_until="domcontentloaded", timeout=15_000)
-        page.wait_for_load_state("networkidle", timeout=8_000)
+        try:
+            # The login page kicks off a background fetch of the (large) intro
+            # video as soon as it renders, so the network may not go idle
+            # within the timeout - that's expected, not a failure.
+            page.wait_for_load_state("networkidle", timeout=8_000)
+        except Exception:
+            pass
 
         # Clear any previous session for this participant
         page.evaluate(f"localStorage.removeItem('{STORAGE_KEY}')")
