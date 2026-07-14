@@ -56,6 +56,21 @@ def load_schedule(pid: str) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def _trial_meta(t: dict) -> dict:
+    """Ground-truth fields (known ahead of time from the schedule) describing
+    whether the AI recommendation shown in this trial is correct - used by
+    dashboards/status consumers, not needed for driving the browser itself."""
+    rec_correct_raw = t.get("rec_correct")
+    return {
+        "scenario_id": t.get("scenario_id"),
+        "difficulty": t.get("difficulty"),
+        "correct_route": t.get("correct_route"),
+        "ai_recommended_route": t.get("ai_recommended_route"),
+        "rec_correct": rec_correct_raw,
+        "rec_is_correct": (str(rec_correct_raw).strip() == "כן") if rec_correct_raw is not None else None,
+    }
+
+
 def build_steps(schedule: dict) -> list:
     """Return a flat ordered list of step-dicts that mirrors the app state machine."""
     steps = []
@@ -72,12 +87,13 @@ def build_steps(schedule: dict) -> list:
     for i, t in enumerate(schedule["practice"]):
         sid = t["scenario_id"]
         base = f"Practice {i+1}/{n_practice} · {sid}"
+        meta = _trial_meta(t)
         steps.append({"label": f"{base} › Scenario Intro", "kind": "scenario_intro",
-                       "stage": "practice", "pi": i})
+                       "stage": "practice", "pi": i, **meta})
         steps.append({"label": f"{base} › Trial",           "kind": "trial",
-                       "stage": "practice", "pi": i})
+                       "stage": "practice", "pi": i, **meta})
         steps.append({"label": f"{base} › Questions",       "kind": "trial_questions",
-                       "stage": "practice", "pi": i})
+                       "stage": "practice", "pi": i, **meta})
 
     steps.append({"label": "Experiment Transition", "kind": "experiment_transition"})
 
@@ -93,12 +109,13 @@ def build_steps(schedule: dict) -> list:
             for ti, t in enumerate(vis["trials"]):
                 sid = t["scenario_id"]
                 base = f"{mname} · {vname} · T{ti+1}/{n_trials} · {sid}"
+                meta = {"model_type": model["model_type"], "visualization": vname, **_trial_meta(t)}
                 steps.append({"label": f"{base} › Scenario Intro", "kind": "scenario_intro",
-                               "stage": "experiment", "mi": mi, "vi": vi, "ti": ti})
+                               "stage": "experiment", "mi": mi, "vi": vi, "ti": ti, **meta})
                 steps.append({"label": f"{base} › Trial",           "kind": "trial",
-                               "stage": "experiment", "mi": mi, "vi": vi, "ti": ti})
+                               "stage": "experiment", "mi": mi, "vi": vi, "ti": ti, **meta})
                 steps.append({"label": f"{base} › Questions",       "kind": "trial_questions",
-                               "stage": "experiment", "mi": mi, "vi": vi, "ti": ti})
+                               "stage": "experiment", "mi": mi, "vi": vi, "ti": ti, **meta})
             steps.append({"label": f"{mname} · {vname} › NASA TLX", "kind": "nasa_tlx",
                            "mi": mi, "vi": vi})
         steps.append({"label": f"{mname} › Model Completion",   "kind": "model_completion", "mi": mi})
@@ -328,10 +345,37 @@ def simulate_route_selection(page):
 
 
 # ──────────────────────────────────────────────────────────────────────────────
+# Live status file (consumed by dashboard_server.py / test_dashboard.html)
+# ──────────────────────────────────────────────────────────────────────────────
+
+def _write_status(status_file, **fields):
+    """Best-effort atomic write of the live-progress JSON a dashboard polls."""
+    if not status_file:
+        return
+    try:
+        data = {"updated_at": time.time(), **fields}
+        tmp = status_file.with_suffix(".tmp")
+        tmp.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+        tmp.replace(status_file)
+    except Exception:
+        pass
+
+
+def _read_control(control_file):
+    """Poll-friendly control flag file a dashboard writes to request a pause."""
+    if not control_file:
+        return {"paused": False}
+    try:
+        return json.loads(control_file.read_text(encoding="utf-8"))
+    except Exception:
+        return {"paused": False}
+
+
+# ──────────────────────────────────────────────────────────────────────────────
 # Main runner
 # ──────────────────────────────────────────────────────────────────────────────
 
-def run(pid: str = "P001", delay: float = 2.0):
+def run(pid: str = "P001", delay: float = 2.0, status_file=None, control_file=None):
     try:
         from playwright.sync_api import sync_playwright
     except ImportError:
@@ -370,139 +414,172 @@ def run(pid: str = "P001", delay: float = 2.0):
         # Clear any previous session for this participant
         page.evaluate(f"localStorage.removeItem('{STORAGE_KEY}')")
 
-        for idx, step in enumerate(steps):
-            kind  = step["kind"]
-            label = step["label"]
-            print(f"  [{idx+1:3d}/{total}] {label}")
+        _write_status(status_file, pid=pid, running=True, done=False, stopped=False, error=None,
+                      paused=False, total=total, index=-1, label="Starting…", kind=None)
 
-            # Short settle pause
-            page.wait_for_timeout(300)
+        try:
+            for idx, step in enumerate(steps):
+                kind  = step["kind"]
+                label = step["label"]
 
-            # ── Inject/update progress overlay ────────────────────────────
-            try:
-                inject_overlay(page, step, idx, total, schedule, steps)
-            except Exception:
-                pass  # overlay is cosmetic – don't fail the run
+                # ── Pause gate — block here (browser stays open) until resumed ──
+                while _read_control(control_file).get("paused"):
+                    _write_status(status_file, pid=pid, running=True, done=False, stopped=False,
+                                  error=None, paused=True, total=total, index=idx - 1,
+                                  label="בהשהיה...", kind=None)
+                    time.sleep(0.3)
 
-            # ── Page-specific actions ─────────────────────────────────────
+                print(f"  [{idx+1:3d}/{total}] {label}")
 
-            if kind == "login":
-                page.locator('#participantId').fill(pid)
-                page.wait_for_timeout(200)
-                click_continue(page)
+                _write_status(status_file, pid=pid, running=True, done=False, stopped=False, error=None,
+                              paused=False, total=total, index=idx, label=label, kind=kind,
+                              stage=step.get("stage"),
+                              model_type=step.get("model_type"), visualization=step.get("visualization"),
+                              scenario_id=step.get("scenario_id"), difficulty=step.get("difficulty"),
+                              correct_route=step.get("correct_route"),
+                              ai_recommended_route=step.get("ai_recommended_route"),
+                              rec_correct=step.get("rec_correct"), rec_is_correct=step.get("rec_is_correct"))
 
-            elif kind == "pre":
-                fill_page(page, kind)
-                page.wait_for_timeout(400)
-                click_continue(page)
+                # Short settle pause
+                page.wait_for_timeout(300)
 
-            elif kind == "practice_info":
-                click_continue(page)
-
-            elif kind == "scenario_intro":
-                click_continue(page)
-
-            elif kind == "trial":
-                # Wait for scenario iframe container to appear, then simulate selection
-                try:
-                    page.wait_for_selector('div[id^="scenario-iframe-container"]',
-                                           timeout=8_000)
-                except Exception:
-                    pass
-                page.wait_for_timeout(int(delay * 1000))
-                simulate_route_selection(page)
-                # Skip normal end-of-step delay (already waited above)
+                # ── Inject/update progress overlay ────────────────────────────
                 try:
                     inject_overlay(page, step, idx, total, schedule, steps)
                 except Exception:
-                    pass
-                page.wait_for_timeout(400)
-                continue  # skip the delay at end
+                    pass  # overlay is cosmetic – don't fail the run
 
-            elif kind == "trial_questions":
-                fill_page(page, kind)
-                page.wait_for_timeout(400)
-                click_continue(page)
+                # ── Page-specific actions ─────────────────────────────────────
 
-            elif kind == "experiment_transition":
-                click_continue(page)
+                if kind == "login":
+                    page.locator('#participantId').fill(pid)
+                    page.wait_for_timeout(200)
+                    click_continue(page)
 
-            elif kind == "model_intro":
-                click_continue(page)
+                elif kind == "pre":
+                    fill_page(page, kind)
+                    page.wait_for_timeout(400)
+                    click_continue(page)
 
-            elif kind == "vis_intro":
-                click_continue(page)
+                elif kind == "practice_info":
+                    click_continue(page)
 
-            elif kind == "nasa_tlx":
-                fill_page(page, kind)
-                page.wait_for_timeout(400)
-                click_continue(page)
+                elif kind == "scenario_intro":
+                    click_continue(page)
 
-            elif kind == "model_completion":
-                click_continue(page)
+                elif kind == "trial":
+                    # Wait for scenario iframe container to appear, then simulate selection
+                    try:
+                        page.wait_for_selector('div[id^="scenario-iframe-container"]',
+                                               timeout=8_000)
+                    except Exception:
+                        pass
+                    page.wait_for_timeout(int(delay * 1000))
+                    simulate_route_selection(page)
+                    # Skip normal end-of-step delay (already waited above)
+                    try:
+                        inject_overlay(page, step, idx, total, schedule, steps)
+                    except Exception:
+                        pass
+                    page.wait_for_timeout(400)
+                    continue  # skip the delay at end
 
-            elif kind == "model_summary_trust":
-                fill_page(page, kind)
-                page.wait_for_timeout(400)
-                click_continue(page)
+                elif kind == "trial_questions":
+                    fill_page(page, kind)
+                    page.wait_for_timeout(400)
+                    click_continue(page)
 
-            elif kind == "model_selection":
-                fill_page(page, kind)
-                page.wait_for_timeout(200)
-                click_continue(page)
+                elif kind == "experiment_transition":
+                    click_continue(page)
 
-            elif kind == "visualization_global":
-                fill_page(page, kind)
-                page.wait_for_timeout(400)
-                click_continue(page)
+                elif kind == "model_intro":
+                    click_continue(page)
 
-            elif kind == "demographics":
-                # Fill with specific fictitious demographic values
-                page.evaluate("""
-                () => {
-                    const set = (id, val) => {
-                        const el = document.getElementById(id);
-                        if (!el) return;
-                        if (el.tagName === 'SELECT') {
-                            el.value = val;
-                            el.dispatchEvent(new Event('change', { bubbles: true }));
-                        } else {
-                            el.value = val;
-                            el.dispatchEvent(new Event('input',  { bubbles: true }));
-                            el.dispatchEvent(new Event('change', { bubbles: true }));
-                        }
-                    };
-                    const radio = (name, val) => {
-                        const r = document.querySelector(
-                            `input[type="radio"][name="${CSS.escape(name)}"][value="${val}"]`);
-                        if (r) { r.checked = true; r.dispatchEvent(new Event('change', { bubbles: true })); }
-                    };
-                    set('demo_age', '28');
-                    radio('gender',           'זכר');
-                    set('demo_native_language', 'עברית');
-                    radio('education',        'תואר ראשון');
-                    radio('field',            'מדעי המחשב / הנדסה / דאטה');
-                    radio('navigation_use',   '5');
-                    radio('tech_skill',       '5');
-                    radio('viz_literacy',     '4');
-                    // Suppress downloadLogs() so Playwright won't navigate to a
-                    // blob URL (which kills the onclick mid-execution).
-                    // We save the JSON from localStorage in Python instead.
-                    window.downloadLogs = () => {};
-                    // force-enable continue button
-                    document.querySelectorAll('button[disabled]').forEach(b => {
-                        b.disabled = false; b.removeAttribute('aria-disabled');
-                    });
-                }
-                """)
-                page.wait_for_timeout(400)
-                click_continue(page)
+                elif kind == "vis_intro":
+                    click_continue(page)
 
-            elif kind == "end":
-                pass  # nothing to click – just show it
+                elif kind == "nasa_tlx":
+                    fill_page(page, kind)
+                    page.wait_for_timeout(400)
+                    click_continue(page)
 
-            # ── Visual pause ──────────────────────────────────────────────
-            page.wait_for_timeout(int(delay * 1000))
+                elif kind == "model_completion":
+                    click_continue(page)
+
+                elif kind == "model_summary_trust":
+                    fill_page(page, kind)
+                    page.wait_for_timeout(400)
+                    click_continue(page)
+
+                elif kind == "model_selection":
+                    fill_page(page, kind)
+                    page.wait_for_timeout(200)
+                    click_continue(page)
+
+                elif kind == "visualization_global":
+                    fill_page(page, kind)
+                    page.wait_for_timeout(400)
+                    click_continue(page)
+
+                elif kind == "demographics":
+                    # Fill with specific fictitious demographic values
+                    page.evaluate("""
+                    () => {
+                        const set = (id, val) => {
+                            const el = document.getElementById(id);
+                            if (!el) return;
+                            if (el.tagName === 'SELECT') {
+                                el.value = val;
+                                el.dispatchEvent(new Event('change', { bubbles: true }));
+                            } else {
+                                el.value = val;
+                                el.dispatchEvent(new Event('input',  { bubbles: true }));
+                                el.dispatchEvent(new Event('change', { bubbles: true }));
+                            }
+                        };
+                        const radio = (name, val) => {
+                            const r = document.querySelector(
+                                `input[type="radio"][name="${CSS.escape(name)}"][value="${val}"]`);
+                            if (r) { r.checked = true; r.dispatchEvent(new Event('change', { bubbles: true })); }
+                        };
+                        set('demo_age', '28');
+                        radio('gender',           'זכר');
+                        set('demo_native_language', 'עברית');
+                        radio('education',        'תואר ראשון');
+                        radio('field',            'מדעי המחשב / הנדסה / דאטה');
+                        radio('navigation_use',   '5');
+                        radio('tech_skill',       '5');
+                        radio('viz_literacy',     '4');
+                        // Suppress downloadLogs() so Playwright won't navigate to a
+                        // blob URL (which kills the onclick mid-execution).
+                        // We save the JSON from localStorage in Python instead.
+                        window.downloadLogs = () => {};
+                        // force-enable continue button
+                        document.querySelectorAll('button[disabled]').forEach(b => {
+                            b.disabled = false; b.removeAttribute('aria-disabled');
+                        });
+                    }
+                    """)
+                    page.wait_for_timeout(400)
+                    click_continue(page)
+
+                elif kind == "end":
+                    pass  # nothing to click – just show it
+
+                # ── Visual pause ──────────────────────────────────────────────
+                page.wait_for_timeout(int(delay * 1000))
+        except Exception as e:
+            _write_status(status_file, pid=pid, running=False, done=False, stopped=False, paused=False,
+                          error=f"{type(e).__name__}: {e}", total=total, index=idx, label=label, kind=kind)
+            try:
+                browser.close()
+            except Exception:
+                pass
+            server.shutdown()
+            raise
+
+        _write_status(status_file, pid=pid, running=False, done=True, stopped=False, paused=False, error=None,
+                      total=total, index=total - 1, label="Run complete", kind="end")
 
         # ── Final report ──────────────────────────────────────────────────
         print(f"\n{'='*60}")
@@ -540,22 +617,29 @@ def run(pid: str = "P001", delay: float = 2.0):
             print("  ✓  No fatal JS errors")
 
         print(f"{'='*60}\n")
-        print("  ✅ הניסוי הסתיים. הדפדפן נשאר פתוח.")
-        print("  כעת תוכל לשמור את ה-JSON מהמסך האחרון.")
-        print("  סגור את הדפדפן ידנית כשתסיים.\n")
 
-        # Wait until the browser window is closed by the user
-        try:
-            while True:
-                if not browser.contexts:
-                    break
-                try:
-                    page.title()  # raises if page/browser closed
-                    time.sleep(1)
-                except Exception:
-                    break
-        except KeyboardInterrupt:
-            pass
+        if status_file:
+            # Dashboard-driven run: the queue watcher only advances to the next
+            # participant once this subprocess actually exits, so close the
+            # browser automatically instead of waiting for a human.
+            print("  ✅ הניסוי הסתיים. סוגר את הדפדפן אוטומטית (הרצה מנוהלת מהדאשבורד).\n")
+        else:
+            print("  ✅ הניסוי הסתיים. הדפדפן נשאר פתוח.")
+            print("  כעת תוכל לשמור את ה-JSON מהמסך האחרון.")
+            print("  סגור את הדפדפן ידנית כשתסיים.\n")
+
+            # Wait until the browser window is closed by the user
+            try:
+                while True:
+                    if not browser.contexts:
+                        break
+                    try:
+                        page.title()  # raises if page/browser closed
+                        time.sleep(1)
+                    except Exception:
+                        break
+            except KeyboardInterrupt:
+                pass
 
         try:
             browser.close()
@@ -573,8 +657,14 @@ def main():
                         help="Participant ID (default: P001)")
     parser.add_argument("--delay", type=float, default=1.0,
                         help="Seconds to display each screen (default: 1.0)")
+    parser.add_argument("--status-file", default=None,
+                        help="Path to write live JSON progress to (consumed by dashboard_server.py)")
+    parser.add_argument("--control-file", default=None,
+                        help="Path to a JSON file polled for {\"paused\": true/false} (consumed by dashboard_server.py)")
     args = parser.parse_args()
-    run(pid=args.pid, delay=args.delay)
+    status_file = Path(args.status_file) if args.status_file else None
+    control_file = Path(args.control_file) if args.control_file else None
+    run(pid=args.pid, delay=args.delay, status_file=status_file, control_file=control_file)
 
 
 if __name__ == "__main__":
