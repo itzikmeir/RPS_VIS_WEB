@@ -1117,7 +1117,7 @@ function renderInfoPage(root, pageId) {
       "system_layout": "תצוגת המערכת",
       "system_criteria": "תצוגת שיקולי המערכת",
       "helper_explanation": "עזר תצוגת שיקולי מערכת",
-      "experiment_flow": "דגשים לניסוי"
+      "experiment_flow": "דגשים לניסוי - יש לקרוא היטב!"
     };
     pageData = {
       id: pageId,
@@ -1255,9 +1255,10 @@ function renderInfoPage(root, pageId) {
     ul.style.margin = "0 0 14px 0";
     ul.style.paddingRight = "20px";
     [
-      "להבין מה הדרישה שמוצגת בתרחיש ולחפש את המסלול שיש לו את הציונים הגבוהים ביותר באותה קטגוריה.",
-      "אם יש מסלול עם ציון נמוך ניתן לפסול אותו.",
-      "מהשניים הנותרים נבחר את זה שקצר יותר בזמן.",
+      "להבין מה הדרישות שמוצגת בתרחיש ולחפש את המסלולים שיש להם את הציונים הגבוהים ביותר באותן קטגוריות.",
+      "את המסלול עם הציון הנמוך ביותר ניתן לפסול אותו.",
+      "אם לשניים הנותרים יש ציונים דומים נבחר את זה שקצר יותר בזמן.",
+      "אם יש 2 דרישות במטלה כגון: נוף וחסכון, יש לבחור מסלול שבהכרח יענה על שתיהן",
     ].forEach(function(t) {
       const li = document.createElement("li");
       li.textContent = t;
@@ -1269,7 +1270,8 @@ function renderInfoPage(root, pageId) {
     const boldReminder = document.createElement("p");
     boldReminder.style.fontWeight = "700";
     boldReminder.style.marginBottom = "10px";
-    boldReminder.textContent = "זכור/י: יש מסלול אחד שהוא הכי מיטבי לאור הדרישה, אנחנו לא מנסים להכשיל אתכם, המודלים חישבו ושקללו אותם אך עלייך לבקר את המלצתם.";
+    boldReminder.style.whiteSpace = "pre-line";
+    boldReminder.textContent = "זכור/י: יש להעדיף את המסלול שעונה לקטגוריה בצורה הטובה ביותר ורק אז לבחון אם הוא גם הקצר ביותר!\nהמודל חישב מסלולים שעונה לדרישות אך עלייך לבקר את המלצתו";
     wrap.appendChild(boldReminder);
 
     [
