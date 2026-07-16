@@ -1271,7 +1271,7 @@ function renderInfoPage(root, pageId) {
     boldReminder.style.fontWeight = "700";
     boldReminder.style.marginBottom = "10px";
     boldReminder.style.whiteSpace = "pre-line";
-    boldReminder.textContent = "זכור/י: יש להעדיף את המסלול שעונה לקטגוריה בצורה הטובה ביותר ורק אז לבחון אם הוא גם הקצר ביותר!\nהמודל חישב מסלולים שעונים לדרישות אך עלייך לבקר את המלצתו.";
+    boldReminder.textContent = "זכור/י: יש להעדיף את המסלול שעונה לקטגוריה בצורה הטובה ביותר ורק אז לבחון אם הוא גם הקצר ביותר!\nהמודל חישב מסלולים שעונים על דרישות אך עלייך לבקר את ההמלצות.";
     wrap.appendChild(boldReminder);
 
     [
