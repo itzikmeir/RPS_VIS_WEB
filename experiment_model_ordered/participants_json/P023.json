@@ -19,8 +19,8 @@
       "slot": 2,
       "scenario_id": "SCN_031_S",
       "difficulty": "E",
-      "correct_route": "א׳",
-      "ai_recommended_route": "א׳",
+      "correct_route": "ב׳",
+      "ai_recommended_route": "ב׳",
       "correct_answers": {
         "Q1": "מסלול א, מסלול ב",
         "Q2": "מסלול ב"
