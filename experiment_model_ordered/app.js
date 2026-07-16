@@ -1607,7 +1607,7 @@ function renderInfoPage(root, pageId) {
     let labels = null;
     if (pageId === "system_layout") {
       labels = [
-        "1. פאנל פירוט המטלה ואישור הבחירה.",
+        "1. פאנל פירוט המטלה, זמן מומלץ ואישור הבחירה.",
         "2. מפה וכלי מפה.",
         "3. גרף זמני המקטעים ובחירת מסלול.",
         "4. ויזואליזציה (משתנה) של פירוט המקטעים במסלול הבחור.",
@@ -1650,7 +1650,21 @@ function renderInfoPage(root, pageId) {
   if (pageData.input_type !== "none") {
     root.appendChild(inputContainer);
   }
-  
+
+  // Bold note explaining the arrow annotation on the system_layout example
+  // image: it points at the purple tag where the system's recommendation appears.
+  // Placed below the checkboxes, in a larger font, so it stands out.
+  if (pageId === "system_layout") {
+    const note = document.createElement("div");
+    note.className = "page-content";
+    note.dir = "rtl";
+    note.style.fontWeight = "700";
+    note.style.fontSize = "1.15em";
+    note.style.marginTop = "16px";
+    note.textContent = "שים/י לב, המלצת המערכת מופיעה בתגית הסגולה היכן שהחץ מצביע.";
+    root.appendChild(note);
+  }
+
   // Navigation buttons
   const buttonGroup = document.createElement("div");
   buttonGroup.className = "button-group";

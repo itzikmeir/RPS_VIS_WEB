@@ -38,7 +38,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from route_utils import normalize_route_letter  # noqa: E402
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
-DEFAULT_SCHEDULE = ROOT_DIR / "Model_Ordered_experiment" / "Models_Experiment_Order_Expanded_corrected.xlsx"
+DEFAULT_SCHEDULE = ROOT_DIR / "Model_Ordered_experiment" / "Models_Experiment_Order_Expanded_V2.xlsx"
 DEFAULT_RAW = Path.home() / "Downloads" / "Experiment_Raw_Data_updated.xlsx"
 DEFAULT_OUT = Path.home() / "Downloads" / "Experiment_Raw_Data_corrected.xlsx"
 DEFAULT_CHART = ROOT_DIR / "Model_Ordered_experiment" / "opt_sub_accuracy_validation.png"

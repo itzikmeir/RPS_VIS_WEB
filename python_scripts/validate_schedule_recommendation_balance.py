@@ -1,5 +1,5 @@
 """
-Design-level validation: for every participant in Models_Experiment_Order_Expanded_corrected.xlsx
+Design-level validation: for every participant in Models_Experiment_Order_Expanded_V2.xlsx
 (sheet Schedule_Long), walk every Experiment-phase trial and check whether the
 System_Recommendation actually equals the Correct_Answer (i.e. whether the
 recommendation is genuinely correct), independent of the Rec_Correct label.
@@ -27,7 +27,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from route_utils import normalize_route_letter  # noqa: E402
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
-DEFAULT_SCHEDULE = ROOT_DIR / "Model_Ordered_experiment" / "Models_Experiment_Order_Expanded_corrected.xlsx"
+DEFAULT_SCHEDULE = ROOT_DIR / "Model_Ordered_experiment" / "Models_Experiment_Order_Expanded_V2.xlsx"
 DEFAULT_REPORT = ROOT_DIR / "Model_Ordered_experiment" / "schedule_recommendation_balance_report.csv"
 DEFAULT_CHART = ROOT_DIR / "Model_Ordered_experiment" / "schedule_recommendation_balance.png"
 
@@ -153,7 +153,7 @@ def make_comparison_chart(table: pd.DataFrame, out_path: Path) -> None:
     ]
     ax_bot.legend(handles=legend_handles, loc="lower right")
 
-    fig.suptitle("Both panels use ONLY Models_Experiment_Order_Expanded_corrected.xlsx - no participant/raw data involved",
+    fig.suptitle("Both panels use ONLY Models_Experiment_Order_Expanded_V2.xlsx - no participant/raw data involved",
                  fontsize=10, y=0.995)
     fig.tight_layout()
     fig.savefig(out_path, dpi=150)
