@@ -1212,6 +1212,10 @@ function monitorCellDiff(planVal, actualVal) {
   return actualVal;
 }
 function monitorFmtBool(v) { return v === undefined || v === null ? '<span class="mon-wait">–</span>' : (v ? '✓' : '✗'); }
+function monitorFmtBoolColored(v) {
+  if (v === undefined || v === null) return '<span class="mon-wait">–</span>';
+  return v ? '<span class="mon-ok">✓</span>' : '<span class="mon-bad">✗</span>';
+}
 
 function summarizeSA(q) {
   const sq = q && q.answers && q.answers.scenario_questions;
@@ -1261,7 +1265,7 @@ function renderMonitorBody(planRows, actualByKey, qByKey, latestKey) {
 
       const choseCheck = a.user_route === a.true_route;
       choseCorrectCell = a.chose_true_optimal === choseCheck
-        ? monitorFmtBool(a.chose_true_optimal)
+        ? monitorFmtBoolColored(a.chose_true_optimal)
         : `<span class="mon-bad" title="חישוב עצמאי: ${choseCheck ? 'כן' : 'לא'}">${monitorFmtBool(a.chose_true_optimal)} ⚠</span>`;
       if (a.chose_true_optimal !== choseCheck) mismatches.push('חישוב בחירה נכונה');
 
