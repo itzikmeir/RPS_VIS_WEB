@@ -21,6 +21,7 @@ from build_scenario_questions_model_ordered import (
     parse_options,
     _match_single_answer_to_index,
 )
+import update_correct_answers_model_ordered as uca
 
 SCENARIO_QUESTIONS = ROOT / "experiment_model_ordered" / "questions" / "scenario_questions.json"
 PARTICIPANTS_DIR = ROOT / "experiment_model_ordered" / "participants_json"
@@ -135,12 +136,6 @@ class TestScenarioQuestionsJSON(unittest.TestCase):
                 self.assertGreaterEqual(idx, 0, f"Index must be >= 0: {idx}")
                 self.assertLess(idx, len(options), f"Index {idx} out of bounds for {len(options)} options")
 
-    def test_multi_correct_entries_exist(self):
-        """At least some entries should have multiple correct indices."""
-        data = load_json(SCENARIO_QUESTIONS)
-        multi = [e for e in data.get("scenario_questions", []) if len(e.get("correct_answer_indices", [])) > 1]
-        self.assertGreater(len(multi), 0, "Expected at least one question with multiple correct answers")
-
     def test_backward_compat_correct_answer_index(self):
         """correct_answer_index should equal first of correct_answer_indices when single."""
         data = load_json(SCENARIO_QUESTIONS)
@@ -156,22 +151,39 @@ class TestScenarioQuestionsJSON(unittest.TestCase):
 class TestParticipantCorrectAnswers(unittest.TestCase):
     """Tests for participant JSON correct_answers with multi-correct."""
 
-    def test_multi_correct_stored_as_comma_separated(self):
-        """Participant correct_answers for multi-correct should contain comma."""
-        found = False
-        for path in list(PARTICIPANTS_DIR.glob("P*.json"))[:5]:
-            data = load_json(path)
-            for trial in data.get("practice", []) + self._all_experiment_trials(data):
-                ca = trial.get("correct_answers", {})
-                for q, val in ca.items():
-                    if val and "," in str(val):
-                        found = True
-                        break
-                if found:
-                    break
-            if found:
-                break
-        self.assertTrue(found, "Expected at least one correct_answers value with comma (multi-correct)")
+    def test_multi_correct_joined_with_comma(self):
+        """build_correct_answers_map joins multiple correct option texts with ", ".
+
+        Uses synthetic scenario_questions data (via a monkeypatched path) rather
+        than scanning real participant files, since the current scenario content
+        isn't guaranteed to include a multi-correct question at any given time.
+        """
+        import tempfile
+        import os
+
+        synthetic = {
+            "scenario_questions": [{
+                "scenario_id": "SCN_TEST",
+                "question_id": "sa_1",
+                "options": ["מסלול א", "מסלול ב", "מסלול ג", "לא יודע/ת"],
+                "correct_answer_indices": [0, 1],
+                "correct_answer_index": 0,
+            }]
+        }
+        fd, tmp_name = tempfile.mkstemp(suffix=".json")
+        os.close(fd)
+        tmp_path = Path(tmp_name)
+        tmp_path.write_text(json.dumps(synthetic, ensure_ascii=False), encoding="utf-8")
+
+        original_path = uca.SCENARIO_QUESTIONS_PATH
+        uca.SCENARIO_QUESTIONS_PATH = tmp_path
+        try:
+            mapping = uca.build_correct_answers_map()
+        finally:
+            uca.SCENARIO_QUESTIONS_PATH = original_path
+            tmp_path.unlink()
+
+        self.assertEqual(mapping["SCN_TEST"]["Q1"], "מסלול א, מסלול ב")
 
     def _all_experiment_trials(self, data):
         trials = []
