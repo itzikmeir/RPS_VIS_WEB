@@ -544,7 +544,7 @@ function renderLoginPage(root) {
 
   subscribeVideoPreload((st) => {
     if (st.error) {
-      videoStatusText.textContent = "⚠ טעינת סרטון ההדרכה מראש נכשלה — הוא ייטען כרגיל בהמשך הניסוי.";
+      videoStatusText.textContent = "⚠ טעינת סרטון ההדרכה מראש נכשלה - הוא ייטען כרגיל בהמשך הניסוי.";
       videoStatusText.style.color = "#c62828";
       videoProgressTrack.style.display = "none";
       startBtn.disabled = false;
@@ -850,7 +850,7 @@ function renderScreenCheckPage(root) {
   sec1.style.cssText = "background:#f8f9fa;border:1px solid #dee2e6;border-radius:8px;padding:16px;margin-bottom:20px;";
   const sec1Title = document.createElement("h3");
   sec1Title.style.marginTop = "0";
-  sec1Title.textContent = "1. חלון הדפדפן — גודל מקסימלי";
+  sec1Title.textContent = "1. חלון הדפדפן - גודל מקסימלי";
   sec1.appendChild(sec1Title);
 
   const windowStatus = document.createElement("div");
@@ -901,7 +901,7 @@ function renderScreenCheckPage(root) {
   sec2.appendChild(tabsInstr);
   const tabsWarning = document.createElement("p");
   tabsWarning.style.cssText = "margin:0 0 12px 0;color:#721c24;background:#f8d7da;border-radius:6px;padding:8px 12px;font-size:14px;";
-  tabsWarning.textContent = "⚠ במהלך הניסוי אין לעבור ללשוניות אחרות — כל מעבר יירשם ועשוי לפסול את הנתונים.";
+  tabsWarning.textContent = "⚠ במהלך הניסוי אין לעבור ללשוניות אחרות - כל מעבר יירשם ועשוי לפסול את הנתונים.";
   sec2.appendChild(tabsWarning);
   const tabsRow = document.createElement("div");
   tabsRow.style.cssText = "display:flex;align-items:center;gap:8px;";
@@ -1013,7 +1013,7 @@ function renderScreenCheckPage(root) {
       calibResult.innerHTML = "\u2714 " + base;
     } else {
       calibResult.style.cssText = "padding:10px 14px;border-radius:6px;background:#f8d7da;color:#721c24;font-size:14px;line-height:1.6;";
-      calibResult.innerHTML = base + "<br><small>\u26A0 מסך גדול מדי (מעל 27\u2033) — עלול ליצור מרווחים גדולים מדי בממשק. אנא פנה לנסיין.</small>";
+      calibResult.innerHTML = base + "<br><small>\u26A0 מסך גדול מדי (מעל 27\u2033) - עלול ליצור מרווחים גדולים מדי בממשק. אנא פנה לנסיין.</small>";
     }
     calibDone = true;
     state.logs.interactions.push({
@@ -1275,7 +1275,7 @@ function renderInfoPage(root, pageId) {
     wrap.appendChild(boldReminder);
 
     [
-      "יש לבדוק היטב את כל המסלולים כדי לזהות מי הכי מתאים לדרישה. יש גם לנסות להצליח בזמן המומלץ — ניתן להמשיך גם אחרי סיום הזמן שהוגדר, הכל בסדר, הניסוי ימשיך.",
+      "יש לבדוק היטב את כל המסלולים כדי לזהות מי הכי מתאים לדרישה. יש גם לנסות להצליח בזמן המומלץ - ניתן להמשיך גם אחרי סיום הזמן שהוגדר, הכל בסדר, הניסוי ימשיך.",
       "לאחר כל תרחיש תשאל מספר שאלות, חלקן ישירות על המטלה וחלקן נוגעות לפרטים אחרים במסך התרחיש. עלייך לנסות לענות לפי מה שאת/ה זוכר/ת. אם אינך זוכר/ת יש לבחור בתשובה \"לא יודע/ת\" ולהתקדם הלאה.",
     ].forEach(function(txt) {
       const p = document.createElement("p");
@@ -4654,7 +4654,7 @@ function renderEndPage(root) {
   const paymentNote = document.createElement("p");
   paymentNote.dir = "rtl";
   paymentNote.style.cssText = "margin-top:14px;font-size:15px;";
-  paymentNote.textContent = "כעת הנסיין ישלם לך — יש לחתום שקיבלת את התשלום.";
+  paymentNote.textContent = "כעת הנסיין ישלם לך - יש לחתום שקיבלת את התשלום.";
   root.appendChild(paymentNote);
   
   const buttonGroup = document.createElement("div");
@@ -5282,7 +5282,7 @@ window.addEventListener("resize", () => {
   resizeWarningTimeout = setTimeout(() => {
     const ok = window.outerWidth >= screen.availWidth * 0.97 &&
                window.outerHeight >= screen.availHeight * 0.97;
-    if (!ok) showEnvWarning("⚠ גודל החלון השתנה — אנא הגדל חזרה למסך מלא (F11)");
+    if (!ok) showEnvWarning("⚠ גודל החלון השתנה - אנא הגדל חזרה למסך מלא (F11)");
   }, 300);
 });
 
