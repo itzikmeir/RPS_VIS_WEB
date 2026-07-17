@@ -22,7 +22,7 @@
       "correct_route": "ב׳",
       "ai_recommended_route": "ב׳",
       "correct_answers": {
-        "Q1": "חיסכון",
+        "Q1": "מקטע 3",
         "Q2": "מסלול ג"
       },
       "rec_correct": "כן"
@@ -46,8 +46,8 @@
       "correct_route": "א׳",
       "ai_recommended_route": "א׳",
       "correct_answers": {
-        "Q1": "קליטה",
-        "Q2": "מסלול ג"
+        "Q1": "מסלול א",
+        "Q2": "מסלול ב"
       },
       "rec_correct": "כן"
     },
@@ -93,7 +93,7 @@
               "correct_route": "ג׳",
               "ai_recommended_route": "ג׳",
               "correct_answers": {
-                "Q1": "מקטע 1",
+                "Q1": "מסלול ג",
                 "Q2": "מסלול ב"
               },
               "rec_correct": "כן"
@@ -105,8 +105,8 @@
               "correct_route": "ב׳",
               "ai_recommended_route": "ב׳",
               "correct_answers": {
-                "Q1": "נוף",
-                "Q2": "מסלול א"
+                "Q1": "מקטע 3",
+                "Q2": "מסלול ג"
               },
               "rec_correct": "כן"
             },
@@ -129,7 +129,7 @@
               "correct_route": "ב׳",
               "ai_recommended_route": "א׳",
               "correct_answers": {
-                "Q1": "חיסכון",
+                "Q1": "מקטע 1",
                 "Q2": "מסלול ג"
               },
               "rec_correct": "לא"
@@ -141,8 +141,8 @@
               "correct_route": "ג׳",
               "ai_recommended_route": "ג׳",
               "correct_answers": {
-                "Q1": "מקטע 3",
-                "Q2": "מסלול א"
+                "Q1": "מסלול ג",
+                "Q2": "מסלול ב"
               },
               "rec_correct": "כן"
             }
@@ -172,7 +172,7 @@
               "ai_recommended_route": "ג׳",
               "correct_answers": {
                 "Q1": "מסלול ג",
-                "Q2": "חיסכון"
+                "Q2": "מקטע 1"
               },
               "rec_correct": "כן"
             },
@@ -195,7 +195,7 @@
               "correct_route": "א׳",
               "ai_recommended_route": "א׳",
               "correct_answers": {
-                "Q1": "נוף",
+                "Q1": "מסלול א",
                 "Q2": "מסלול א"
               },
               "rec_correct": "כן"
@@ -208,7 +208,7 @@
               "ai_recommended_route": "ג׳",
               "correct_answers": {
                 "Q1": "מקטע 2",
-                "Q2": "מסלול ב"
+                "Q2": "מסלול א"
               },
               "rec_correct": "כן"
             }
@@ -225,7 +225,7 @@
               "correct_route": "ג׳",
               "ai_recommended_route": "ג׳",
               "correct_answers": {
-                "Q1": "חיסכון",
+                "Q1": "מסלול ג",
                 "Q2": "מסלול ב"
               },
               "rec_correct": "כן"
@@ -250,7 +250,7 @@
               "ai_recommended_route": "ב׳",
               "correct_answers": {
                 "Q1": "מסלול ג",
-                "Q2": "מסלול א"
+                "Q2": "מסלול ב"
               },
               "rec_correct": "לא"
             },
@@ -273,7 +273,7 @@
               "correct_route": "ב׳",
               "ai_recommended_route": "ב׳",
               "correct_answers": {
-                "Q1": "נוף",
+                "Q1": "מסלול ב",
                 "Q2": "מקטע 1"
               },
               "rec_correct": "כן"
@@ -310,7 +310,7 @@
               "correct_route": "ב׳",
               "ai_recommended_route": "ב׳",
               "correct_answers": {
-                "Q1": "קליטה",
+                "Q1": "מקטע 2",
                 "Q2": "מסלול ג"
               },
               "rec_correct": "כן"
@@ -334,7 +334,7 @@
               "correct_route": "ג׳",
               "ai_recommended_route": "ב׳",
               "correct_answers": {
-                "Q1": "מסלול ג",
+                "Q1": "מסלול א",
                 "Q2": "מסלול ב"
               },
               "rec_correct": "לא"
@@ -353,7 +353,7 @@
               "ai_recommended_route": "ב׳",
               "correct_answers": {
                 "Q1": "מסלול ב",
-                "Q2": "מסלול ג"
+                "Q2": "מסלול א"
               },
               "rec_correct": "כן"
             },
@@ -364,8 +364,8 @@
               "correct_route": "א׳",
               "ai_recommended_route": "א׳",
               "correct_answers": {
-                "Q1": "נוף",
-                "Q2": "מסלול ב"
+                "Q1": "מקטע 2",
+                "Q2": "מסלול ג"
               },
               "rec_correct": "כן"
             },
@@ -376,7 +376,7 @@
               "correct_route": "ג׳",
               "ai_recommended_route": "א׳",
               "correct_answers": {
-                "Q1": "מקטע 1",
+                "Q1": "מסלול ג",
                 "Q2": "מסלול א"
               },
               "rec_correct": "לא"
@@ -388,8 +388,8 @@
               "correct_route": "א׳",
               "ai_recommended_route": "ג׳",
               "correct_answers": {
-                "Q1": "קליטה",
-                "Q2": "מסלול ג"
+                "Q1": "מסלול א",
+                "Q2": "מסלול ב"
               },
               "rec_correct": "לא"
             }
@@ -418,7 +418,7 @@
               "correct_route": "ג׳",
               "ai_recommended_route": "ג׳",
               "correct_answers": {
-                "Q1": "חיסכון",
+                "Q1": "מסלול ג",
                 "Q2": "מסלול א"
               },
               "rec_correct": "כן"
@@ -442,8 +442,8 @@
               "correct_route": "א׳",
               "ai_recommended_route": "ב׳",
               "correct_answers": {
-                "Q1": "קליטה",
-                "Q2": "מסלול ב"
+                "Q1": "מקטע 3",
+                "Q2": "מסלול ג"
               },
               "rec_correct": "לא"
             }
