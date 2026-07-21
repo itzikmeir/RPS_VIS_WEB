@@ -4583,12 +4583,8 @@ function renderDemographicsPage(root) {
       }
     });
 
-    // Before ending the experiment, upload to Drive and download locally
-    uploadLogsToDrive();
-    downloadLogs();
-
     logPageExit(pageName);
-    
+
     // Log questionnaire
     state.logs.questionnaires.push({
       trial_id: null,
@@ -4604,7 +4600,12 @@ function renderDemographicsPage(root) {
       exit_ts: Date.now()
     });
     persistToStorage();
-    
+
+    // Before ending the experiment, upload to Drive and download locally
+    // (must happen after the push above so demographics are included)
+    uploadLogsToDrive();
+    downloadLogs();
+
     state.stage = "end";
     state.pageType = "end";
     render();
