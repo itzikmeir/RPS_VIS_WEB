@@ -4378,7 +4378,7 @@ function renderDemographicsPage(root) {
       placeholderOption.textContent = "בחר שפה";
       select.appendChild(placeholderOption);
       
-      const languageOptions = ["עברית", "ערבית", "אנגלית", "רוסית", "אתיופית", "אחר"];
+      const languageOptions = ["עברית", "ערבית", "אנגלית", "רוסית", "אמהרית", "אחר"];
       languageOptions.forEach(opt => {
         const option = document.createElement("option");
         option.value = opt;
