@@ -39,6 +39,8 @@
     .rblock { border: 1px solid #ddd; border-radius: 5px; padding: 14px 16px; margin: 14px 0; }
     .rblock h4 { margin-top: 0; }
     .interp { font-style: italic; font-size: 13px; color: #333; background: #fafafa; border-left: 3px solid #aaa; padding: 8px 12px; margin: 10px 0; }
+    .plain { font-size: 13px; color: #0d3c61; background: #eef6fc; border-left: 3px solid #64b5f6; border-radius: 0 4px 4px 0; padding: 8px 12px; margin: 10px 0; }
+    .plain b { color: #0d47a1; }
     .finding { background: #e8f5e9; border: 1px solid #a5d6a7; border-radius: 5px; padding: 10px 14px; margin: 10px 0; font-size: 13px; }
     .inconc { background: #fff8e1; border: 1px solid #ffe082; border-radius: 5px; padding: 10px 14px; margin: 10px 0; font-size: 13px; }
     .warn { background: #fce4ec; border: 1px solid #f48fb1; border-radius: 5px; padding: 8px 12px; margin: 8px 0; font-size: 12.5px; }
@@ -79,14 +81,24 @@
     This report presents the full statistical analysis for a controlled within-subjects experiment
     examining how three visualization types — Stacked Bar, Radar Chart, and Heat Map — affect
     trust calibration and decision-making in an AI-guided, multi-criteria route planning task.
-    The analysis addresses five research questions: (RQ1) the effect of visualization type on trust
-    calibration score (TCS), response time, workload, confidence, route accuracy, and situational
-    awareness; (RQ2a) moderation by task difficulty; (RQ2b) the effect of AI model quality
-    (Optimal vs. Suboptimal) on workload, subjective trust, and behavioral calibration; (RQ3) the
-    speed–comprehension trade-off; and (RQ4) individual-difference moderators. Repeated-measures
-    ANOVA (parametric) and Friedman tests (non-parametric) are reported alongside Kendall's W,
-    Cohen's d, and statistical power estimates. Results are interpreted with explicit notation of
-    underpowered tests.
+    The analysis addresses eight research questions: (RQ1) the effect of visualization type on trust
+    calibration score (TCS), response time, workload, confidence, situational awareness, and route
+    accuracy; (RQ2a) a retroactive manipulation check of the Easy/Hard difficulty design and its
+    effect on the same outcomes; (RQ2b) the effect of AI model quality (Optimal vs. Suboptimal) on
+    workload, subjective trust, and behavioral calibration; (RQ2c) learning and practice effects
+    across the session; (RQ2d) whether the visualization effect itself depends on task difficulty
+    (a Difficulty × Visualization interaction, tested with a full two-way repeated-measures ANOVA);
+    (RQ3) the speed–comprehension trade-off; and (RQ4) individual-difference moderators. Three
+    additional validity checks are reported: a presentation-order/counterbalancing check; a
+    confidence-calibration analysis (does self-reported confidence track actual route optimality);
+    and a preference–performance alignment analysis (does each participant's stated favourite
+    visualization actually match the one that gave <i>them</i> the best trust calibration and
+    route accuracy — tested against chance with an exact binomial test).
+    Repeated-measures ANOVA (parametric) and Friedman tests (non-parametric) are reported alongside
+    Kendall's W, Cohen's d, and exact statistical power (computed via the noncentral chi-square
+    distribution rather than a fixed lookup table); a Holm–Bonferroni correction is applied across
+    the RQ1 test family. Results are interpreted with explicit notation of underpowered tests, and
+    every result is accompanied by a plain-language summary alongside the technical statistics.
   </div>
 
   <div class="data-input">
@@ -118,9 +130,20 @@
 // 1. STATISTICAL UTILITIES
 // ════════════════════════════════════════════════════════════════════════════
 
-const VISNMAP = {'עמודות נערמות':'Stacked Bar','רדאר':'Radar Chart','מפת חום':'Heat Map'};
+// Two spellings of "stacked bar" appear across the data (app.js itself treats
+// them as equivalent in a couple of places, e.g. checking both variants when
+// matching vis.visualization) — both are mapped here so every extraction in
+// this report (including the preference-ranking questionnaire, which uses the
+// second spelling) resolves correctly regardless of which one a given file has.
+const VISNMAP = {'עמודות נערמות':'Stacked Bar','עמודות מוערמות':'Stacked Bar','רדאר':'Radar Chart','מפת חום':'Heat Map'};
 const VIS3 = ['Stacked Bar','Radar Chart','Heat Map'];
 const VIS_COLOR = {'Stacked Bar':'#1976d2','Radar Chart':'#d32f2f','Heat Map':'#388e3c'};
+const THIRDS = ['Early','Middle','Late'];
+const THIRD_COLOR = {'Early':'#7b1fa2','Middle':'#f57c00','Late':'#0097a7'};
+const POSITIONS = ['1st block','2nd block','3rd block'];
+const POSITION_COLOR = {'1st block':'#5d4037','2nd block':'#00838f','3rd block':'#c2185b'};
+const DIFF2 = ['Easy','Hard'];
+const DIFF_COLOR = {'Easy':'#43a047','Hard':'#e53935'};
 
 function mean(a){ return a.length?a.reduce((s,v)=>s+v,0)/a.length:NaN; }
 function variance(a){ if(a.length<2)return 0; const m=mean(a); return a.reduce((s,v)=>s+(v-m)**2,0)/(a.length-1); }
@@ -206,6 +229,55 @@ function rmANOVA(matrix){
   return {F,df_c,df_e,p,eta2,MS_c,MS_e,condMeans:cM,grandM,N,k};
 }
 
+// Two-way fully-repeated-measures ANOVA (S x A x B design): main effect of A,
+// main effect of B, and the A×B interaction, each with its own error term.
+// cube[s][a][b] = one pre-aggregated value per subject/cell (no nulls).
+// Validated against synthetic data with known zero/pure-main/pure-interaction
+// patterns (SS decomposition identity, and F ratios landing where expected).
+function rmANOVA2(cube){
+  const n=cube.length, a=cube[0].length, b=cube[0][0].length;
+  const all=cube.flat(2);
+  const grand=mean(all);
+  const Ms=cube.map(sc=>mean(sc.flat()));
+  const MA=Array.from({length:a},(_,ai)=>mean(cube.flatMap(sc=>sc[ai])));
+  const MB=Array.from({length:b},(_,bi)=>mean(cube.flatMap(sc=>sc.map(row=>row[bi]))));
+  const MAB=Array.from({length:a},(_,ai)=>Array.from({length:b},(_,bi)=>mean(cube.map(sc=>sc[ai][bi]))));
+  const MsA=cube.map(sc=>sc.map(row=>mean(row)));
+  const MsB=cube.map(sc=>{
+    const out=[];
+    for(let bi=0;bi<b;bi++) out.push(mean(sc.map(row=>row[bi])));
+    return out;
+  });
+
+  const SS_A=n*b*MA.reduce((s,m)=>s+(m-grand)**2,0);
+  const SS_B=n*a*MB.reduce((s,m)=>s+(m-grand)**2,0);
+  let SS_AB=0;
+  for(let ai=0;ai<a;ai++)for(let bi=0;bi<b;bi++) SS_AB += (MAB[ai][bi]-MA[ai]-MB[bi]+grand)**2;
+  SS_AB*=n;
+  const SS_S=a*b*Ms.reduce((s,m)=>s+(m-grand)**2,0);
+  let SS_AxS=0;
+  for(let si=0;si<n;si++)for(let ai=0;ai<a;ai++) SS_AxS += (MsA[si][ai]-Ms[si]-MA[ai]+grand)**2;
+  SS_AxS*=b;
+  let SS_BxS=0;
+  for(let si=0;si<n;si++)for(let bi=0;bi<b;bi++) SS_BxS += (MsB[si][bi]-Ms[si]-MB[bi]+grand)**2;
+  SS_BxS*=a;
+  const SS_total=all.reduce((s,v)=>s+(v-grand)**2,0);
+  const SS_ABxS=SS_total-SS_A-SS_B-SS_AB-SS_S-SS_AxS-SS_BxS;
+
+  const df_A=a-1, df_AxS=(a-1)*(n-1);
+  const df_B=b-1, df_BxS=(b-1)*(n-1);
+  const df_AB=(a-1)*(b-1), df_ABxS=(a-1)*(b-1)*(n-1);
+  const MS_A=SS_A/df_A, MS_AxS=SS_AxS/df_AxS, F_A=MS_A/MS_AxS, p_A=fp(F_A,df_A,df_AxS);
+  const MS_B=SS_B/df_B, MS_BxS=SS_BxS/df_BxS, F_B=MS_B/MS_BxS, p_B=fp(F_B,df_B,df_BxS);
+  const MS_AB=SS_AB/df_AB, MS_ABxS=SS_ABxS/df_ABxS, F_AB=MS_AB/MS_ABxS, p_AB=fp(F_AB,df_AB,df_ABxS);
+  const eta2_A=SS_A/(SS_A+SS_AxS), eta2_B=SS_B/(SS_B+SS_BxS), eta2_AB=SS_AB/(SS_AB+SS_ABxS);
+
+  return {n,a,b,MA,MB,MAB,
+    A:{F:F_A,df1:df_A,df2:df_AxS,p:p_A,eta2:eta2_A},
+    B:{F:F_B,df1:df_B,df2:df_BxS,p:p_B,eta2:eta2_B},
+    AB:{F:F_AB,df1:df_AB,df2:df_ABxS,p:p_AB,eta2:eta2_AB}};
+}
+
 function pairedT(x,y){
   const d=x.map((xi,i)=>xi-y[i]), n=d.length;
   const mD=mean(d), sD=sd(d);
@@ -233,13 +305,69 @@ function pearsonR(x,y){
   return {r,r2:r*r,t:t2,p,n};
 }
 
+// ── Noncentral chi-square power (exact, for Friedman / RM designs) ──────────
+// Inverse chi-square CDF (quantile), via bisection on the regularized lower
+// incomplete gamma function already defined above (gammaIncLower).
+function chi2Quantile(p,df){
+  if(p<=0)return 0; if(p>=1)return Infinity;
+  let hi=Math.max(df*4,10);
+  while(gammaIncLower(df/2,hi/2)<p) hi*=2;
+  let lo=0;
+  for(let i=0;i<100;i++){
+    const mid=(lo+hi)/2;
+    if(gammaIncLower(df/2,mid/2)<p) lo=mid; else hi=mid;
+  }
+  return (lo+hi)/2;
+}
+// Noncentral chi-square CDF via Poisson-mixture of central chi-squares.
+function noncentralChi2CDF(x,df,lambda){
+  if(x<=0)return 0;
+  if(lambda<=0) return gammaIncLower(df/2,x/2);
+  const halfLam=lambda/2;
+  let total=0, poisTerm=Math.exp(-halfLam);
+  const maxJ=Math.ceil(halfLam+40*Math.sqrt(halfLam+1))+200;
+  for(let j=0;j<=maxJ;j++){
+    if(j>0) poisTerm*=halfLam/j;
+    total+=poisTerm*gammaIncLower(df/2+j,x/2);
+    if(poisTerm<1e-16&&j>halfLam) break;
+  }
+  return Math.min(1,total);
+}
+// Power of Friedman's test (equivalently the RM-ANOVA omnibus, df=k-1) to
+// detect a population Kendall's W at sample size N, assuming the *observed*
+// W is an unbiased estimate of the true effect. Exact noncentral-chi2 power,
+// using the identity chi2 = N*(k-1)*W as the noncentrality parameter.
+function friedmanPower(W,N,k,alpha=0.05){
+  if(!(W>0)||!(N>0)||k<2) return 0;
+  const df=k-1, critX=chi2Quantile(1-alpha,df), lambda=N*df*W;
+  return Math.max(0,Math.min(1,1-noncentralChi2CDF(critX,df,lambda)));
+}
+// Minimum N to reach targetPower for a given true W (k conditions).
+function requiredN(W,k,targetPower=0.80,alpha=0.05){
+  if(!(W>0)) return Infinity;
+  let n=k+1;
+  while(n<3000 && friedmanPower(W,n,k,alpha)<targetPower) n++;
+  return n;
+}
+
+// Exact one-sided binomial test: P(X ≥ k) under Binomial(n, p0). Used to test
+// whether an observed "hit rate" (e.g. stated preference matching actual best
+// performance) exceeds the chance rate (1/3 for a 3-way choice).
+function logChoose(n,k){ return logGamma(n+1)-logGamma(k+1)-logGamma(n-k+1); }
+function binomialTestUpperP(k,n,p0){
+  if(k<=0) return 1;
+  if(k>n) return 0;
+  let s=0;
+  for(let i=k;i<=n;i++) s+=Math.exp(logChoose(n,i)+i*Math.log(p0)+(n-i)*Math.log(1-p0));
+  return Math.min(1,Math.max(0,s));
+}
+
 // Effect size labels
 function wLabel(W){ return W>=0.26?'large':W>=0.10?'medium':'small'; }
 function powerNote(W,N,k){
-  // approximate power from SAP lookup
-  if(W>=0.26) return '≥.80 ✓';
-  if(W>=0.10) return '~.50–.79';
-  return '&lt;.50 ⚠';
+  const pw=friedmanPower(W,N,k);
+  const pct=(pw*100).toFixed(0)+'%';
+  return pw>=0.80?`${pct} ✓`:pw<0.50?`${pct} ⚠`:pct;
 }
 function dLabel(d){ const a=Math.abs(d); return a>=0.8?'large':a>=0.5?'medium':a>=0.2?'small':'negligible'; }
 function pFmt(p){ if(typeof p!=='number'||!isFinite(p))return '–'; if(p<.001)return '&lt;.001'; return p.toFixed(3); }
@@ -260,9 +388,33 @@ function extractData(validResults){
     const interactions=Array.isArray(logs.interactions)?logs.interactions:[];
     const pid=r.data.participant_id||(qs[0]&&qs[0].participant_id)||r.file.name.replace(/\.json$/i,'').replace(/_log$/,'');
 
-    // vis_index → English name
-    const visOfIdx={};
-    pages.forEach(p=>{ if(p.metadata?.vis_index!=null&&p.metadata?.visualization) visOfIdx[p.metadata.vis_index]=VISNMAP[p.metadata.visualization]||p.metadata.visualization; });
+    // vis_index → visualization name, keyed by model_index too. Confirmed
+    // across every real participant file: the SAME vis_index (0/1/2) maps to
+    // a DIFFERENT visualization in the OPT block vs. the SUB block (a
+    // deliberate rotation, presumably to counterbalance visualization order
+    // against model order) — not the same session-wide order in both. A flat
+    // vis_index-only map would let the later model block's assignment
+    // silently overwrite the earlier one, mislabeling half of every
+    // participant's trials by visualization identity.
+    const visOfIdx={}; // visOfIdx[model_index][vis_index] = English name
+    pages.forEach(p=>{
+      const mi=p.metadata?.model_index, vi=p.metadata?.vis_index, vzn=p.metadata?.visualization;
+      if(mi!=null&&vi!=null&&vzn){ (visOfIdx[mi]=visOfIdx[mi]||{})[vi]=VISNMAP[vzn]||vzn; }
+    });
+    function lookupVis(modelIndex,visIndex){
+      if(modelIndex==null||visIndex==null) return null;
+      return visOfIdx[modelIndex]?visOfIdx[modelIndex][visIndex]??null:null;
+    }
+
+    // presentation order: first time each visualization was encountered
+    // (drives the counterbalancing/order-effect check — reuses visAgg below,
+    // just relabeled by position instead of by visualization identity).
+    const visFirstTs={};
+    pages.forEach(p=>{
+      const vis=lookupVis(p.metadata?.model_index,p.metadata?.vis_index);
+      if(vis&&p.enter_ts!=null&&(visFirstTs[vis]==null||p.enter_ts<visFirstTs[vis])) visFirstTs[vis]=p.enter_ts;
+    });
+    const presentationOrder=VIS3.filter(v=>visFirstTs[v]!=null).sort((x,y)=>visFirstTs[x]-visFirstTs[y]);
 
     // model_index → OPT/SUB
     const modelOfIdx={};
@@ -276,7 +428,7 @@ function extractData(validResults){
     // NASA-TLX per vis per model
     const nasaByVis={};
     qs.filter(q=>q.questionnaire_type==='nasa_tlx').forEach(q=>{
-      const vis=visOfIdx[q.vis_index]; if(!vis||!q.answers)return;
+      const vis=lookupVis(q.model_index,q.vis_index); if(!vis||!q.answers)return;
       const vals=Object.values(q.answers).filter(v=>typeof v==='number');
       if(!vals.length)return;
       (nasaByVis[vis]=nasaByVis[vis]||[]).push(mean(vals));
@@ -290,17 +442,30 @@ function extractData(validResults){
       if(vals.length)trustOf[mt]=mean(vals);
     });
 
+    // Stated visualization preference (post-experiment ranking, 1 = most
+    // preferred). Used to check whether people's favourite visualization was
+    // actually the one that helped them most (preference–performance alignment).
+    const vgQ=qs.find(q=>q.questionnaire_type==='visualization_global');
+    let prefVis=null;
+    if(vgQ?.answers){
+      const ranks=Object.entries(vgQ.answers).filter(([k,v])=>VISNMAP[k]&&typeof v==='number').map(([k,v])=>({vis:VISNMAP[k],rank:v}));
+      const top=ranks.find(r=>r.rank===1);
+      if(ranks.length===3&&top) prefVis=top.vis;
+    }
+
     // demographics
     const demoQ=qs.find(q=>q.questionnaire_type==='demographics');
     const demo=demoQ?.answers||null;
 
     // ── per-vis accumulators ──
     const vAcc={};
-    VIS3.forEach(v=>{ vAcc[v]={tcs:[],rt:[],conf:[],work:[],nasa:[],sa:[],ca:0,or_:0,ur:0,cr:0,n:0}; });
+    VIS3.forEach(v=>{ vAcc[v]={tcs:[],rt:[],conf:[],work:[],nasa:[],sa:[],opt:[],ca:0,or_:0,ur:0,cr:0,n:0}; });
+    // raw per-trial records (with start_ts) for the learning-effect (chronological-thirds) analysis
+    const expTrialsRaw=[];
 
     // experiment trials
     trials.filter(t=>t.stage==='experiment').forEach(t=>{
-      const vis=visOfIdx[t.vis_index]; if(!vis||!vAcc[vis])return;
+      const vis=lookupVis(t.model_index,t.vis_index); if(!vis||!vAcc[vis])return;
       const post=postOf[t.trial_id];
       const recCorrect=(t.ai_route!=null&&t.true_route!=null)?t.ai_route===t.true_route:null;
       const rt=(t.end_ts&&t.start_ts&&t.end_ts>t.start_ts)?(t.end_ts-t.start_ts)/1000:null;
@@ -309,6 +474,7 @@ function extractData(validResults){
       const sa1=post?.answers?.scenario_questions?.sa_1?.is_correct??null;
       const sa2=post?.answers?.scenario_questions?.sa_2?.is_correct??null;
       const saScore=(sa1!==null&&sa2!==null)?(((sa1?1:0)+(sa2?1:0))/2):sa1!==null?(sa1?1:0):sa2!==null?(sa2?1:0):null;
+      const choseOptimal=(t.chose_true_optimal===true||t.chose_true_optimal===false)?t.chose_true_optimal:null;
 
       // TCS category
       let tcsCat=null, tcsVal=null;
@@ -323,11 +489,17 @@ function extractData(validResults){
       if(conf!==null)vAcc[vis].conf.push(conf);
       if(work!==null)vAcc[vis].work.push(work);
       if(saScore!==null)vAcc[vis].sa.push(saScore);
+      if(choseOptimal!==null)vAcc[vis].opt.push(choseOptimal?1:0);
       vAcc[vis].n++;
 
       allTrials.push({pid,vis,modelType:t.model_type||modelOfIdx[t.model_index],difficulty:t.difficulty,
-        followedAI:t.followed_ai,recCorrect,choseOptimal:t.chose_true_optimal,
+        followedAI:t.followed_ai,recCorrect,choseOptimal,
         rt,conf,work,sa1,sa2,saScore,tcsCat,tcsVal});
+
+      if(t.start_ts!=null){
+        const rtOk=(rt!==null&&rt>0&&rt<600)?rt:null;
+        expTrialsRaw.push({start_ts:t.start_ts,tcsVal,rt:rtOk,conf,work,saScore});
+      }
     });
 
     // per-vis NASA (block level)
@@ -343,11 +515,47 @@ function extractData(validResults){
         work:g.work.length?mean(g.work):null, workSD:g.work.length>1?sd(g.work):null,
         nasa:g.nasa.length?mean(g.nasa):null, nasaSD:g.nasa.length>1?sd(g.nasa):null,
         sa:g.sa.length?mean(g.sa):null, saSD:g.sa.length>1?sd(g.sa):null,
+        opt:g.opt.length?mean(g.opt):null, optSD:g.opt.length>1?sd(g.opt):null,
         ca:g.ca,or_:g.or_,ur:g.ur,cr:g.cr,n:g.n
       };
     });
 
-    participantData.push({pid,visAgg,trustOf,demo,
+    // ── learning-effect thirds: split chronological trial order (by start_ts)
+    // into Early/Middle/Late so within-session practice/fatigue effects can be
+    // tested with the same repeated-measures machinery used for visualization. ──
+    const tAcc={}; THIRDS.forEach(t3=>{ tAcc[t3]={tcs:[],rt:[],conf:[],work:[],sa:[]}; });
+    const sortedExp=[...expTrialsRaw].sort((a,b)=>a.start_ts-b.start_ts);
+    const nExp=sortedExp.length;
+    sortedExp.forEach((e,i)=>{
+      const idx=Math.min(THIRDS.length-1,Math.floor(i*THIRDS.length/nExp));
+      const label=THIRDS[idx];
+      if(e.tcsVal!==null)tAcc[label].tcs.push(e.tcsVal);
+      if(e.rt!==null)tAcc[label].rt.push(e.rt);
+      if(e.conf!==null)tAcc[label].conf.push(e.conf);
+      if(e.work!==null)tAcc[label].work.push(e.work);
+      if(e.saScore!==null)tAcc[label].sa.push(e.saScore);
+    });
+    const thirdAgg={};
+    THIRDS.forEach(t3=>{
+      const g=tAcc[t3];
+      thirdAgg[t3]={
+        tcs:g.tcs.length?mean(g.tcs):null, tcsSD:g.tcs.length>1?sd(g.tcs):null,
+        rt:g.rt.length?mean(g.rt):null, rtSD:g.rt.length>1?sd(g.rt):null,
+        conf:g.conf.length?mean(g.conf):null, confSD:g.conf.length>1?sd(g.conf):null,
+        work:g.work.length?mean(g.work):null, workSD:g.work.length>1?sd(g.work):null,
+        sa:g.sa.length?mean(g.sa):null, saSD:g.sa.length>1?sd(g.sa):null
+      };
+    });
+
+    // ── counterbalancing check: relabel the same per-vis aggregates by the
+    // ORDER in which each visualization was first encountered (1st/2nd/3rd
+    // block), instead of by visualization identity. Tests whether presentation
+    // position — independent of which specific visualization it was — affected
+    // performance, i.e. whether counterbalancing successfully neutralized order. ──
+    const positionAgg={};
+    POSITIONS.forEach((pos,i)=>{ positionAgg[pos]=presentationOrder[i]!=null?visAgg[presentationOrder[i]]:{tcs:null,rt:null,conf:null,work:null,sa:null,opt:null}; });
+
+    participantData.push({pid,visAgg,thirdAgg,positionAgg,presentationOrder,trustOf,demo,prefVis,
       hasAllVis:VIS3.every(v=>vAcc[v].n>0)});
   });
 
@@ -362,31 +570,36 @@ function runAnalyses(data){
   const full=participantData.filter(p=>p.hasAllVis);
   const N=full.length;
 
-  // matrix builder: N×3 for Friedman/ANOVA, filters out any row with null
-  function buildMat(metric){
-    const rows=full.map(p=>VIS3.map(v=>p.visAgg[v][metric]));
-    return rows.filter(r=>r.every(v=>v!==null));
+  // generic matrix builder: N×k for Friedman/ANOVA, filters out any row with null,
+  // parameterized over an arbitrary set of within-subject levels + accessor
+  // (used both for the 3 visualizations and the 3 learning-effect thirds).
+  function buildMat(levels,accessor){
+    const rows=full.map(p=>levels.map(l=>accessor(p,l)));
+    return rows.filter(r=>r.every(v=>v!==null&&v!==undefined&&isFinite(v)));
   }
-  function colStats(mat){
-    return VIS3.map((_,j)=>{
+  function colStats(mat,levels){
+    return levels.map((_,j)=>{
       const col=mat.map(r=>r[j]);
       return {m:mean(col),sd:sd(col),se:se(col),med:median(col),n:col.length};
     });
   }
-  function runVis(metric){
-    const mat=buildMat(metric); if(mat.length<5)return null;
-    const cs=colStats(mat);
+  function runFactor(levels,accessor){
+    const mat=buildMat(levels,accessor); if(mat.length<5)return null;
+    const cs=colStats(mat,levels);
     const fr=friedman(mat);
     const rm=rmANOVA(mat);
-    // post-hoc pairwise Wilcoxon
+    // post-hoc pairwise Wilcoxon over all level pairs
     const pairs=[]; const alpha_adj=0.017;
-    [[0,1],[0,2],[1,2]].forEach(([i,j])=>{
+    for(let i=0;i<levels.length;i++)for(let j=i+1;j<levels.length;j++){
       const xi=mat.map(r=>r[i]), xj=mat.map(r=>r[j]);
       const w=wilcoxon(xi,xj);
-      pairs.push({i,j,label:`${VIS3[i]} vs ${VIS3[j]}`,w,sig:w.p<alpha_adj});
-    });
-    return {mat,cs,fr,rm,pairs,N:mat.length};
+      pairs.push({i,j,label:`${levels[i]} vs ${levels[j]}`,w,sig:w.p<alpha_adj});
+    }
+    return {mat,cs,fr,rm,pairs,N:mat.length,levels};
   }
+  function runVis(metric){ return runFactor(VIS3,(p,v)=>p.visAgg[v][metric]); }
+  function runThird(metric){ return runFactor(THIRDS,(p,t3)=>p.thirdAgg[t3][metric]); }
+  function runPosition(metric){ return runFactor(POSITIONS,(p,pos)=>p.positionAgg[pos]?p.positionAgg[pos][metric]:null); }
 
   const tcsRes=runVis('tcs');
   const rtRes=runVis('rt');
@@ -394,6 +607,28 @@ function runAnalyses(data){
   const workRes=runVis('work');
   const nasaRes=runVis('nasa');
   const saRes=runVis('sa');
+  const optRes=runVis('opt');
+
+  // RQ2c: learning/practice effects — same 4 trial-level metrics as RQ2a,
+  // now split by chronological position (Early/Middle/Late third) instead of
+  // by visualization, using the identical Friedman/RM-ANOVA machinery.
+  const thirdTcsRes=runThird('tcs');
+  const thirdRtRes=runThird('rt');
+  const thirdConfRes=runThird('conf');
+  const thirdWorkRes=runThird('work');
+  const thirdSaRes=runThird('sa');
+
+  // Counterbalancing check: same 3-level machinery, but the factor is *which
+  // block position* (1st/2nd/3rd encountered) rather than visualization
+  // identity — tests whether presentation order alone (independent of which
+  // visualization was assigned to it) affected performance.
+  const posTcsRes=runPosition('tcs');
+  const posRtRes=runPosition('rt');
+
+  // Descriptive counterbalancing table: how many participants had each
+  // visualization in each presentation position.
+  const orderCounts={}; VIS3.forEach(v=>{ orderCounts[v]={}; POSITIONS.forEach(pos=>orderCounts[v][pos]=0); });
+  full.forEach(p=>{ (p.presentationOrder||[]).forEach((v,i)=>{ if(orderCounts[v]) orderCounts[v][POSITIONS[i]]++; }); });
 
   // Task difficulty – paired t-test per metric
   function difficultyTest(metric){
@@ -413,11 +648,47 @@ function runAnalyses(data){
   const diffRt=difficultyTest('rt');
   const diffWork=difficultyTest('work');
   const diffConf=difficultyTest('conf');
+  const diffOpt=difficultyTest('choseOptimal');
 
-  // Model quality OPT vs SUB
+  // Difficulty × Visualization interaction — a full two-way repeated-measures
+  // ANOVA (not just two separate one-way tests) on the same 5 metrics, testing
+  // whether the visualization effect actually depends on task difficulty
+  // (e.g. one visualization helping more specifically on Hard trials).
+  function interactionTest(metric){
+    const cube=[];
+    full.forEach(p=>{
+      const rows=['E','H'].map(d=>VIS3.map(v=>{
+        const vals=allTrials.filter(t=>t.pid===p.pid&&t.difficulty===d&&t.vis===v&&t[metric]!==null&&t[metric]!==undefined).map(t=>t[metric]);
+        return vals.length?mean(vals):null;
+      }));
+      if(rows.every(row=>row.every(v=>v!==null&&isFinite(v)))) cube.push(rows);
+    });
+    if(cube.length<5) return null;
+    return {...rmANOVA2(cube),cube};
+  }
+  const intTcs=interactionTest('tcsVal');
+  const intRt=interactionTest('rt');
+  const intConf=interactionTest('conf');
+  const intWork=interactionTest('work');
+  const intOpt=interactionTest('choseOptimal');
+
+  // Confidence calibration: is self-reported confidence actually higher on
+  // trials where the participant chose the objectively optimal route?
+  const confCalib=(()=>{
+    const pC=[],pI=[];
+    full.forEach(p=>{
+      const correct=allTrials.filter(t=>t.pid===p.pid&&t.choseOptimal===true&&t.conf!==null).map(t=>t.conf);
+      const incorrect=allTrials.filter(t=>t.pid===p.pid&&t.choseOptimal===false&&t.conf!==null).map(t=>t.conf);
+      if(correct.length&&incorrect.length){pC.push(mean(correct));pI.push(mean(incorrect));}
+    });
+    return pC.length>=5?{...pairedT(pC,pI),mC:mean(pC),sdC:sd(pC),mI:mean(pI),sdI:sd(pI),n:pC.length}:null;
+  })();
+
+  // Model quality OPT vs SUB — restricted to `full` (complete 3-vis data) for
+  // consistency with every other repeated-measures test in this report.
   function modelTest(getter){
     const optVals=[],subVals=[];
-    participantData.forEach(p=>{
+    full.forEach(p=>{
       const o=getter(p,'OPT'), s=getter(p,'SUB');
       if(o!==null&&s!==null){optVals.push(o);subVals.push(s);}
     });
@@ -447,6 +718,16 @@ function runAnalyses(data){
     });
     return optV.length>=5?{...pairedT(optV,subV),mOPT:mean(optV),sdOPT:sd(optV),mSUB:mean(subV),sdSUB:sd(subV),n:optV.length}:null;
   })();
+  // Route accuracy (chose_true_optimal) by model
+  const optAccModelTest=(()=>{
+    const optV=[],subV=[];
+    full.forEach(p=>{
+      const optAcc=allTrials.filter(t=>t.pid===p.pid&&t.modelType==='OPT'&&t.choseOptimal!==null).map(t=>t.choseOptimal?1:0);
+      const subAcc=allTrials.filter(t=>t.pid===p.pid&&t.modelType==='SUB'&&t.choseOptimal!==null).map(t=>t.choseOptimal?1:0);
+      if(optAcc.length&&subAcc.length){optV.push(mean(optAcc));subV.push(mean(subAcc));}
+    });
+    return optV.length>=5?{...pairedT(optV,subV),mOPT:mean(optV),sdOPT:sd(optV),mSUB:mean(subV),sdSUB:sd(subV),n:optV.length}:null;
+  })();
 
   // Trust–behavior alignment: TIAS vs TCS correlation per participant
   const trustBehavior=(()=>{
@@ -459,11 +740,56 @@ function runAnalyses(data){
     return trust.length>=5?pearsonR(trust,tcsB):null;
   })();
 
-  // SA vs RT (speed-comprehension) per vis
+  // Preference–performance alignment: does each participant's stated favourite
+  // visualization actually match the one that gave them their best TCS / route
+  // accuracy? Tested two ways: (1) categorical hit-rate vs. chance (1/3) via an
+  // exact binomial test, and (2) continuous paired comparison of performance
+  // in the preferred vs. non-preferred visualizations.
+  const prefAlign=(()=>{
+    const rows=[];
+    full.forEach(p=>{
+      if(!p.prefVis) return;
+      const tcsByVis=VIS3.map(v=>({v,val:p.visAgg[v].tcs}));
+      const optByVis=VIS3.map(v=>({v,val:p.visAgg[v].opt}));
+      if(tcsByVis.some(x=>x.val===null)||optByVis.some(x=>x.val===null)) return;
+      const bestTcsVis=[...tcsByVis].sort((a,b)=>b.val-a.val)[0].v;
+      const bestOptVis=[...optByVis].sort((a,b)=>b.val-a.val)[0].v;
+      rows.push({
+        pid:p.pid, prefVis:p.prefVis, bestTcsVis, bestOptVis,
+        tcsMatch:bestTcsVis===p.prefVis, optMatch:bestOptVis===p.prefVis,
+        tcsPref:tcsByVis.find(x=>x.v===p.prefVis).val,
+        tcsOther:mean(tcsByVis.filter(x=>x.v!==p.prefVis).map(x=>x.val)),
+        optPref:optByVis.find(x=>x.v===p.prefVis).val,
+        optOther:mean(optByVis.filter(x=>x.v!==p.prefVis).map(x=>x.val))
+      });
+    });
+    if(rows.length<5) return null;
+    const n=rows.length;
+    const nTcsMatch=rows.filter(r=>r.tcsMatch).length;
+    const nOptMatch=rows.filter(r=>r.optMatch).length;
+    return {
+      rows,n,nTcsMatch,nOptMatch,
+      pTcsMatch:binomialTestUpperP(nTcsMatch,n,1/3),
+      pOptMatch:binomialTestUpperP(nOptMatch,n,1/3),
+      tcsPT:pairedT(rows.map(r=>r.tcsPref),rows.map(r=>r.tcsOther)),
+      optPT:pairedT(rows.map(r=>r.optPref),rows.map(r=>r.optOther))
+    };
+  })();
+
+  // SA vs RT (speed-comprehension) per vis, aggregated to the PARTICIPANT
+  // level first (one point per participant per vis). Correlating raw trials
+  // directly would treat ~30 repeated observations per person as independent
+  // (pseudo-replication), inflating N and understating p — the same reason
+  // the trust–behavior correlation above is computed per participant.
   const saRtCorr={};
   VIS3.forEach(vis=>{
-    const pairs=allTrials.filter(t=>t.vis===vis&&t.saScore!==null&&t.rt!==null);
-    saRtCorr[vis]=pairs.length>=5?pearsonR(pairs.map(t=>t.rt),pairs.map(t=>t.saScore)):null;
+    const byP={};
+    allTrials.filter(t=>t.vis===vis&&t.saScore!==null&&t.rt!==null).forEach(t=>{
+      (byP[t.pid]=byP[t.pid]||[]).push(t);
+    });
+    const rtM=[],saM=[];
+    Object.values(byP).forEach(arr=>{ rtM.push(mean(arr.map(t=>t.rt))); saM.push(mean(arr.map(t=>t.saScore))); });
+    saRtCorr[vis]=rtM.length>=5?pearsonR(rtM,saM):null;
   });
 
   // Global trust calibration matrix
@@ -485,19 +811,23 @@ function runAnalyses(data){
     return f.includes('מחשב')||f.includes('הנדסה')||f.includes('דאטה');
   });
 
-  return {N,tcsRes,rtRes,confRes,workRes,nasaRes,saRes,
-    diffTcs,diffRt,diffWork,diffConf,
-    trustTest,nasaModelTest,tcsModelTest,trustBehavior,
+  return {N,tcsRes,rtRes,confRes,workRes,nasaRes,saRes,optRes,
+    thirdTcsRes,thirdRtRes,thirdConfRes,thirdWorkRes,thirdSaRes,
+    posTcsRes,posRtRes,orderCounts,
+    diffTcs,diffRt,diffWork,diffConf,diffOpt,
+    intTcs,intRt,intConf,intWork,intOpt,confCalib,
+    trustTest,nasaModelTest,tcsModelTest,optAccModelTest,trustBehavior,prefAlign,
     saRtCorr,tcMatrix,ages,genderCounts,demoParts,stemParts,participantData};
 }
 
 // ════════════════════════════════════════════════════════════════════════════
 // 4. SVG CHARTS
 // ════════════════════════════════════════════════════════════════════════════
-function barChart(cs,metric,options={}){
+function barChart(cs,levels,colors,options={}){
   const W=320,H=210,pl=54,pr=18,pt=20,pb=46;
   const cW=W-pl-pr, cH=H-pt-pb;
   const vals=cs.map(c=>c.m), errs=cs.map(c=>c.se||0);
+  const shortLabels=options.shortLabels||levels;
   // Auto-compute axis bounds from data + error bars
   const dataLow=Math.min(...vals.map((v,i)=>v-errs[i]));
   const dataHigh=Math.max(...vals.map((v,i)=>v+errs[i]));
@@ -505,7 +835,7 @@ function barChart(cs,metric,options={}){
   const yMin=options.yMin!==undefined ? options.yMin : (dataLow<0 ? dataLow-span*0.15 : 0);
   const yMax=options.yMax!==undefined ? options.yMax : (dataHigh>0 ? dataHigh+span*0.15 : span*0.15)||1;
   const yScale=v=>pt+cH*(1-(v-yMin)/(yMax-yMin));
-  const bW=cW/(VIS3.length*1.6), gap=bW*0.6;
+  const bW=cW/(levels.length*1.6), gap=bW*0.6;
 
   let svg=`<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg" style="font-family:system-ui,sans-serif;overflow:visible">`;
   // gridlines + y-axis labels
@@ -529,12 +859,12 @@ function barChart(cs,metric,options={}){
   if(options.yLabel) svg+=`<text transform="rotate(-90,14,${H/2})" x="14" y="${H/2}" text-anchor="middle" font-size="10" fill="#555">${options.yLabel}</text>`;
 
   const yZero=Math.max(pt,Math.min(pt+cH,yScale(0))); // clamp zero line to chart area
-  VIS3.forEach((v,i)=>{
+  levels.forEach((v,i)=>{
     const x=pl+gap/2+i*(bW+gap);
     const yVal=yScale(vals[i]);
     const barTop=Math.min(yZero,yVal), barBot=Math.max(yZero,yVal);
     const bH=Math.max(1,barBot-barTop);
-    const col=VIS_COLOR[v];
+    const col=colors[v]||'#666';
     svg+=`<rect x="${x}" y="${barTop}" width="${bW}" height="${bH}" fill="${col}" opacity="0.75" rx="2"/>`;
     // error bar centred on value
     const eH=cH*(errs[i]/(yMax-yMin));
@@ -545,8 +875,7 @@ function barChart(cs,metric,options={}){
     // value label: above bar for positive, below for negative
     const lblY=vals[i]>=0 ? yVal-eH-3 : yVal+eH+10;
     svg+=`<text x="${mx}" y="${lblY}" text-anchor="middle" font-size="9" fill="#333">${vals[i].toFixed(2)}</text>`;
-    const lbl=['Stack.','Radar','Heat'][i];
-    svg+=`<text x="${mx}" y="${H-pb+14}" text-anchor="middle" font-size="9.5" fill="${col}">${lbl}</text>`;
+    svg+=`<text x="${mx}" y="${H-pb+14}" text-anchor="middle" font-size="9.5" fill="${col}">${shortLabels[i]}</text>`;
   });
   svg+='</svg>';
   return svg;
@@ -585,21 +914,43 @@ function pairChart(optVals,subVals,label){
 // ════════════════════════════════════════════════════════════════════════════
 // 5. RENDERING
 // ════════════════════════════════════════════════════════════════════════════
-function visResultBlock(res,title,yLabel,refLine,note,interpFn){
+// Generates a jargon-free "what did we actually find" summary for any
+// Friedman/RM-ANOVA result — used before the technical interpretation.
+function plainVisSummary(res,plainInfo){
+  if(!res||!plainInfo) return '';
+  const {checks,label,higherBetter}=plainInfo;
+  const {cs,fr,levels,N}=res;
+  const ranked=levels.map((v,i)=>({v,m:cs[i].m})).sort((a,b)=>higherBetter?b.m-a.m:a.m-b.m);
+  const best=ranked[0], worst=ranked[ranked.length-1];
+  let verdict;
+  if(fr.p<.05){
+    verdict=`We <b>did</b> find a real difference: ${label} was highest with <b>${higherBetter?best.v:worst.v}</b> and lowest with <b>${higherBetter?worst.v:best.v}</b> — unlikely to be random chance, based on ${N} participants.`;
+  } else {
+    const pw=friedmanPower(fr.W,N,levels.length);
+    verdict = pw<0.80
+      ? `We did <b>not</b> find a clear difference here — but with only ${N} participants, this test may simply be too small to catch a real effect even if one exists. Read this as "not enough evidence yet," not as proof there's no difference.`
+      : `We did <b>not</b> find a difference here, and with ${N} participants this test had good ability to detect one if it existed — so this is more likely a genuine similarity than a false negative.`;
+  }
+  return `<div class="plain">💡 <b>In plain terms:</b> ${checks} ${verdict}</div>`;
+}
+
+function visResultBlock(res,title,yLabel,refLine,note,interpFn,colorMap,shortLabels,plainInfo){
   if(!res) return `<div class="inconc"><b>${title}:</b> Insufficient data.</div>`;
-  const {cs,fr,rm,pairs,N}=res;
+  const {cs,fr,rm,pairs,N,levels}=res;
+  colorMap=colorMap||VIS_COLOR;
   const sig=fr.p<.05;
   const eff=wLabel(fr.W);
-  const pwr=powerNote(fr.W,N,3);
+  const pw=friedmanPower(fr.W,N,levels.length);
+  const pwr=powerNote(fr.W,N,levels.length);
 
   let html=`<div class="rblock">
   <h4>${title}</h4>
   <div class="chart-row">
-  <div>${barChart(cs,null,{yLabel,refLine})}</div>
+  <div>${barChart(cs,levels,colorMap,{yLabel,refLine,shortLabels})}</div>
   <div style="flex:1;min-width:220px">
   <table class="st">
     <tr><th>Condition</th><th><i>M</i></th><th><i>SD</i></th><th><i>SE</i></th><th><i>Mdn</i></th></tr>`;
-  VIS3.forEach((v,i)=>{ html+=`<tr><td class="lbl" style="color:${VIS_COLOR[v]}">${v}</td><td>${fmtN(cs[i].m)}</td><td>${fmtN(cs[i].sd)}</td><td>${fmtN(cs[i].se)}</td><td>${fmtN(cs[i].med)}</td></tr>`; });
+  levels.forEach((v,i)=>{ html+=`<tr><td class="lbl" style="color:${colorMap[v]||'#333'}">${v}</td><td>${fmtN(cs[i].m)}</td><td>${fmtN(cs[i].sd)}</td><td>${fmtN(cs[i].se)}</td><td>${fmtN(cs[i].med)}</td></tr>`; });
   html+=`</table>
   <table class="st" style="margin-top:8px">
     <tr><th>Test</th><th>Statistic</th><th><i>df</i></th><th><i>p</i></th><th>Effect</th><th>Power</th></tr>
@@ -608,7 +959,7 @@ function visResultBlock(res,title,yLabel,refLine,note,interpFn){
       <td><i>F</i>(${rm.df_c},${rm.df_e}) = ${fmtN(rm.F)}</td>
       <td>${rm.df_c}, ${rm.df_e}</td>
       <td class="${sigClass(rm.p)}">${pFmt(rm.p)}</td>
-      <td>η² = ${fmtN(rm.eta2,3)}</td>
+      <td>η²<sub>p</sub> = ${fmtN(rm.eta2,3)}</td>
       <td>–</td>
     </tr>
     <tr>
@@ -622,26 +973,29 @@ function visResultBlock(res,title,yLabel,refLine,note,interpFn){
   </table>`;
   if(sig){
     html+=`<table class="st" style="margin-top:6px"><tr><th>Post-hoc (Wilcoxon, α<sub>adj</sub>=.017)</th><th><i>Z</i></th><th><i>p</i></th><th><i>r</i></th></tr>`;
-    pairs.forEach(pw=>{ html+=`<tr><td class="lbl">${pw.label}</td><td>${fmtN(pw.w.z)}</td><td class="${pw.sig?'sig':'ns'}">${pFmt(pw.w.p)}</td><td>${fmtN(pw.w.r,3)}</td></tr>`; });
+    pairs.forEach(pw2=>{ html+=`<tr><td class="lbl">${pw2.label}</td><td>${fmtN(pw2.w.z)}</td><td class="${pw2.sig?'sig':'ns'}">${pFmt(pw2.w.p)}</td><td>${fmtN(pw2.w.r,3)}</td></tr>`; });
     html+=`</table>`;
   }
   html+=`</div></div>`;
+  html+=plainVisSummary(res,plainInfo);
   // interpretation
   html+=`<div class="interp">${interpFn(res)}</div>`;
-  if(fr.W<0.10) html+=`<div class="inconc">⚠ <b>Underpowered:</b> Kendall's <i>W</i> = ${fmtN(fr.W,3)} is a small effect. Estimated power at <i>N</i> = ${N} is ${pwr}. This result should be interpreted as <b>inconclusive</b> rather than as evidence of no effect.</div>`;
+  if(!sig&&pw<0.80) html+=`<div class="inconc">⚠ <b>Underpowered:</b> Kendall's <i>W</i> = ${fmtN(fr.W,3)} (${eff} effect). Estimated power at <i>N</i> = ${N} is ${(pw*100).toFixed(0)}%. This null result should be interpreted as <b>inconclusive</b> rather than as evidence of no effect — a sample of <i>N</i> = ${requiredN(fr.W,levels.length,0.80)} would be needed to reach 80% power at this effect size.</div>`;
   if(note) html+=`<p class="note">${note}</p>`;
   html+=`</div>`;
   return html;
 }
 
-function interpVis(res,metricLabel,higherBetter){
-  const {cs,fr,rm,pairs,N}=res;
+function interpVis(res,metricLabel,higherBetter,factorLabel){
+  const {cs,fr,rm,pairs,N,levels}=res;
+  factorLabel=factorLabel||'visualization type';
   const sig=fr.p<.05; const eff=wLabel(fr.W);
-  const ranks=VIS3.map((v,i)=>({v,m:cs[i].m})).sort((a,b)=>higherBetter?b.m-a.m:a.m-b.m);
+  const pw=friedmanPower(fr.W,N,levels.length);
+  const ranks=levels.map((v,i)=>({v,m:cs[i].m})).sort((a,b)=>higherBetter?b.m-a.m:a.m-b.m);
   const winner=ranks[0].v;
   if(sig){
-    let s=`A Friedman test indicated a significant effect of visualization type on ${metricLabel}, χ²(${fr.df}, <i>N</i> = ${N}) = ${fmtN(fr.chi2)}, <i>p</i> = ${pFmt(fr.p)}, Kendall's <i>W</i> = ${fmtN(fr.W,3)} (${eff} effect). `;
-    s+=`A one-way repeated-measures ANOVA corroborated this finding, <i>F</i>(${rm.df_c}, ${rm.df_e}) = ${fmtN(rm.F)}, <i>p</i> = ${pFmt(rm.p)}, η² = ${fmtN(rm.eta2,3)}. `;
+    let s=`A Friedman test indicated a significant effect of ${factorLabel} on ${metricLabel}, χ²(${fr.df}, <i>N</i> = ${N}) = ${fmtN(fr.chi2)}, <i>p</i> = ${pFmt(fr.p)}, Kendall's <i>W</i> = ${fmtN(fr.W,3)} (${eff} effect). `;
+    s+=`A one-way repeated-measures ANOVA corroborated this finding, <i>F</i>(${rm.df_c}, ${rm.df_e}) = ${fmtN(rm.F)}, <i>p</i> = ${pFmt(rm.p)}, η²<sub>p</sub> = ${fmtN(rm.eta2,3)}. `;
     s+=`Descriptively, the <b>${winner}</b> condition showed the ${higherBetter?'highest':'lowest'} ${metricLabel} (<i>M</i> = ${fmtN(ranks[0].m)}).`;
     const sigPairs=pairs.filter(p=>p.sig);
     if(sigPairs.length){
@@ -651,14 +1005,54 @@ function interpVis(res,metricLabel,higherBetter){
     }
     return s;
   } else {
-    return `A Friedman test did not reveal a significant effect of visualization type on ${metricLabel}, χ²(${fr.df}, <i>N</i> = ${N}) = ${fmtN(fr.chi2)}, <i>p</i> = ${pFmt(fr.p)}, Kendall's <i>W</i> = ${fmtN(fr.W,3)} (${eff} effect). The RM-ANOVA yielded <i>F</i>(${rm.df_c}, ${rm.df_e}) = ${fmtN(rm.F)}, <i>p</i> = ${pFmt(rm.p)}, η² = ${fmtN(rm.eta2,3)}. The null result ${fr.W<0.10?'should be treated as inconclusive given insufficient statistical power':'is consistent with a null or negligible effect'}.`;
+    return `A Friedman test did not reveal a significant effect of ${factorLabel} on ${metricLabel}, χ²(${fr.df}, <i>N</i> = ${N}) = ${fmtN(fr.chi2)}, <i>p</i> = ${pFmt(fr.p)}, Kendall's <i>W</i> = ${fmtN(fr.W,3)} (${eff} effect). The RM-ANOVA yielded <i>F</i>(${rm.df_c}, ${rm.df_e}) = ${fmtN(rm.F)}, <i>p</i> = ${pFmt(rm.p)}, η²<sub>p</sub> = ${fmtN(rm.eta2,3)}. The null result ${pw<0.80?`should be treated as inconclusive given insufficient statistical power (estimated power ≈ ${(pw*100).toFixed(0)}% at <i>N</i> = ${N})`:`is consistent with a null or negligible effect (the test was adequately powered, ≈${(pw*100).toFixed(0)}%, to detect the observed effect size)`}.`;
   }
 }
 
+// Renders a 2×3 (Difficulty × Visualization) repeated-measures ANOVA result:
+// cell-means table, main effects, and the interaction — plus a plain-language
+// verdict on whether the "best" visualization actually depends on difficulty.
+function interactionBlock(res,title,metricLabel,higherBetter){
+  if(!res) return `<div class="inconc"><b>${title}:</b> Insufficient data.</div>`;
+  const {A,B,AB,MAB,n}=res;
+  let html=`<div class="rblock"><h4>${title}</h4>`;
+  html+=`<table class="st"><tr><th></th>`;
+  VIS3.forEach(v=>{ html+=`<th style="color:${VIS_COLOR[v]}">${v}</th>`; });
+  html+=`</tr>`;
+  DIFF2.forEach((d,ai)=>{
+    html+=`<tr><td class="lbl" style="color:${DIFF_COLOR[d]}">${d}</td>`;
+    VIS3.forEach((v,bi)=>{ html+=`<td>${fmtN(MAB[ai][bi])}</td>`; });
+    html+=`</tr>`;
+  });
+  html+=`</table>
+  <table class="st" style="margin-top:8px"><tr><th>Effect</th><th>Statistic</th><th><i>p</i></th><th>η²<sub>p</sub></th></tr>
+  <tr><td class="lbl">Difficulty (main effect)</td><td><i>F</i>(${A.df1},${A.df2}) = ${fmtN(A.F)}</td><td class="${sigClass(A.p)}">${pFmt(A.p)}</td><td>${fmtN(A.eta2,3)}</td></tr>
+  <tr><td class="lbl">Visualization (main effect)</td><td><i>F</i>(${B.df1},${B.df2}) = ${fmtN(B.F)}</td><td class="${sigClass(B.p)}">${pFmt(B.p)}</td><td>${fmtN(B.eta2,3)}</td></tr>
+  <tr><td class="lbl"><b>Difficulty × Visualization (interaction)</b></td><td><i>F</i>(${AB.df1},${AB.df2}) = ${fmtN(AB.F)}</td><td class="${sigClass(AB.p)}">${pFmt(AB.p)}</td><td>${fmtN(AB.eta2,3)}</td></tr>
+  </table>`;
+
+  const rank=(row)=>VIS3.map((v,i)=>({v,m:row[i]})).sort((a,b)=>higherBetter?b.m-a.m:a.m-b.m);
+  const easyBest=rank(MAB[0])[0], hardBest=rank(MAB[1])[0];
+  let plain;
+  if(AB.p<.05){
+    plain=`Yes — the best visualization actually <b>depends on difficulty</b>: on Easy trials <b>${easyBest.v}</b> did best (${fmtN(easyBest.m)}), while on Hard trials <b>${hardBest.v}</b> did best (${fmtN(hardBest.m)}). This is a real, statistically reliable crossover (not just noise), based on ${n} participants.`;
+  } else {
+    const samePattern=easyBest.v===hardBest.v;
+    plain=`No reliable evidence of that here. ${samePattern?`Descriptively, <b>${easyBest.v}</b> came out on top for both Easy and Hard trials`:`Descriptively, <b>${easyBest.v}</b> edged out on Easy trials and <b>${hardBest.v}</b> on Hard trials`} — but with only ${n} participants this pattern is not distinguishable from chance, so it should be treated as a hint worth re-testing with more data, not a conclusion.`;
+  }
+  html+=`<div class="plain">💡 <b>In plain terms:</b> This checks whether the visualization that works best changes depending on whether the scenario was Easy or Hard (e.g. Heat Map only pulling ahead on Hard tasks). ${plain}</div>`;
+  html+=`<div class="interp">Two-way repeated-measures ANOVA (Difficulty × Visualization) on ${metricLabel}. Main effect of difficulty: <i>F</i>(${A.df1},${A.df2}) = ${fmtN(A.F)}, <i>p</i> = ${pFmt(A.p)}. Main effect of visualization: <i>F</i>(${B.df1},${B.df2}) = ${fmtN(B.F)}, <i>p</i> = ${pFmt(B.p)}. Interaction: <i>F</i>(${AB.df1},${AB.df2}) = ${fmtN(AB.F)}, <i>p</i> = ${pFmt(AB.p)}, η²<sub>p</sub> = ${fmtN(AB.eta2,3)}. Parametric only (assumes sphericity); no non-parametric equivalent is computed for the interaction term.</div>`;
+  html+=`</div>`;
+  return html;
+}
+
 function renderResults(analysis){
-  const {N,tcsRes,rtRes,confRes,workRes,nasaRes,saRes,
-    diffTcs,diffRt,diffWork,diffConf,
-    trustTest,nasaModelTest,tcsModelTest,trustBehavior,
+  const {N,tcsRes,rtRes,confRes,workRes,nasaRes,saRes,optRes,
+    thirdTcsRes,thirdRtRes,thirdConfRes,thirdWorkRes,thirdSaRes,
+    posTcsRes,posRtRes,orderCounts,
+    diffTcs,diffRt,diffWork,diffConf,diffOpt,
+    intTcs,intRt,intConf,intWork,intOpt,confCalib,
+    trustTest,nasaModelTest,tcsModelTest,optAccModelTest,trustBehavior,prefAlign,
     saRtCorr,tcMatrix,ages,genderCounts,demoParts,participantData}=analysis;
 
   let html='';
@@ -698,43 +1092,82 @@ function renderResults(analysis){
   <p>TCS is the primary outcome. It quantifies the proportion of trials in which the participant made the correct reliance decision (Correct Accept or Correct Reject). A random-choice baseline yields TCS = 0.50.</p>`;
   html+=visResultBlock(tcsRes,'TCS by Visualization','TCS (proportion)',0.5,
     'Note: dashed reference line at TCS = 0.50 (chance level).',
-    r=>interpVis(r,'Trust Calibration Score (TCS)',true));
+    r=>interpVis(r,'Trust Calibration Score (TCS)',true),null,null,
+    {checks:'This checks whether participants were better at knowing when to trust vs. override the AI, depending on which visualization they had.',label:'trust calibration',higherBetter:true});
 
   html+=`<h3>2.2 Response Time</h3>
   <p>Response time (RT) is measured in seconds from trial onset to route selection.</p>`;
   html+=visResultBlock(rtRes,'Response Time (s) by Visualization','RT (s)',null,null,
-    r=>interpVis(r,'response time (RT)',false));
+    r=>interpVis(r,'response time (RT)',false),null,null,
+    {checks:'This checks whether people took longer or shorter to decide depending on the visualization.',label:'decision speed',higherBetter:false});
 
   html+=`<h3>2.3 Decision Confidence</h3>
   <p>Post-trial self-reported confidence in the chosen route (scale: –10 to +10; higher = more confident).</p>`;
   html+=visResultBlock(confRes,'Confidence by Visualization','Confidence',null,null,
-    r=>interpVis(r,'decision confidence',true));
+    r=>interpVis(r,'decision confidence',true),null,null,
+    {checks:'This checks whether people simply felt more or less confident in their choice depending on the visualization (regardless of whether they were actually right).',label:'self-reported confidence',higherBetter:true});
 
   html+=`<h3>2.4 Trial-Level Cognitive Workload</h3>
   <p>Single-item NASA-TLX proxy for mental workload per trial (scale: –10 to +10; higher = more demanding).</p>`;
   html+=visResultBlock(workRes,'Trial Workload by Visualization','Workload',null,null,
-    r=>interpVis(r,'cognitive workload',false));
+    r=>interpVis(r,'cognitive workload',false),null,null,
+    {checks:'This checks whether one visualization felt mentally harder to use than another, trial by trial.',label:'mental effort',higherBetter:false});
 
   html+=`<h3>2.5 Block-Level NASA-TLX Workload</h3>
   <p>Five-item NASA-TLX questionnaire administered after each model × visualization block. Mean of five subscales (mental demand, time demand, performance, effort, frustration; scale –10 to +10).</p>`;
   html+=visResultBlock(nasaRes,'NASA-TLX (Block) by Visualization','NASA-TLX',null,null,
-    r=>interpVis(r,'block-level NASA-TLX workload',false));
+    r=>interpVis(r,'block-level NASA-TLX workload',false),null,null,
+    {checks:'This is the same workload question but asked once per whole block (5 combined items) instead of after every single trial — a broader, less noisy read on perceived effort.',label:'overall block workload',higherBetter:false});
 
   html+=`<h3>2.6 Situational Awareness (SA Accuracy)</h3>
   <p>Two SAGAT-based binary questions per trial (SA-1, SA-2). SA score = proportion correct (0, 0.5, or 1 per trial). Higher scores indicate better comprehension of the visualized scenario information.</p>`;
   html+=visResultBlock(saRes,'SA Accuracy by Visualization','SA (proportion)',null,null,
-    r=>interpVis(r,'situational awareness accuracy (SA)',true));
+    r=>interpVis(r,'situational awareness accuracy (SA)',true),null,null,
+    {checks:'This checks whether people actually absorbed/understood the scenario details better with one visualization, tested with quick comprehension questions.',label:'comprehension accuracy',higherBetter:true});
 
-  // ── RQ2a: Task Difficulty ──────────────────────────────────────────────
-  html+=`<h2>3. RQ2a: Task Difficulty Effects (Easy vs. Hard)</h2>
-  <p>Paired t-tests compare per-participant means for Easy (E) and Hard (H) trials across all visualization conditions. Cohen's d is reported as effect size.</p>
+  html+=`<h3>2.7 Route Accuracy</h3>
+  <p>Proportion of trials in which the participant's final chosen route matched the true objectively-optimal route (independent of what the AI recommended or whether it was followed). This is distinct from TCS, which scores the quality of the <i>reliance decision</i> rather than the outcome itself.</p>`;
+  html+=visResultBlock(optRes,'Route Accuracy by Visualization','Route accuracy (proportion)',null,null,
+    r=>interpVis(r,'route accuracy',true),null,null,
+    {checks:'This checks the bottom line: regardless of whether they followed the AI or not, did people actually end up picking the objectively best route more often with one visualization?',label:'final route accuracy',higherBetter:true});
+
+  // Holm-Bonferroni family-wise correction across the 7 RQ1 omnibus tests —
+  // running 7 tests at α=.05 each inflates the chance of a false positive
+  // somewhere in the family; Holm's step-down procedure controls for that.
+  html+=`<h3>2.8 Family-Wise Correction Across RQ1 (Holm–Bonferroni)</h3>
+  <p>The 7 tests above (2.1–2.7) were each evaluated at <i>α</i> = .05 individually. Running 7 independent tests raises the chance that at least one comes out "significant" by chance alone (family-wise error) to roughly 1−.95⁷ ≈ 30%. Holm's step-down procedure controls this: <i>p</i>-values are sorted ascending and compared against a progressively stricter threshold (<i>α</i>/7, <i>α</i>/6, … <i>α</i>/1) until one fails to beat its threshold, at which point it and all remaining (larger) <i>p</i>-values are declared non-significant.</p>`;
+  {
+    const rq1Family=[['TCS',tcsRes],['Response Time',rtRes],['Confidence',confRes],['Trial Workload',workRes],['NASA-TLX',nasaRes],['SA Accuracy',saRes],['Route Accuracy',optRes]].filter(([,r])=>r);
+    const sorted=[...rq1Family].sort((a,b)=>a[1].fr.p-b[1].fr.p);
+    const m=sorted.length;
+    let holmSig=[];
+    let stopped=false;
+    sorted.forEach(([label,r],i)=>{
+      const thresh=0.05/(m-i);
+      const passes=!stopped && r.fr.p<thresh;
+      if(!passes) stopped=true;
+      holmSig.push({label,p:r.fr.p,thresh,passes});
+    });
+    html+=`<table class="st"><tr><th>Rank</th><th>Outcome</th><th>Raw <i>p</i></th><th>Holm threshold</th><th>Survives correction?</th></tr>`;
+    holmSig.forEach((row,i)=>{
+      html+=`<tr><td>${i+1}</td><td class="lbl">${row.label}</td><td class="${sigClass(row.p)}">${pFmt(row.p)}</td><td>${row.thresh.toFixed(4)}</td><td class="${row.passes?'sig':'ns'}">${row.passes?'Yes':'No'}</td></tr>`;
+    });
+    html+=`</table>`;
+    const anySurvive=holmSig.some(r=>r.passes);
+    html+=`<div class="plain">💡 <b>In plain terms:</b> ${anySurvive?`After accounting for running 7 tests at once, ${holmSig.filter(r=>r.passes).map(r=>r.label).join(', ')} still hold up as real differences.`:`Once we account for the fact that we ran 7 separate tests, none of the "raw" p<.05 results from above are safely distinguishable from chance — the family-wise correction is a stricter, more conservative bar, and nothing clears it with the current sample.`}</div>`;
+  }
+
+  // ── RQ2a: Task Difficulty (Manipulation Check) ──────────────────────────
+  html+=`<h2>3. RQ2a: Task Difficulty Effects — Manipulation Check (Easy vs. Hard)</h2>
+  <p>Scenarios were designed with two difficulty tiers: <b>Easy</b> (one requirement, e.g. find a scenic route) and <b>Hard</b> (two simultaneous requirements, e.g. scenic <i>and</i> efficient in segment 1). This section is a <b>manipulation check</b> — it asks retroactively, from the actual behavioural data, whether Hard trials were in fact experienced as harder, rather than assuming the design label was correct. Paired t-tests compare per-participant means for Easy vs. Hard trials, pooled across all visualization conditions. Cohen's <i>d</i> is reported as effect size.</p>
   <table class="st">
     <tr><th>Outcome</th><th>Easy <i>M</i> (SD)</th><th>Hard <i>M</i> (SD)</th><th><i>t</i></th><th><i>df</i></th><th><i>p</i></th><th>Cohen's <i>d</i></th><th>Interpretation</th></tr>`;
   const diffRows=[
-    {label:'TCS',res:diffTcs,hi:true},
     {label:'RT (s)',res:diffRt,hi:false},
     {label:'Workload',res:diffWork,hi:false},
-    {label:'Confidence',res:diffConf,hi:true}
+    {label:'Confidence',res:diffConf,hi:true},
+    {label:'TCS',res:diffTcs,hi:true},
+    {label:'Route Accuracy',res:diffOpt,hi:true}
   ];
   diffRows.forEach(({label,res,hi})=>{
     if(!res){html+=`<tr><td class="lbl">${label}</td><td colspan="7"><i>Insufficient data</i></td></tr>`;return;}
@@ -743,7 +1176,19 @@ function renderResults(analysis){
     html+=`<tr><td class="lbl">${label}</td><td>${fmtN(mE)} (${fmtN(sdE)})</td><td>${fmtN(mH)} (${fmtN(sdH)})</td><td class="${sigClass(p)}">${fmtN(t)}</td><td>${df}</td><td class="${sigClass(p)}">${pFmt(p)}</td><td class="${dl==='large'?'eff-lg':dl==='medium'?'eff-md':''}">${fmtN(d,3)} (${dl})</td><td>${p<.05?`${hi?(mE>mH?'Easy > Hard':'Hard > Easy'):(mE<mH?'Easy < Hard':'Hard < Easy')} ✓`:`n.s.`}</td></tr>`;
   });
   html+=`</table>
-  <div class="interp">Task difficulty is expected to increase response time and workload, and decrease confidence and TCS for Hard trials. Effects with <i>d</i> ≥ 0.80 are considered large and meaningful even at N = 30.</div>`;
+  <div class="interp">Task difficulty is expected to increase response time and workload, and decrease confidence, TCS, and route accuracy for Hard trials. Effects with <i>d</i> ≥ 0.80 are considered large and meaningful even at N = 30.</div>`;
+  {
+    const rtSig=diffRt&&diffRt.p<.05, workSig=diffWork&&diffWork.p<.05, confSig=diffConf&&diffConf.p<.05, accSig=(diffTcs&&diffTcs.p<.05)||(diffOpt&&diffOpt.p<.05);
+    let verdict;
+    if(rtSig&&(workSig||confSig||accSig)){
+      verdict=`Yes — the Hard scenarios were genuinely harder, both in how long they took <i>and</i> in how they felt or performed.`;
+    } else if(rtSig){
+      verdict=`Partially — Hard scenarios reliably took longer (a real, procedural sign of extra difficulty), but this extra time didn't clearly translate into people feeling more taxed, less confident, or performing worse. It's possible the extra requirement added time without adding much subjective/decision-quality difficulty, or that the sample is too small to detect those softer effects.`;
+    } else {
+      verdict=`Not clearly — none of the difficulty indicators moved reliably between Easy and Hard trials in this sample, so the "two-requirement" scenarios may not have functioned as intended (or the sample is too small to tell).`;
+    }
+    html+=`<div class="plain">💡 <b>In plain terms — was Hard actually harder?</b> ${verdict}</div>`;
+  }
 
   // ── RQ2b: Model Quality ────────────────────────────────────────────────
   html+=`<h2>4. RQ2b: AI Model Quality Effects (OPT vs. SUB)</h2>
@@ -753,28 +1198,132 @@ function renderResults(analysis){
   const modelRows=[
     {label:'TIAS Trust (1–7)',res:trustTest,expected:'OPT > SUB'},
     {label:'Trial Workload',res:nasaModelTest,expected:'OPT < SUB'},
-    {label:'TCS',res:tcsModelTest,expected:'OPT > SUB'}
+    {label:'TCS',res:tcsModelTest,expected:'OPT > SUB'},
+    {label:'Route Accuracy',res:optAccModelTest,expected:'OPT > SUB'}
   ];
   modelRows.forEach(({label,res,expected})=>{
     if(!res){html+=`<tr><td class="lbl">${label}</td><td colspan="7"><i>Insufficient data</i></td></tr>`;return;}
     const {mOPT,sdOPT,mSUB,sdSUB,t,df,p,d,n}=res;
     html+=`<tr><td class="lbl">${label}</td><td>${fmtN(mOPT)} (${fmtN(sdOPT)})</td><td>${fmtN(mSUB)} (${fmtN(sdSUB)})</td><td class="${sigClass(p)}">${fmtN(t)}</td><td>${df}</td><td class="${sigClass(p)}">${pFmt(p)}</td><td>${fmtN(d,3)} (${dLabel(d)})</td><td>${p<.05?`Sig. (${expected})`:'n.s.'} <i>n</i>=${n}</td></tr>`;
   });
-  html+=`</table>`;
+  html+=`</table>
+  <div class="plain">💡 <b>In plain terms:</b> this checks whether people could tell the good AI model from the bad one — did they trust it more, work less hard, and end up picking better routes when the AI was actually reliable?</div>`;
 
   // Dissociation assessment
   const wlSig=nasaModelTest&&nasaModelTest.p<.05;
   const trSig=trustTest&&trustTest.p<.05;
   if(wlSig&&!trSig){
-    html+=`<div class="finding">🔑 <b>Dissociation pattern detected:</b> Cognitive workload was significantly higher for the SUB model (suggesting participants registered lower AI accuracy) yet TIAS subjective trust did not differ significantly across model types. This is consistent with the <i>automation bias</i> hypothesis: participants experience the processing burden of erroneous recommendations without proportionally recalibrating their stated trust in the system.</div>`;
+    html+=`<div class="finding">🔑 <b>Dissociation pattern detected:</b> Cognitive workload was significantly higher for the SUB model (suggesting participants registered lower AI accuracy) yet TIAS subjective trust did not differ significantly across model types. This is consistent with the <i>automation bias</i> hypothesis: participants experience the processing burden of erroneous recommendations without proportionally recalibrating their stated trust in the system.<br><span style="font-weight:400">In plain terms: people worked harder when the AI was worse, but didn't actually say they trusted it any less — a mismatch between how they felt and what they said.</span></div>`;
   } else if(wlSig&&trSig){
-    html+=`<div class="finding">Both workload and subjective trust differed significantly by model quality, suggesting that participants were sensitive to model accuracy both cognitively and in their trust ratings. No dissociation is evident.</div>`;
+    html+=`<div class="finding">Both workload and subjective trust differed significantly by model quality, suggesting that participants were sensitive to model accuracy both cognitively and in their trust ratings. No dissociation is evident.<br><span style="font-weight:400">In plain terms: people correctly picked up on the bad AI both in how hard they worked and in how much they said they trusted it.</span></div>`;
   } else {
     html+=`<div class="inconc">Neither workload nor trust showed a clear significant pattern by model quality. Results are inconclusive, possibly due to insufficient power or high inter-individual variability.</div>`;
   }
 
+  // ── RQ2c: Learning / Practice Effects ───────────────────────────────────
+  html+=`<h2>5. RQ2c: Learning and Practice Effects Across the Session</h2>
+  <p>Did performance change over the course of the experiment as participants gained practice with the task? Each participant's experiment-stage trials were ordered chronologically by their actual timestamp (not by nominal trial index, which resets within each model×visualization block) and split into three equal-sized, within-subject segments — <b>Early</b>, <b>Middle</b>, and <b>Late</b> — spanning the whole session regardless of which visualization or model was active at that point. The same Friedman / RM-ANOVA / post-hoc machinery used for RQ1 is applied here with session-third as the 3-level within-subject factor, so a significant effect indicates a genuine practice (or fatigue) trend rather than a visualization or model effect.</p>`;
+
+  html+=`<h3>5.1 Trust Calibration Score (TCS)</h3>`;
+  html+=visResultBlock(thirdTcsRes,'TCS by Session Third','TCS (proportion)',0.5,
+    'Note: dashed reference line at TCS = 0.50 (chance level).',
+    r=>interpVis(r,'Trust Calibration Score (TCS)',true,'session position (Early/Middle/Late)'),
+    THIRD_COLOR,null,
+    {checks:'This checks whether people got better (or worse) at knowing when to trust the AI simply from doing more trials, regardless of which visualization or model they had at the time.',label:'trust calibration',higherBetter:true});
+
+  html+=`<h3>5.2 Response Time</h3>`;
+  html+=visResultBlock(thirdRtRes,'Response Time (s) by Session Third','RT (s)',null,
+    'A negative (faster) trend from Early to Late is the classic practice-effect signature.',
+    r=>interpVis(r,'response time (RT)',false,'session position (Early/Middle/Late)'),
+    THIRD_COLOR,null,
+    {checks:'This checks whether people simply sped up (got more efficient) as they gained practice over the session.',label:'decision speed',higherBetter:false});
+
+  html+=`<h3>5.3 Decision Confidence</h3>`;
+  html+=visResultBlock(thirdConfRes,'Confidence by Session Third','Confidence',null,null,
+    r=>interpVis(r,'decision confidence',true,'session position (Early/Middle/Late)'),
+    THIRD_COLOR,null,
+    {checks:'This checks whether people grew more (or less) confident in their choices as the session went on.',label:'self-reported confidence',higherBetter:true});
+
+  html+=`<h3>5.4 Cognitive Workload</h3>`;
+  html+=visResultBlock(thirdWorkRes,'Workload by Session Third','Workload',null,null,
+    r=>interpVis(r,'cognitive workload',false,'session position (Early/Middle/Late)'),
+    THIRD_COLOR,null,
+    {checks:'This checks whether the task started feeling easier (practice) or harder (fatigue) as the session progressed.',label:'mental effort',higherBetter:false});
+
+  html+=`<h3>5.5 Situational Awareness (SA Accuracy)</h3>`;
+  html+=visResultBlock(thirdSaRes,'SA Accuracy by Session Third','SA (proportion)',null,null,
+    r=>interpVis(r,'situational awareness accuracy (SA)',true,'session position (Early/Middle/Late)'),
+    THIRD_COLOR,null,
+    {checks:'This checks whether comprehension of the scenario details changed over the course of the session — e.g. attention fading late in the experiment.',label:'comprehension accuracy',higherBetter:true});
+
+  // Learning-effect summary finding
+  const learnSig=[['TCS',thirdTcsRes],['RT',thirdRtRes],['Confidence',thirdConfRes],['Workload',thirdWorkRes],['SA',thirdSaRes]].filter(([,r])=>r&&r.fr.p<.05);
+  if(learnSig.length){
+    html+=`<div class="finding">📈 <b>Practice effect detected:</b> ${learnSig.map(([lbl,r])=>`${lbl} (Friedman <i>W</i> = ${fmtN(r.fr.W,3)}, <i>p</i> = ${pFmt(r.fr.p)})`).join('; ')} changed significantly across the session. Because this factor cuts across visualization and model conditions (which were counterbalanced), a genuine learning/fatigue trend here is a confound to keep in mind when interpreting RQ1/RQ2b effects, and a candidate covariate for future analyses.</div>`;
+  } else {
+    html+=`<div class="inconc">No metric showed a significant change across session thirds. This is consistent with either a genuinely stable performance profile across the session, or — given the same small-<i>N</i> power limitations noted throughout this report — an underpowered null.</div>`;
+  }
+
+  // ── RQ2d: Difficulty × Visualization Interaction ────────────────────────
+  html+=`<h2>6. RQ2d: Difficulty × Visualization Interaction</h2>
+  <p>RQ1 and RQ2a each ask a one-dimensional question — does visualization matter, and does difficulty matter — but neither can tell us whether the <i>best</i> visualization changes depending on how hard the scenario is (e.g. Heat Map only pulling ahead specifically on Hard, two-requirement scenarios). This section runs a full two-way repeated-measures ANOVA (Difficulty × Visualization, 2×3, every participant contributing all 6 cells) on each outcome, with the interaction term as the outcome of interest. This is a genuinely different question from RQ1/RQ2a and needs its own, dedicated test — a significant main effect in either one-way test does not imply, and is not implied by, a significant interaction here.</p>`;
+  html+=interactionBlock(intTcs,'TCS: Difficulty × Visualization','TCS',true);
+  html+=interactionBlock(intRt,'Response Time: Difficulty × Visualization','response time',false);
+  html+=interactionBlock(intConf,'Confidence: Difficulty × Visualization','confidence',true);
+  html+=interactionBlock(intWork,'Workload: Difficulty × Visualization','workload',false);
+  html+=interactionBlock(intOpt,'Route Accuracy: Difficulty × Visualization','route accuracy',true);
+  {
+    const intFamily=[['TCS',intTcs],['RT',intRt],['Confidence',intConf],['Workload',intWork],['Route Accuracy',intOpt]].filter(([,r])=>r);
+    const intSig=intFamily.filter(([,r])=>r.AB.p<.05);
+    if(intSig.length){
+      html+=`<div class="finding">🔀 <b>Interaction detected:</b> ${intSig.map(([l])=>l).join(', ')} showed a significant Difficulty × Visualization interaction — the visualization that works best genuinely depends on task difficulty for ${intSig.length===1?'this outcome':'these outcomes'}.</div>`;
+    } else {
+      html+=`<div class="inconc">No outcome showed a significant interaction with the current sample. Note this is a stricter, higher-df test than the one-way analyses (df=2,26 for the interaction term vs. the same for the one-way effects, but splitting the data into 6 cells instead of 3 roughly halves the data feeding each cell mean) — so it needs a larger sample than RQ1/RQ2a to reach the same power, and a null here is even more likely to reflect "not enough data yet" than the one-way nulls elsewhere in this report.</div>`;
+    }
+  }
+
+  // ── Counterbalancing Check ───────────────────────────────────────────────
+  html+=`<h2>7. Counterbalancing Check: Presentation-Order Effects</h2>
+  <p>Each participant saw the three visualizations in a different order (by design, to counterbalance order against visualization identity). This section checks two things: (1) descriptively, whether each visualization actually ended up in each presentation slot (1st/2nd/3rd) roughly equally often, which is what makes the RQ1 comparison fair; and (2) statistically, whether presentation position itself — independent of which visualization occupied it — affected performance. If position 1 (or 3) trials looked systematically different regardless of which visualization was there, that would point to an order confound (fatigue, warm-up, novelty) rather than a true visualization effect.</p>
+  <h3>7.1 Counterbalancing Table</h3>
+  <table class="st" style="max-width:480px">
+    <tr><th>Visualization</th><th>1st block</th><th>2nd block</th><th>3rd block</th></tr>`;
+  VIS3.forEach(v=>{ html+=`<tr><td class="lbl" style="color:${VIS_COLOR[v]}">${v}</td><td>${orderCounts[v]['1st block']}</td><td>${orderCounts[v]['2nd block']}</td><td>${orderCounts[v]['3rd block']}</td></tr>`; });
+  html+=`</table>
+  <p class="note">If counterbalancing worked as intended, each row should be roughly even (≈N/3 per cell). Large imbalances would mean a visualization×order confound is possible and RQ1 results should be interpreted more cautiously.</p>
+  <h3>7.2 Does Presentation Position Itself Affect Performance?</h3>`;
+  html+=visResultBlock(posTcsRes,'TCS by Presentation Position','TCS (proportion)',0.5,
+    'If this is significant, part of what looks like a "visualization effect" in RQ1 could actually be an order effect.',
+    r=>interpVis(r,'Trust Calibration Score (TCS)',true,'presentation position (1st/2nd/3rd block, regardless of which visualization)'),
+    POSITION_COLOR,null,
+    {checks:'This checks whether simply being the first, second, or third block a participant experienced — regardless of which visualization it happened to be — affected trust calibration.',label:'trust calibration',higherBetter:true});
+  html+=visResultBlock(posRtRes,'Response Time by Presentation Position','RT (s)',null,null,
+    r=>interpVis(r,'response time (RT)',false,'presentation position (1st/2nd/3rd block, regardless of which visualization)'),
+    POSITION_COLOR,null,
+    {checks:'This checks whether people were simply slower or faster in their first block than their later blocks, independent of which visualization it was — a warm-up effect.',label:'decision speed',higherBetter:false});
+
+  // ── Confidence Calibration ───────────────────────────────────────────────
+  html+=`<h2>8. Confidence Calibration</h2>
+  <p>Is self-reported confidence actually informative — do participants feel more confident specifically on trials where they picked the objectively optimal route, versus trials where they didn't? This is tested with a paired <i>t</i>-test comparing each participant's mean confidence on their "correct" (chose the true-optimal route) vs. "incorrect" trials.</p>`;
+  if(confCalib){
+    const {mC,sdC,mI,sdI,t,df,p,d,n}=confCalib;
+    html+=`<table class="st" style="max-width:480px">
+      <tr><th>Trials where...</th><th><i>M</i> confidence (SD)</th></tr>
+      <tr><td class="lbl">...route was optimal</td><td>${fmtN(mC)} (${fmtN(sdC)})</td></tr>
+      <tr><td class="lbl">...route was not optimal</td><td>${fmtN(mI)} (${fmtN(sdI)})</td></tr>
+    </table>
+    <table class="st" style="margin-top:8px;max-width:480px">
+      <tr><th><i>t</i></th><th><i>df</i></th><th><i>p</i></th><th>Cohen's <i>d</i></th><th><i>N</i></th></tr>
+      <tr><td class="${sigClass(p)}">${fmtN(t)}</td><td>${df}</td><td class="${sigClass(p)}">${pFmt(p)}</td><td>${fmtN(d,3)} (${dLabel(d)})</td><td>${n}</td></tr>
+    </table>
+    <div class="plain">💡 <b>In plain terms:</b> this checks whether people's gut feeling of confidence actually tracked whether they were right. ${p<.05?`Yes — confidence was reliably higher (M=${fmtN(mC)}) when the route chosen was actually optimal, versus lower (M=${fmtN(mI)}) when it wasn't. Confidence is a meaningful signal in this sample.`:`Not reliably — confidence was numerically ${mC>mI?'a bit higher':'about the same or lower'} on correct trials (M=${fmtN(mC)} vs M=${fmtN(mI)}), but the difference isn't statistically distinguishable from chance with N=${n} participants, so we can't yet conclude confidence tracks accuracy.`}</div>
+    <div class="interp">Paired <i>t</i>-test, confidence on optimal-route trials vs. non-optimal-route trials: <i>t</i>(${df}) = ${fmtN(t)}, <i>p</i> = ${pFmt(p)}, Cohen's <i>d</i> = ${fmtN(d,3)} (${dLabel(d)}).</div>`;
+  } else {
+    html+=`<div class="inconc">Insufficient data for confidence-calibration analysis (need both correct and incorrect trials with confidence ratings for the same participants).</div>`;
+  }
+
   // ── Trust–Behavior Alignment ───────────────────────────────────────────
-  html+=`<h2>5. Trust–Performance Alignment</h2>
+  html+=`<h2>9. Trust–Performance Alignment</h2>
   <p>This section examines whether participants' subjective trust (TIAS) corresponds to their behavioural trust calibration (TCS). A positive correlation would indicate alignment; a near-zero or negative correlation would suggest dissociation or automation bias. A Pearson correlation is computed at the participant level (<i>N</i> = available participants).</p>`;
 
   if(trustBehavior){
@@ -785,27 +1334,58 @@ function renderResults(analysis){
     </table>`;
     const sign=r>0?'positive':'negative';
     const str=Math.abs(r)>=0.5?'strong':Math.abs(r)>=0.3?'moderate':'weak';
-    html+=`<div class="interp">The ${sign} correlation between TIAS trust and TCS is ${str} (<i>r</i> = ${fmtN(r,3)}, <i>p</i> = ${pFmt(p)}). ${p<.05?`This statistically significant relationship indicates that participants who report higher trust in the AI tend to show ${r>0?'better calibrated':'less calibrated'} reliance behaviour.`:`The non-significant result (p = ${pFmt(p)}) suggests that subjective trust and behavioural trust calibration are dissociated in this sample — participants' self-reports of trust do not reliably predict whether they follow the AI appropriately.`}</div>`;
+    html+=`<div class="plain">💡 <b>In plain terms:</b> this checks whether people who <i>say</i> they trust the AI more are also the ones who actually rely on it appropriately (not too much, not too little). ${p<.05?`Yes — self-reported trust tracked actual reliance behaviour in this sample.`:`Not reliably — what people said about their trust didn't clearly predict how they actually behaved with the AI. This is a well-known pattern in human-automation research: people aren't always a good judge of their own reliance habits.`}</div>
+    <div class="interp">The ${sign} correlation between TIAS trust and TCS is ${str} (<i>r</i> = ${fmtN(r,3)}, <i>p</i> = ${pFmt(p)}). ${p<.05?`This statistically significant relationship indicates that participants who report higher trust in the AI tend to show ${r>0?'better calibrated':'less calibrated'} reliance behaviour.`:`The non-significant result (p = ${pFmt(p)}) suggests that subjective trust and behavioural trust calibration are dissociated in this sample — participants' self-reports of trust do not reliably predict whether they follow the AI appropriately.`}</div>`;
   } else {
     html+=`<div class="inconc">Insufficient data for TIAS × TCS correlation (need trust scores and TCS for same participants).</div>`;
   }
 
+  // ── Preference–Performance Alignment ────────────────────────────────────
+  html+=`<h2>10. Preference–Performance Alignment</h2>
+  <p>After the experiment, each participant ranked the three visualizations by preference. This section asks a self-awareness question: was the visualization someone <i>said</i> they liked best actually the one that gave <i>them personally</i> their best trust calibration (TCS) and route accuracy? This is tested two ways — (1) a categorical hit-rate: how often the stated favourite matched the participant's own best-performing visualization, compared against the 1-in-3 rate expected by chance (exact binomial test); and (2) a continuous paired comparison of performance in the preferred visualization vs. the average of the other two.</p>`;
+  if(prefAlign){
+    const {n,nTcsMatch,nOptMatch,pTcsMatch,pOptMatch,tcsPT,optPT}=prefAlign;
+    html+=`<h3>10.1 Hit Rate: Did the Favourite Match the Best-Performing Visualization?</h3>
+    <table class="st" style="max-width:620px">
+      <tr><th>Outcome</th><th>Matches</th><th>Hit rate</th><th>Chance rate</th><th><i>p</i> (one-sided binomial)</th></tr>
+      <tr><td class="lbl">Preferred = Best TCS</td><td>${nTcsMatch} / ${n}</td><td>${(nTcsMatch/n*100).toFixed(0)}%</td><td>33%</td><td class="${sigClass(pTcsMatch)}">${pFmt(pTcsMatch)}</td></tr>
+      <tr><td class="lbl">Preferred = Best Route Accuracy</td><td>${nOptMatch} / ${n}</td><td>${(nOptMatch/n*100).toFixed(0)}%</td><td>33%</td><td class="${sigClass(pOptMatch)}">${pFmt(pOptMatch)}</td></tr>
+    </table>
+    <h3>10.2 Performance in Preferred vs. Non-Preferred Visualization</h3>
+    <table class="st" style="max-width:620px">
+      <tr><th>Outcome</th><th>Preferred <i>M</i> (SD)</th><th>Other two <i>M</i> (SD)</th><th><i>t</i></th><th><i>df</i></th><th><i>p</i></th><th>Cohen's <i>d</i></th></tr>
+      <tr><td class="lbl">TCS</td><td>${fmtN(mean(prefAlign.rows.map(r=>r.tcsPref)))} (${fmtN(sd(prefAlign.rows.map(r=>r.tcsPref)))})</td><td>${fmtN(mean(prefAlign.rows.map(r=>r.tcsOther)))} (${fmtN(sd(prefAlign.rows.map(r=>r.tcsOther)))})</td><td class="${sigClass(tcsPT.p)}">${fmtN(tcsPT.t)}</td><td>${tcsPT.df}</td><td class="${sigClass(tcsPT.p)}">${pFmt(tcsPT.p)}</td><td>${fmtN(tcsPT.d,3)} (${dLabel(tcsPT.d)})</td></tr>
+      <tr><td class="lbl">Route Accuracy</td><td>${fmtN(mean(prefAlign.rows.map(r=>r.optPref)))} (${fmtN(sd(prefAlign.rows.map(r=>r.optPref)))})</td><td>${fmtN(mean(prefAlign.rows.map(r=>r.optOther)))} (${fmtN(sd(prefAlign.rows.map(r=>r.optOther)))})</td><td class="${sigClass(optPT.p)}">${fmtN(optPT.t)}</td><td>${optPT.df}</td><td class="${sigClass(optPT.p)}">${pFmt(optPT.p)}</td><td>${fmtN(optPT.d,3)} (${dLabel(optPT.d)})</td></tr>
+    </table>`;
+    const tcsGood=pTcsMatch<.05||tcsPT.p<.05, optGood=pOptMatch<.05||optPT.p<.05;
+    let verdict;
+    if(tcsGood&&optGood) verdict=`Yes — people were meaningfully <b>self-aware</b>: their stated favourite visualization tended to actually be the one that gave them the best trust calibration and route accuracy.`;
+    else if(tcsGood||optGood) verdict=`Partially — preference tracked ${tcsGood?'trust calibration':'route accuracy'} better than chance, but not clearly ${tcsGood?'route accuracy':'trust calibration'}. People may have picked up on one aspect of "what helps them" without noticing the other.`;
+    else verdict=`Not really — people's stated favourite visualization was no better than a random guess at predicting which one actually gave <i>them</i> the best results. This doesn't mean the preference ratings are meaningless (people may prefer a visualization for reasons other than performance, e.g. it felt nicer to use), but it does mean "what people say they like" and "what objectively works best for them" were not the same thing here.`;
+    html+=`<div class="plain">💡 <b>In plain terms:</b> this asks whether people actually know what's good for them. ${verdict}</div>
+    <div class="interp">Hit-rate: TCS match ${nTcsMatch}/${n} (${pFmt(pTcsMatch)} vs. chance), Route Accuracy match ${nOptMatch}/${n} (${pFmt(pOptMatch)} vs. chance). Paired comparison: TCS <i>t</i>(${tcsPT.df}) = ${fmtN(tcsPT.t)}, <i>p</i> = ${pFmt(tcsPT.p)}; Route Accuracy <i>t</i>(${optPT.df}) = ${fmtN(optPT.t)}, <i>p</i> = ${pFmt(optPT.p)}.</div>`;
+  } else {
+    html+=`<div class="inconc">Insufficient data for preference–performance alignment (need a completed visualization-preference ranking and complete 3-visualization performance data for the same participants).</div>`;
+  }
+
   // ── Speed–Comprehension Trade-off ─────────────────────────────────────
-  html+=`<h2>6. Speed–Comprehension Trade-off (SA × RT by Visualization)</h2>
-  <p>Do visualizations that support better situational awareness come at the cost of longer response time? A positive correlation (higher SA → longer RT) would indicate a trade-off; a negative correlation would suggest the visualization aids both speed and comprehension. Pearson correlations are computed at the trial level per visualization condition.</p>
+  html+=`<h2>11. Speed–Comprehension Trade-off (SA × RT by Visualization)</h2>
+  <p>Do visualizations that support better situational awareness come at the cost of longer response time? A positive correlation (higher SA → longer RT) would indicate a trade-off; a negative correlation would suggest the visualization aids both speed and comprehension. Pearson correlations are computed at the <b>participant level</b> (each participant's mean RT and mean SA within a visualization condition contributes one point), not at the trial level — trials from the same participant are not independent observations, so correlating raw trials directly would understate the true <i>p</i>-value.</p>
   <table class="st">
-    <tr><th>Visualization</th><th>Pearson <i>r</i></th><th><i>r</i>²</th><th><i>t</i></th><th><i>p</i></th><th><i>N</i> trials</th><th>Interpretation</th></tr>`;
+    <tr><th>Visualization</th><th>Pearson <i>r</i></th><th><i>r</i>²</th><th><i>t</i></th><th><i>p</i></th><th><i>N</i> participants</th><th>Interpretation</th></tr>`;
   VIS3.forEach(vis=>{
     const res=saRtCorr[vis];
     if(!res){html+=`<tr><td class="lbl" style="color:${VIS_COLOR[vis]}">${vis}</td><td colspan="6"><i>n/a</i></td></tr>`;return;}
     html+=`<tr><td class="lbl" style="color:${VIS_COLOR[vis]}">${vis}</td><td class="${sigClass(res.p)}">${fmtN(res.r,3)}</td><td>${fmtN(res.r2,3)}</td><td>${fmtN(res.t)}</td><td class="${sigClass(res.p)}">${pFmt(res.p)}</td><td>${res.n}</td><td>${res.p<.05?(res.r>0?'Trade-off (SA↑ → slower)':'Complementary (SA↑ → faster)'):'No significant trade-off'}</td></tr>`;
   });
   html+=`</table>
-  <p class="note">Correlations near zero are consistent with the SAP prediction (W ≈ 0.03–0.15). Significant negative correlations would suggest that a visualization facilitates both comprehension and speed simultaneously.</p>`;
+  <p class="note">Correlations near zero are consistent with the SAP prediction. Significant negative correlations would suggest that a visualization facilitates both comprehension and speed simultaneously.</p>`;
+  html+=`<div class="plain">💡 <b>In plain terms:</b> this checks whether visualizations that help people understand the scenario better also make them slower to decide (a speed-for-comprehension trade-off), or whether a good visualization can give both at once. ${VIS3.some(v=>saRtCorr[v]&&saRtCorr[v].p<.05)?'At least one visualization showed a real relationship between comprehension and speed here.':"None of the three visualizations showed a reliable relationship between comprehension and speed in this sample — being more accurate about the scenario didn't cost extra time, nor did it buy any."}</div>`;
 
   // ── Individual Differences ─────────────────────────────────────────────
-  html+=`<h2>7. Individual Differences</h2>
+  html+=`<h2>12. Individual Differences</h2>
   <p>The following analyses examine whether demographic or individual-difference variables moderate TCS. All tests are conducted at the participant level. Given the small sample, all results should be interpreted with extreme caution; only effects with Cohen's |<i>d</i>| ≥ 0.50 or |<i>r</i>| ≥ 0.30 are discussed as potentially meaningful pending replication.</p>`;
+  html+=`<div class="plain">💡 <b>In plain terms:</b> this section checks whether some kinds of people were just naturally better at the trust-calibration task — older/younger, male/female, more tech-savvy, more visualization-literate, more used to navigation apps. These aren't claims about the visualizations themselves; they're about who benefits more from the system in general.</div>`;
 
   if(demoParts.length>=8){
     // Age × TCS
@@ -828,13 +1408,17 @@ function renderResults(analysis){
       const femTCS=femParts.map(p=>mean(VIS3.map(v=>p.visAgg[v].tcs).filter(v=>v!==null))).filter(v=>isFinite(v));
       const malTCS=maleParts.map(p=>mean(VIS3.map(v=>p.visAgg[v].tcs).filter(v=>v!==null))).filter(v=>isFinite(v));
       if(femTCS.length>=3&&malTCS.length>=3){
-        // Independent t-test (use paired if same N, else use 2-sample approx)
+        // Welch's t-test (unequal variances) — safer default than pooled-variance
+        // t when group sizes/variances are unequal, as is typical here.
         const mF=mean(femTCS),sF=sd(femTCS),mM=mean(malTCS),sM=sd(malTCS);
         const nF=femTCS.length,nM=malTCS.length;
-        const sp=Math.sqrt(((nF-1)*sF**2+(nM-1)*sM**2)/(nF+nM-2));
-        const tG=(mF-mM)/(sp*Math.sqrt(1/nF+1/nM)),dfG=nF+nM-2;
-        const pG=tpValue(Math.abs(tG),dfG), dG=(mF-mM)/sp;
-        html+=`<p><b>Gender (Female vs. Male):</b> <i>M</i><sub>F</sub> = ${fmtN(mF)}, <i>M</i><sub>M</sub> = ${fmtN(mM)}; <i>t</i>(${dfG}) = ${fmtN(tG)}, <i>p</i> = ${pFmt(pG)}, Cohen's <i>d</i> = ${fmtN(dG,3)} (${dLabel(dG)}). ${pG<.05?'Significant gender difference.':'No significant gender difference in TCS.'}</p>`;
+        const seF2=sF**2/nF, seM2=sM**2/nM;
+        const tG=(mF-mM)/Math.sqrt(seF2+seM2);
+        const dfG=Math.pow(seF2+seM2,2)/((seF2**2)/(nF-1)+(seM2**2)/(nM-1));
+        const pG=tpValue(Math.abs(tG),dfG);
+        const spPooled=Math.sqrt(((nF-1)*sF**2+(nM-1)*sM**2)/(nF+nM-2));
+        const dG=(mF-mM)/spPooled;
+        html+=`<p><b>Gender (Female vs. Male):</b> <i>M</i><sub>F</sub> = ${fmtN(mF)}, <i>M</i><sub>M</sub> = ${fmtN(mM)}; Welch's <i>t</i>(${fmtN(dfG,1)}) = ${fmtN(tG)}, <i>p</i> = ${pFmt(pG)}, Cohen's <i>d</i> = ${fmtN(dG,3)} (${dLabel(dG)}). ${pG<.05?'Significant gender difference.':'No significant gender difference in TCS.'}</p>`;
       }
     }
 
@@ -844,12 +1428,26 @@ function renderResults(analysis){
       const rVL=pearsonR(vlData.map(x=>x.vl),vlData.map(x=>x.tcs));
       html+=`<p><b>Visualization Literacy:</b> Pearson <i>r</i>(${rVL.n}) = ${fmtN(rVL.r,3)}, <i>p</i> = ${pFmt(rVL.p)}, <i>r</i>² = ${fmtN(rVL.r2,3)}. ${rVL.p<.05?'Significant association.':'No significant association with TCS.'}</p>`;
     }
+
+    // Tech skill (self-rated troubleshooting/learning ability) × TCS
+    const tsData=demoParts.map(p=>({v:p.demo.tech_skill,tcs:mean(VIS3.map(v=>p.visAgg[v].tcs).filter(v=>v!==null))})).filter(d=>typeof d.v==='number'&&isFinite(d.tcs));
+    if(tsData.length>=5){
+      const rTS=pearsonR(tsData.map(x=>x.v),tsData.map(x=>x.tcs));
+      html+=`<p><b>Tech Skill (self-rated):</b> Pearson <i>r</i>(${rTS.n}) = ${fmtN(rTS.r,3)}, <i>p</i> = ${pFmt(rTS.p)}, <i>r</i>² = ${fmtN(rTS.r2,3)}. ${rTS.p<.05?'Significant association.':'No significant association with TCS.'}</p>`;
+    }
+
+    // Navigation-app use frequency × TCS
+    const nuData=demoParts.map(p=>({v:p.demo.navigation_use,tcs:mean(VIS3.map(v=>p.visAgg[v].tcs).filter(v=>v!==null))})).filter(d=>typeof d.v==='number'&&isFinite(d.tcs));
+    if(nuData.length>=5){
+      const rNU=pearsonR(nuData.map(x=>x.v),nuData.map(x=>x.tcs));
+      html+=`<p><b>Navigation-App Use Frequency:</b> Pearson <i>r</i>(${rNU.n}) = ${fmtN(rNU.r,3)}, <i>p</i> = ${pFmt(rNU.p)}, <i>r</i>² = ${fmtN(rNU.r2,3)}. ${rNU.p<.05?'Significant association.':'No significant association with TCS.'}</p>`;
+    }
   } else {
     html+=`<div class="inconc">Demographics available for only ${demoParts.length} participants. Individual-differences analyses will be reported once the full sample is collected.</div>`;
   }
 
   // ── Summary Table ──────────────────────────────────────────────────────
-  html+=`<h2>8. Summary of Findings</h2>
+  html+=`<h2>13. Summary of Findings</h2>
   <table class="st">
     <tr><th>RQ</th><th>Outcome</th><th>Test</th><th>Effect Size</th><th><i>p</i></th><th>Conclusion</th></tr>`;
   const sumRows=[
@@ -859,44 +1457,81 @@ function renderResults(analysis){
     {rq:'RQ1',out:'Trial Workload',res:workRes,type:'fr'},
     {rq:'RQ1',out:'NASA-TLX',res:nasaRes,type:'fr'},
     {rq:'RQ1',out:'SA Accuracy',res:saRes,type:'fr'},
+    {rq:'RQ1',out:'Route Accuracy',res:optRes,type:'fr'},
     {rq:'RQ2a',out:'RT (Difficulty)',res:diffRt,type:'t'},
     {rq:'RQ2a',out:'Workload (Difficulty)',res:diffWork,type:'t'},
+    {rq:'RQ2a',out:'Confidence (Difficulty)',res:diffConf,type:'t'},
     {rq:'RQ2a',out:'TCS (Difficulty)',res:diffTcs,type:'t'},
+    {rq:'RQ2a',out:'Route Accuracy (Difficulty)',res:diffOpt,type:'t'},
     {rq:'RQ2b',out:'TIAS Trust (Model)',res:trustTest,type:'t'},
     {rq:'RQ2b',out:'Workload (Model)',res:nasaModelTest,type:'t'},
     {rq:'RQ2b',out:'TCS (Model)',res:tcsModelTest,type:'t'},
-    {rq:'RQ3',out:'SA×RT Trust–Behavior',res:trustBehavior,type:'r'}
+    {rq:'RQ2b',out:'Route Accuracy (Model)',res:optAccModelTest,type:'t'},
+    {rq:'RQ2c',out:'TCS (Session Third)',res:thirdTcsRes,type:'fr'},
+    {rq:'RQ2c',out:'RT (Session Third)',res:thirdRtRes,type:'fr'},
+    {rq:'RQ2c',out:'Confidence (Session Third)',res:thirdConfRes,type:'fr'},
+    {rq:'RQ2c',out:'Workload (Session Third)',res:thirdWorkRes,type:'fr'},
+    {rq:'RQ2c',out:'SA Accuracy (Session Third)',res:thirdSaRes,type:'fr'},
+    {rq:'RQ2d',out:'TCS (Difficulty×Vis interaction)',res:intTcs,type:'f2'},
+    {rq:'RQ2d',out:'RT (Difficulty×Vis interaction)',res:intRt,type:'f2'},
+    {rq:'RQ2d',out:'Confidence (Difficulty×Vis interaction)',res:intConf,type:'f2'},
+    {rq:'RQ2d',out:'Workload (Difficulty×Vis interaction)',res:intWork,type:'f2'},
+    {rq:'RQ2d',out:'Route Accuracy (Difficulty×Vis interaction)',res:intOpt,type:'f2'},
+    {rq:'Order',out:'TCS (Presentation Position)',res:posTcsRes,type:'fr'},
+    {rq:'Order',out:'RT (Presentation Position)',res:posRtRes,type:'fr'},
+    {rq:'Trust–Behav.',out:'TIAS Trust × TCS Alignment',res:trustBehavior,type:'r'},
+    {rq:'RQ3',out:`SA×RT (${VIS3[0]})`,res:saRtCorr[VIS3[0]],type:'r'},
+    {rq:'RQ3',out:`SA×RT (${VIS3[1]})`,res:saRtCorr[VIS3[1]],type:'r'},
+    {rq:'RQ3',out:`SA×RT (${VIS3[2]})`,res:saRtCorr[VIS3[2]],type:'r'},
+    {rq:'Calib.',out:'Confidence (Correct vs. Incorrect)',res:confCalib,type:'t'},
+    {rq:'Pref.',out:'Preferred = Best TCS (hit-rate)',res:prefAlign?{p:prefAlign.pTcsMatch,k:prefAlign.nTcsMatch,n:prefAlign.n}:null,type:'binom'},
+    {rq:'Pref.',out:'Preferred = Best Route Acc. (hit-rate)',res:prefAlign?{p:prefAlign.pOptMatch,k:prefAlign.nOptMatch,n:prefAlign.n}:null,type:'binom'},
+    {rq:'Pref.',out:'TCS (Preferred vs. Other Vis)',res:prefAlign?prefAlign.tcsPT:null,type:'t'},
+    {rq:'Pref.',out:'Route Accuracy (Preferred vs. Other Vis)',res:prefAlign?prefAlign.optPT:null,type:'t'}
   ];
   sumRows.forEach(({rq,out,res,type})=>{
     if(!res){html+=`<tr><td>${rq}</td><td>${out}</td><td colspan="4"><i>n/a</i></td></tr>`;return;}
-    if(type==='fr'){
-      const {fr,rm}=res;
-      const sig=fr.p<.05, pw=powerNote(fr.W,res.N,3);
-      html+=`<tr><td>${rq}</td><td>${out}</td><td>RM-ANOVA / Friedman</td><td class="${wLabel(fr.W)==='large'?'eff-lg':wLabel(fr.W)==='medium'?'eff-md':'eff-sm'}">W = ${fmtN(fr.W,3)} (${wLabel(fr.W)}); η² = ${fmtN(rm.eta2,3)}</td><td class="${sigClass(fr.p)}">${pFmt(fr.p)}</td><td>${sig?'<b>Significant</b>':'n.s.'} | Power: ${pw}</td></tr>`;
+    if(type==='binom'){
+      const sig=res.p<.05;
+      html+=`<tr><td>${rq}</td><td>${out}</td><td>Binomial (vs. chance)</td><td>${res.k}/${res.n} (${(res.k/res.n*100).toFixed(0)}%, chance 33%)</td><td class="${sigClass(res.p)}">${pFmt(res.p)}</td><td>${sig?'<b>Above chance</b>':'n.s.'}</td></tr>`;
+    } else if(type==='fr'){
+      const {fr,rm,N:resN,levels}=res;
+      const sig=fr.p<.05, pw=powerNote(fr.W,resN,levels.length);
+      html+=`<tr><td>${rq}</td><td>${out}</td><td>RM-ANOVA / Friedman</td><td class="${wLabel(fr.W)==='large'?'eff-lg':wLabel(fr.W)==='medium'?'eff-md':'eff-sm'}">W = ${fmtN(fr.W,3)} (${wLabel(fr.W)}); η²<sub>p</sub> = ${fmtN(rm.eta2,3)}</td><td class="${sigClass(fr.p)}">${pFmt(fr.p)}</td><td>${sig?'<b>Significant</b>':'n.s.'} | Power (<i>N</i>=${resN}): ${pw}</td></tr>`;
     } else if(type==='t'){
       const sig=res.p<.05;
       html+=`<tr><td>${rq}</td><td>${out}</td><td>Paired <i>t</i></td><td class="${dLabel(res.d)==='large'?'eff-lg':dLabel(res.d)==='medium'?'eff-md':''}">d = ${fmtN(res.d,3)} (${dLabel(res.d)})</td><td class="${sigClass(res.p)}">${pFmt(res.p)}</td><td>${sig?'<b>Significant</b>':'n.s.'}</td></tr>`;
     } else if(type==='r'){
       const sig=res.p<.05;
       html+=`<tr><td>${rq}</td><td>${out}</td><td>Pearson <i>r</i></td><td>r = ${fmtN(res.r,3)}</td><td class="${sigClass(res.p)}">${pFmt(res.p)}</td><td>${sig?'<b>Significant</b>':'n.s.'}</td></tr>`;
+    } else if(type==='f2'){
+      const {AB}=res, sig=AB.p<.05;
+      html+=`<tr><td>${rq}</td><td>${out}</td><td>2-way RM-ANOVA (interaction)</td><td class="${dLabel(Math.sqrt(AB.eta2)*2)==='large'?'eff-lg':''}">η²<sub>p</sub> = ${fmtN(AB.eta2,3)}</td><td class="${sigClass(AB.p)}">${pFmt(AB.p)}</td><td>${sig?'<b>Significant interaction</b>':'n.s.'}</td></tr>`;
     }
   });
   html+=`</table>
-  <p class="note">Green cells = large effect; yellow = medium; pink = small. ✓ = power ≥ .80 at N = 30; ⚠ = power &lt; .50 (inconclusive if non-significant).</p>`;
+  <p class="note">Green cells = large effect; yellow = medium; pink = small. Power is computed exactly (noncentral χ²) for each test's own <i>N</i> and factor levels — not a fixed reference sample. ✓ = power ≥ .80; ⚠ = power &lt; .50 (inconclusive if non-significant).</p>`;
 
   // ── Discussion ─────────────────────────────────────────────────────────
-  html+=`<h2>9. Discussion</h2>`;
+  html+=`<h2>14. Discussion</h2>`;
 
   // Auto-generate key discussion bullets
   const bullets=[];
-  if(rtRes&&rtRes.fr.p<.05) bullets.push(`<b>Visualization type significantly affected response time</b> (Friedman <i>W</i> = ${fmtN(rtRes.fr.W,3)}, <i>p</i> = ${pFmt(rtRes.fr.p)}), with ${rtRes.cs.reduce((a,c,i)=>c.m<a.m?{m:c.m,v:VIS3[i]}:a,{m:Infinity}).v} yielding the fastest decisions. This large effect (well-powered at N = ${N}) is robustly interpretable regardless of the final sample size.`);
+  if(rtRes&&rtRes.fr.p<.05){
+    const pwRt=friedmanPower(rtRes.fr.W,rtRes.N,3);
+    bullets.push(`<b>Visualization type significantly affected response time</b> (Friedman <i>W</i> = ${fmtN(rtRes.fr.W,3)}, <i>p</i> = ${pFmt(rtRes.fr.p)}), with ${rtRes.cs.reduce((a,c,i)=>c.m<a.m?{m:c.m,v:VIS3[i]}:a,{m:Infinity}).v} yielding the fastest decisions. ${pwRt>=0.80?`This effect was well-powered at <i>N</i> = ${rtRes.N} (≈${(pwRt*100).toFixed(0)}%) and is robustly interpretable.`:`Note the achieved power at <i>N</i> = ${rtRes.N} was only ≈${(pwRt*100).toFixed(0)}%, so despite reaching significance this estimate should be treated cautiously pending replication.`}`);
+  }
   if(workRes&&workRes.fr.p<.05) bullets.push(`<b>Cognitive workload differed significantly across visualization types</b> (W = ${fmtN(workRes.fr.W,3)}, <i>p</i> = ${pFmt(workRes.fr.p)}). The ${workRes.cs.reduce((a,c,i)=>c.m<a.m?{m:c.m,v:VIS3[i]}:a,{m:Infinity}).v} condition was the least demanding, consistent with theories of perceptual efficiency (Sweller, 1988).`);
   if(tcsRes){
     if(tcsRes.fr.p<.05) bullets.push(`<b>Visualization type significantly affected trust calibration</b> (W = ${fmtN(tcsRes.fr.W,3)}, <i>p</i> = ${pFmt(tcsRes.fr.p)}), supporting the hypothesis that how AI reasoning is visualized shapes reliance quality (Lee &amp; See, 2004).`);
-    else bullets.push(`<b>Trust calibration (TCS) did not differ significantly across visualization types</b> (W = ${fmtN(tcsRes.fr.W,3)}, <i>p</i> = ${pFmt(tcsRes.fr.p)}). Given estimated power of ${powerNote(tcsRes.fr.W,tcsRes.N,3)}, this result is <b>inconclusive</b> and should not be interpreted as evidence of no effect. The study is underpowered for TCS; a minimum of <i>N</i> ≥ 84 is recommended for 80% power at the observed effect size.`);
+    else bullets.push(`<b>Trust calibration (TCS) did not differ significantly across visualization types</b> (W = ${fmtN(tcsRes.fr.W,3)}, <i>p</i> = ${pFmt(tcsRes.fr.p)}). Given estimated power of ${powerNote(tcsRes.fr.W,tcsRes.N,3)} at <i>N</i> = ${tcsRes.N}, this result is <b>inconclusive</b> and should not be interpreted as evidence of no effect — see §10.1 for the sample size needed to resolve it.`);
   }
   if(nasaModelTest&&nasaModelTest.p<.05&&trustTest&&trustTest.p>.05) bullets.push(`<b>Dissociation between cognitive load and stated trust:</b> participants showed significantly higher workload in the SUB model condition yet did not proportionally reduce their TIAS trust ratings. This is consistent with automation complacency (Parasuraman &amp; Manzey, 2010) and warrants investigation with larger samples.`);
   if(trustBehavior&&!isNaN(trustBehavior.r)) bullets.push(`<b>Subjective trust (TIAS) and behavioural trust calibration (TCS)</b> showed <i>r</i> = ${fmtN(trustBehavior.r,3)} (<i>p</i> = ${pFmt(trustBehavior.p)}), ${trustBehavior.p<.05?'a significant alignment':'no significant alignment'}. ${Math.abs(trustBehavior.r)<0.15?'The near-zero correlation suggests that self-reported trust fails to predict behavioural reliance, a classic dissociation in human–automation interaction literature.':''}`);
+  {
+    const learnSig2=[['TCS',thirdTcsRes],['response time',thirdRtRes],['confidence',thirdConfRes],['workload',thirdWorkRes],['SA accuracy',thirdSaRes]].filter(([,r])=>r&&r.fr.p<.05);
+    if(learnSig2.length) bullets.push(`<b>Performance changed significantly over the course of the session</b> for ${learnSig2.map(([lbl])=>lbl).join(', ')} (RQ2c, §5), indicating a practice and/or fatigue effect that is orthogonal to the counterbalanced visualization/model conditions but should be considered a covariate in future modelling.`);
+  }
 
   if(bullets.length){
     html+=`<ul style="line-height:1.9">`;
@@ -904,10 +1539,30 @@ function renderResults(analysis){
     html+=`</ul>`;
   }
 
-  html+=`<h3>9.1 Limitations</h3>
-  <p>The current sample (<i>N</i> = ${N}) provides adequate power for large effects (Kendall's <i>W</i> ≥ .26; Cohen's <i>d</i> ≥ 0.80) but is underpowered for the primary outcome (TCS, observed <i>W</i> ≈ .06, power ≈ .36). Results for TCS, route accuracy, SA, and individual-difference moderators must be interpreted as exploratory. The minimum viable sample for the full study is <i>N</i> = 60 (power ≈ .56 on TCS); <i>N</i> ≥ 84 is required for .80 power. Additionally, missing demographic data for ${participantData.length - demoParts.length} participants limits the individual-differences analyses. The within-subjects design introduces order and learning effects that were partially controlled through counterbalancing but cannot be fully eliminated.</p>
+  html+=`<h3>14.1 Limitations</h3>`;
+  {
+    const missingDemo=participantData.length-demoParts.length;
+    let powerPara;
+    if(tcsRes){
+      const W=tcsRes.fr.W, curN=tcsRes.N;
+      const pwCur=friedmanPower(W,curN,3), pw30=friedmanPower(W,30,3), pw35=friedmanPower(W,35,3);
+      const reqN80=requiredN(W,3,0.80);
+      let targetNote;
+      if(pw35>=0.80&&pw30<0.80){
+        targetNote=`Recruiting to the target of <i>N</i> = 30 gives ≈${(pw30*100).toFixed(0)}% power — still short of the conventional 80% threshold. A nearby target of <i>N</i> = 35 gives ≈${(pw35*100).toFixed(0)}% power, which <b>does</b> cross 80% — five additional participants meaningfully change the reliability of this test. The exact minimum for 80% power at this effect size is <i>N</i> = ${reqN80}.`;
+      } else if(pw35-pw30>=0.05){
+        targetNote=`At the target of <i>N</i> = 30, estimated power is ≈${(pw30*100).toFixed(0)}%; extending to <i>N</i> = 35 raises this to ≈${(pw35*100).toFixed(0)}%, a meaningfully higher power for only 5 more participants. The exact minimum for 80% power at this effect size is <i>N</i> = ${reqN80}.`;
+      } else {
+        targetNote=`At the target of <i>N</i> = 30, estimated power is ≈${(pw30*100).toFixed(0)}% (<i>N</i> = 35 gives ≈${(pw35*100).toFixed(0)}%, not a meaningfully different figure). The exact minimum for 80% power at this effect size is <i>N</i> = ${reqN80}.`;
+      }
+      powerPara=`The current sample (<i>N</i> = ${curN}) provides adequate power for large effects (Kendall's <i>W</i> ≥ .26; Cohen's <i>d</i> ≥ 0.80) but is underpowered for the primary outcome (TCS, observed <i>W</i> = ${fmtN(W,3)}, exact power ≈ ${(pwCur*100).toFixed(0)}% at <i>N</i> = ${curN}, computed via noncentral χ² — see §2.1 methodology). ${targetNote} All power figures on this page use this same exact calculation (not a fixed lookup table), and assume the population effect equals what was observed here — a small-sample estimate that can itself be noisy, so these figures should be read as planning guidance, not a guarantee.`;
+    } else {
+      powerPara=`TCS-based power projections are unavailable because the current upload does not contain enough complete-data participants to estimate Kendall's <i>W</i>.`;
+    }
+    html+=`<p>${powerPara} Results for TCS, route accuracy, SA, and individual-difference moderators must be interpreted as exploratory given the current sample. Missing demographic data for ${missingDemo} participant(s) limits the individual-differences analyses. The within-subjects design introduces order and learning effects that were partially controlled through counterbalancing but cannot be fully eliminated — see §5 (RQ2c) for a direct empirical test of within-session practice/fatigue effects.</p>`;
+  }
 
-  <h3>9.2 Pre-Registration Note</h3>
+  html+=`<h3>14.2 Pre-Registration Note</h3>
   <p>All analyses in this report follow the pre-registered Statistical Analysis Plan (SAP). Outcomes flagged as underpowered were identified <i>a priori</i> and are reported as inconclusive, not as evidence of null effects, consistent with best practices for underpowered within-subjects designs (Cohen, 1988).</p>`;
 
   document.getElementById('results').innerHTML=html;
