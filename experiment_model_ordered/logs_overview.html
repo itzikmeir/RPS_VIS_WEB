@@ -121,11 +121,20 @@
         const trialsWithOptimal = trials.filter(t => t.chose_true_optimal === true).length;
         const accuracy = totalTrials > 0 ? (trialsWithOptimal / totalTrials) * 100 : null;
 
+        // Experiment-only accuracy: practice trials are a learning phase and
+        // shouldn't count toward the experiment's results.
+        const expTrials = trials.filter(t => t.stage !== 'practice');
+        const expTrialsWithOptimal = expTrials.filter(t => t.chose_true_optimal === true).length;
+        const accuracyExp = expTrials.length > 0 ? (expTrialsWithOptimal / expTrials.length) * 100 : null;
+
         const consentInteraction = interactions.find(i => i.interaction_type === 'consent_form_data');
         const fullName = consentInteraction && consentInteraction.data && consentInteraction.data.name ? consentInteraction.data.name : '';
         const idNumber = consentInteraction && consentInteraction.data && consentInteraction.data.id_number ? consentInteraction.data.id_number : '';
 
-        const firstTs = pages.length > 0 && pages[0].enter_ts ? pages[0].enter_ts : null;
+        // Exclude the LoginPage: participants can open the login link long before
+        // actually starting the session, which would otherwise inflate total time.
+        const contentPages = pages.filter(p => p.stage !== 'login');
+        const firstTs = contentPages.length > 0 && contentPages[0].enter_ts ? contentPages[0].enter_ts : null;
         let sessionDate = '', sessionTime = '';
         if (firstTs) {
           const dt = new Date(firstTs);
@@ -133,7 +142,7 @@
           sessionTime = dt.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
         }
 
-        const lastExitTs = pages.slice().reverse().map(p => p.exit_ts).find(ts => ts != null) || null;
+        const lastExitTs = contentPages.slice().reverse().map(p => p.exit_ts).find(ts => ts != null) || null;
         let totalTime = null;
         if (firstTs && lastExitTs) {
           const totalMs = lastExitTs - firstTs;
@@ -206,6 +215,7 @@
           totalPages: pages.length,
           totalInteractions: interactions.length,
           accuracy,
+          accuracyExp,
           modelChoice,
           modelChoiceType,
           choseOptimal,
@@ -227,7 +237,16 @@
         const trialsWithOptimal = allTrials.filter(t => t.chose_true_optimal === true).length;
         return allTrials.length > 0 ? (trialsWithOptimal / allTrials.length) * 100 : null;
       })();
-      statsGrid.appendChild(createStatCard('Overall Correct Trials', overallAccuracy !== null ? overallAccuracy.toFixed(1) + '%' : 'N/A'));
+      statsGrid.appendChild(createStatCard('Overall Correct Trials (All Stages, incl. Practice)', overallAccuracy !== null ? overallAccuracy.toFixed(1) + '%' : 'N/A'));
+
+      // Experiment-only accuracy: this is the number that matters for the study's
+      // results — practice trials are a learning phase and shouldn't be counted.
+      const allExpTrials = allTrials.filter(t => t.stage !== 'practice');
+      const overallAccuracyExp = (() => {
+        const trialsWithOptimal = allExpTrials.filter(t => t.chose_true_optimal === true).length;
+        return allExpTrials.length > 0 ? (trialsWithOptimal / allExpTrials.length) * 100 : null;
+      })();
+      statsGrid.appendChild(createStatCard('Overall Correct Trials (Experiment Only)', overallAccuracyExp !== null ? overallAccuracyExp.toFixed(1) + '%' : 'N/A'));
       const avgTimeLabel = (() => {
         const times = summary.map(s => s.totalTime).filter(t => t !== null);
         if (times.length === 0) return 'N/A';
@@ -371,12 +390,13 @@
             <th title="The name of the JSON log file uploaded for this participant">File</th>
             <th title="The date on which the participant ran the experiment session">Date</th>
             <th title="The time at which the participant started the experiment session">Time</th>
-            <th title="Total session duration from the first page entered to the last page exited">Total Time</th>
+            <th title="Total session duration from the first non-login page entered to the last page exited (excludes time spent on LoginPage before the session actually started)">Total Time</th>
             <th title="The total number of route-choice trials the participant completed across all stages">Total Trials</th>
             <th title="The total number of questionnaires (post-scenario, model summary, NASA-TLX, etc.) the participant answered">Total Questionnaires</th>
             <th title="The total number of pages (instructions, trials, questionnaires) the participant navigated through">Total Pages</th>
             <th title="The total number of recorded interactions (button clicks, form submissions, consent data, etc.) logged during the session">Total Interactions</th>
-            <th title="The percentage of trials in which the participant chose the objectively optimal route (chose_true_optimal = true)">Correct Trials (%)</th>
+            <th title="The percentage of trials (across all stages, including practice) in which the participant chose the objectively optimal route (chose_true_optimal = true)">Correct Trials — All Stages (%)</th>
+            <th title="The percentage of EXPERIMENT trials only (practice excluded) in which the participant chose the objectively optimal route. This is the number that matters for the study's results.">Correct Trials — Experiment Only (%)</th>
             <th title="The model the participant selected as preferred at the end of the experiment">Model Choice</th>
             <th title="Whether the participant's preferred model was the objectively optimal (OPT) model">Chose Optimal?</th>
             <th title="Visualization ranked 1st (most preferred) in the global visualization preference questionnaire">Vis 1st</th>
@@ -393,14 +413,19 @@
       const accVals = summary.map(s => s.accuracy).filter(a => a !== null);
       const accMin = accVals.length ? Math.min(...accVals) : 0;
       const accMax = accVals.length ? Math.max(...accVals) : 100;
-      const accColor = (val) => {
+      const accExpVals = summary.map(s => s.accuracyExp).filter(a => a !== null);
+      const accExpMin = accExpVals.length ? Math.min(...accExpVals) : 0;
+      const accExpMax = accExpVals.length ? Math.max(...accExpVals) : 100;
+      const makeAccColor = (min, max) => (val) => {
         if (val === null) return '';
-        const t = accMax > accMin ? (val - accMin) / (accMax - accMin) : 1;
+        const t = max > min ? (val - min) / (max - min) : 1;
         const r = Math.round(255 - t * (255 - 76));
         const g = Math.round(152 + t * (175 - 152));
         const b = Math.round(0   + t * (80  - 0));
         return `background:rgb(${r},${g},${b});color:#fff;font-weight:600`;
       };
+      const accColor = makeAccColor(accMin, accMax);
+      const accColorExp = makeAccColor(accExpMin, accExpMax);
       summary.forEach(row => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
@@ -416,6 +441,7 @@
           <td>${row.totalPages}</td>
           <td>${row.totalInteractions}</td>
           <td style="${accColor(row.accuracy)}">${row.accuracy !== null ? row.accuracy.toFixed(1) + '%' : 'N/A'}</td>
+          <td style="${accColorExp(row.accuracyExp)}">${row.accuracyExp !== null ? row.accuracyExp.toFixed(1) + '%' : 'N/A'}</td>
           <td class="${row.modelChoiceType === 'OPT' ? 'cell-green' : ''}">${row.modelChoice ? `${row.modelChoice}${row.modelChoiceType ? ' (' + row.modelChoiceType + ')' : ''}` : 'N/A'}</td>
           <td class="${row.choseOptimal === true ? 'cell-green' : ''}" style="text-align:center">${row.choseOptimal === true ? '✓' : row.choseOptimal === false ? '✗' : 'N/A'}</td>
           <td>${row.visPref[0]}</td>
